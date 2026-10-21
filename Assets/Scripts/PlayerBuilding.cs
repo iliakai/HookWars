@@ -26,7 +26,7 @@ public class PlayerBuilding : MonoBehaviour
             Vector2 mouse = Mouse.current.position.ReadValue();
             Vector2 gui = new Vector2(mouse.x, Screen.height - mouse.y);
             BuildingUpgradeMenu upgrades = GetComponent<BuildingUpgradeMenu>();
-            return menuOpen && MenuRect.Contains(gui) || upgrades != null && upgrades.Contains(gui);
+            return menuOpen && MenuRect.Contains(gui) || upgrades != null && (upgrades.Contains(gui) || upgrades.SelectedThisFrame);
         }
     }
     private void Awake()

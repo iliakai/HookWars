@@ -144,6 +144,7 @@ public class EnemyChase : MonoBehaviour
     private void ApplyPosition(Vector3 position, bool rightBank)
     {
         position = ArenaLayout.ClampToBank(position, rightBank);
+        position = WorldCollision.Slide(transform, position, ArenaLayout.HeroRadius);
 
         transform.position = position;
 

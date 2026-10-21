@@ -1,0 +1,56 @@
+{
+  "source": "Assets/Textures/Animals/cow_walk.gif",
+  "sourceSha256": "9ad0c783ff7eb0680a8bc6a64aeaf8eb4ac02f809304495a42202b0212c40e0d",
+  "width": 384,
+  "height": 384,
+  "frames": [
+    {
+      "durationMs": 160,
+      "disposal": 2,
+      "rect": [
+        0,
+        0,
+        384,
+        384
+      ],
+      "file": "frame_000.png",
+      "rgbaSha256": "8673eb7983a527bafb5a79df71ba3f5adfbc94c2fd7fa60022bae8455839aa27"
+    },
+    {
+      "durationMs": 160,
+      "disposal": 2,
+      "rect": [
+        19,
+        73,
+        347,
+        250
+      ],
+      "file": "frame_001.png",
+      "rgbaSha256": "82cb592a5f039991ed6e3e42b4ce89aab1388b9344d3ad79739ffb6a4e3671cc"
+    },
+    {
+      "durationMs": 160,
+      "disposal": 2,
+      "rect": [
+        20,
+        73,
+        348,
+        248
+      ],
+      "file": "frame_002.png",
+      "rgbaSha256": "e3a399348db3a893f483d8a5c2cbd1db9ff890c288547169f1987b6f49e329ca"
+    },
+    {
+      "durationMs": 160,
+      "disposal": 2,
+      "rect": [
+        19,
+        73,
+        347,
+        248
+      ],
+      "file": "frame_003.png",
+      "rgbaSha256": "9c8289bf7effaec9be4711f2cc1eae5211bb6d6dc7828f9cdc04dc6faf65cf90"
+    }
+  ]
+}

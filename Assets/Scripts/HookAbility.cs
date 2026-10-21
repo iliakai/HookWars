@@ -509,6 +509,13 @@ public class HookAbility: MonoBehaviour
 
     private void HitAndPull(Transform target)
     {
+        Animal animal = target.GetComponent<Animal>();
+        if (animal != null)
+        {
+            Carcass carcass = animal.Kill();
+            if (carcass == null) { state = HookState.Returning; return; }
+            target = carcass.transform;
+        }
         Health targetHealth = target.GetComponent<Health>();
         if (targetHealth != null) targetHealth.TakeDamage(damage);
         // Keep pulling the dead hero; its separate carcass is reserved until landing.

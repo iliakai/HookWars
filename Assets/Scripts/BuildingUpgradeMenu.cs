@@ -5,12 +5,14 @@ public class BuildingUpgradeMenu : MonoBehaviour
 {
     [SerializeField] private Camera worldCamera;
     private GameBuilding selected;
+    public bool SelectedThisFrame { get; private set; }
     private Rect Panel => new Rect(Screen.width - 412, 420, 400, 260);
     public bool Contains(Vector2 point) => selected != null && Panel.Contains(point);
     private void Awake() { if (worldCamera == null) worldCamera = Camera.main; }
     private bool CanAct => !GetComponent<Health>().IsDead && !GetComponent<HookVictim>().IsCaught;
     private void Update()
     {
+        SelectedThisFrame = false;
         if (!CanAct) { selected = null; return; }
         if (Mouse.current == null || worldCamera == null || GetComponent<PlayerBuilding>().IsBuilding) return;
         Vector2 mouse = Mouse.current.position.ReadValue();
@@ -20,6 +22,7 @@ public class BuildingUpgradeMenu : MonoBehaviour
         Collider2D hit = Physics2D.OverlapPoint(point, LayerMask.GetMask("Buildings"));
         GameBuilding candidate = hit != null ? hit.GetComponent<GameBuilding>() : null;
         selected = candidate != null && candidate.Owner == GetComponent<PlayerProgression>() ? candidate : null;
+        SelectedThisFrame = selected != null;
     }
     private void OnGUI()
     {

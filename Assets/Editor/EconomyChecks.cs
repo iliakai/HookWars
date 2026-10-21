@@ -6,6 +6,13 @@ using Object = UnityEngine.Object;
 public static class EconomyChecks
 {
     private static int assertions;
+    [MenuItem("HookWars/Economy/Check stage 4")]
+    public static void Run4()
+    {
+        EconomySetup.Stage4();
+        SessionState.SetInt("HookWars.EconomyStage", 4);
+        CarryingChecks.Run();
+    }
     [MenuItem("HookWars/Economy/Check stage 3")]
     public static void Run3()
     {
@@ -83,10 +90,105 @@ public static class EconomyChecks
             Check(Near(wallet.ProductKg, 19) && wallet.Bones == 10 && owner.Gold == beforeGold - 225,
                 "Death preserves owner and building resources");
             if (stage >= 3) CheckShops(root);
+            if (stage >= 4) CheckAnimals(root);
             Debug.Log($"HOOKWARS_ECONOMY_STAGE_{stage}_PASS: {assertions} assertions.");
         }
         finally { Object.DestroyImmediate(root); }
     }
+    private static void CheckAnimals(GameObject root)
+    {
+        GameObject ownerRoot = new GameObject("Farm owner"); ownerRoot.transform.SetParent(root.transform);
+        OwnerEconomy wallet = ownerRoot.AddComponent<OwnerEconomy>();
+        PlayerProgression owner = wallet.GetComponent<PlayerProgression>();
+        AnimalFarm prefab = AssetDatabase.LoadAssetAtPath<AnimalFarm>(EconomySetup.FarmPath);
+        AnimalFarm a = Object.Instantiate(prefab, new Vector3(-12, -8), Quaternion.identity, root.transform);
+        AnimalFarm b = Object.Instantiate(prefab, new Vector3(-14, -8), Quaternion.identity, root.transform);
+        a.Initialize(owner); b.Initialize(owner);
+        Check(a.Advance(14) == null && b.Advance(14) == null, "Independent farm timers wait for interval");
+        Animal first = a.Advance(1), second = b.Advance(1);
+        Check(first != null && second != null && first != second, "Each farm spawns independently");
+        first.transform.SetParent(root.transform); second.transform.SetParent(root.transform);
+        Check(ArenaLayout.IsInsideBank(first.transform.position, first.transform.position.x > 0, first.Radius) &&
+            ArenaLayout.IsInsideBank(second.transform.position, second.transform.position.x > 0, second.Radius), "Animal spawn on dry dynamic banks");
+        Check(first.GetComponent<Health>() == null && second.GetComponent<Health>() == null, "No numeric Health on animals");
+        float mass = first.MassKg;
+        Carcass carcass = first.Kill(); carcass.transform.SetParent(root.transform);
+        Check(first.Kill() == carcass && carcass.MassKg == mass && !first.gameObject.activeSelf,
+            "Animal death gives exactly one carcass and stops walking animation");
+        second.gameObject.SetActive(false);
+        carcass.gameObject.SetActive(false);
+        foreach (string species in new[] { "sheep", "cow", "pig" })
+        {
+            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Animations/" + species + "_walk.anim");
+            var binding = AnimationUtility.GetObjectReferenceCurveBindings(clip)[0];
+            var frames = AnimationUtility.GetObjectReferenceCurve(clip, binding);
+            Check(frames.Length == 5 && Near(clip.length, 0.64) && AnimationUtility.GetAnimationClipSettings(clip).loopTime,
+                "Four GIF frames and exact looping 160 ms timing: " + species);
+            foreach (var frame in frames)
+            {
+                Sprite sprite = (Sprite)frame.value;
+                Check(sprite.rect.width == 384 && sprite.rect.height == 384 && sprite.pivot == new Vector2(192, 0) && sprite.pixelsPerUnit == 480,
+                    "Stable animal canvas/pivot/scale: " + species);
+            }
+        }
+        GameObject killer = new GameObject("Animal hook owner"); killer.transform.SetParent(root.transform);
+        killer.transform.position = new Vector3(-6, -6);
+        killer.AddComponent<Health>(); killer.AddComponent<HookVictim>(); CarcassCarrier carrier = killer.AddComponent<CarcassCarrier>();
+        HookAbility hook = killer.AddComponent<HookAbility>();
+        Set(hook, "hookPrefab", AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Hook.prefab").transform);
+        Set(hook, "targetLayers", (LayerMask)LayerMask.GetMask("Animals"));
+        Set(hook, "speed", 4f / Time.deltaTime);
+        for (int mode = 0; mode < 2; mode++)
+        {
+            Animal animal = Object.Instantiate(AssetDatabase.LoadAssetAtPath<Animal>("Assets/Prefabs/sheep.prefab"), new Vector3(-4, -6), Quaternion.identity, root.transform);
+            Set(hook, "nextThrowTime", 0f); hook.TryThrow(Vector2.right);
+            if (mode == 0) Invoke(hook, "FlyHook");
+            else { hook.ActiveHook.position = new Vector3(-2, -6); Invoke(hook, "TryCatchOnReturn", killer.transform.position, 10f); }
+            Carcass caught = (Carcass)typeof(Animal).GetField("carcass", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(animal);
+            Check(caught != null && hook.IsPullingTarget(caught.transform) && caught.IsReserved, "Animal lethal hook continues pulling its carcass: " + mode);
+            Set(hook, "pullSpeed", 100f / Time.deltaTime); Invoke(hook, "PullTarget");
+            Check(caught.IsStored && carrier.Count == mode + 1, "Animal carcass uses normal pickup: " + mode);
+        }
+        owner.AddGold(1000);
+        Check(a.TryUpgrade(0) && a.SpawnInterval == 12 && b.SpawnInterval == 15, "Farm upgrade is local with positive minimum");
+        GameObject obstacle = new GameObject("Animal obstacle"); obstacle.transform.SetParent(root.transform);
+        obstacle.layer = LayerMask.NameToLayer("Buildings"); obstacle.transform.position = new Vector3(-4, 6);
+        obstacle.AddComponent<BoxCollider2D>().size = Vector2.one;
+        Animal walker = Object.Instantiate(AssetDatabase.LoadAssetAtPath<Animal>("Assets/Prefabs/sheep.prefab"), new Vector3(-6, 6), Quaternion.identity, root.transform);
+        Check(!WorldCollision.CanMove(walker.transform, new Vector3(-2, 6), walker.Radius), "Animal movement sweep cannot cross buildings or walls");
+        walker.transform.position = new Vector3(-2.4f, 0);
+        Set(walker, "direction", Vector2.right); Set(walker, "nextDirection", float.MaxValue);
+        Set(walker, "moveSpeed", 1f / Time.deltaTime);
+        Invoke(walker, "Update");
+        Check(ArenaLayout.IsInsideBank(walker.transform.position, false, walker.Radius) && walker.GetComponent<Animator>().speed == 0,
+            "Animal update rejects crossing the river and stops animation");
+        UnityEngine.Random.State randomBefore = UnityEngine.Random.state;
+        UnityEngine.Random.InitState(1021);
+        foreach (int depth in new[] { 4, 20 })
+        {
+            Set(ArenaLayout.Instance, "appliedDepth", depth);
+            bool left = false, right = false;
+            for (int i = 0; i < 24; i++)
+            {
+                Animal spawned = a.TrySpawn();
+                Check(spawned != null && ArenaLayout.IsInsideBank(spawned.transform.position, spawned.transform.position.x > 0, spawned.Radius),
+                    "Free dry spawn at bank depth " + depth);
+                left |= spawned.transform.position.x < 0; right |= spawned.transform.position.x > 0;
+                spawned.transform.SetParent(root.transform);
+                spawned.gameObject.SetActive(false);
+            }
+            Check(left && right, "Farms use both banks at depth " + depth);
+        }
+        Set(ArenaLayout.Instance, "appliedDepth", 16); UnityEngine.Random.state = randomBefore;
+        owner.AddGold(100000);
+        for (int i = 0; i < 20; i++) a.TryUpgrade(0);
+        Check(a.SpawnInterval == 3 && !a.TryUpgrade(0), "Farm interval has positive lower bound");
+        GameObject cover = new GameObject("Full map"); cover.transform.SetParent(root.transform);
+        cover.AddComponent<BoxCollider2D>().size = new Vector2(100, 100);
+        Check(a.TrySpawn() == null, "Full map returns after bounded spawn attempts");
+    }
+    public static object Invoke(object target, string method, params object[] args) => target.GetType().GetMethod(method,
+        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(target, args);
     private static void CheckShops(GameObject root)
     {
         GameObject first = new GameObject("Shop owner A"); first.transform.SetParent(root.transform);

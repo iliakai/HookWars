@@ -146,7 +146,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.65, z: 0}
-  m_LocalScale: {x: 0.03189793, y: 0.03189793, z: 0.03189793}
+  m_LocalScale: {x: 0.03210273, y: 0.03210273, z: 0.03210273}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 923269593}
@@ -200,7 +200,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 30
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2890908579912889382, guid: 27e4418225104fa47a47e9b4f1abb8dd, type: 3}
+  m_Sprite: {fileID: 2126017655558070095, guid: fac3b72e1bcf91e43b8578f3dd9b49dc, type: 3}
   m_Color: {r: 0.8, g: 0.35, b: 0.2, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1253,7 +1253,7 @@ MonoBehaviour:
   hookPrefab: {fileID: 4949370477256255621, guid: a48f41b36fc6e834581fb6868943873e, type: 3}
   targetLayers:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 8448
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 3072
@@ -1286,7 +1286,7 @@ MonoBehaviour:
   playerAim: {fileID: 1372860863}
   targetLayers:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 8448
   swingVisual: {fileID: 1728477467}
   damage: 20
   attackRange: 1.6
@@ -1407,6 +1407,7 @@ MonoBehaviour:
   buildingPrefabs:
   - {fileID: 6430136431561755328, guid: 3e2d9cd8c6dcf9048bd8cce8e7a08044, type: 3}
   - {fileID: 2455497073292196938, guid: 9d21675be166cf64e84bee2875416f65, type: 3}
+  - {fileID: 4178985464801724631, guid: 8a4453e7e0a5c6e4c865e2f3f8556696, type: 3}
 --- !u!114 &641424505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1763,7 +1764,7 @@ MonoBehaviour:
   hookPrefab: {fileID: 4949370477256255621, guid: a48f41b36fc6e834581fb6868943873e, type: 3}
   targetLayers:
     serializedVersion: 2
-    m_Bits: 512
+    m_Bits: 8704
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 3072
@@ -2104,7 +2105,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.65, z: 0}
-  m_LocalScale: {x: 0.03189793, y: 0.03189793, z: 0.03189793}
+  m_LocalScale: {x: 0.03210273, y: 0.03210273, z: 0.03210273}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 641424495}
@@ -2158,7 +2159,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 30
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2890908579912889382, guid: 27e4418225104fa47a47e9b4f1abb8dd, type: 3}
+  m_Sprite: {fileID: 2126017655558070095, guid: fac3b72e1bcf91e43b8578f3dd9b49dc, type: 3}
   m_Color: {r: 0.8, g: 0.35, b: 0.2, a: 1}
   m_FlipX: 0
   m_FlipY: 0

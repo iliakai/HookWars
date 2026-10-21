@@ -76,14 +76,16 @@ public class PlayerMelee : MonoBehaviour
 
         // Одна цель получает урон только один раз за взмах.
         HashSet<Health> damagedTargets = new HashSet<Health>();
+        HashSet<Animal> killedAnimals = new HashSet<Animal>();
         int hitCount = 0;
 
         foreach (Collider2D target in targets)
         {
             Health health = target.GetComponent<Health>();
+            Animal animal = target.GetComponent<Animal>();
 
-            if (health == null || health.IsDead ||
-                health.gameObject == gameObject)
+            if ((health == null && animal == null) || (health != null && health.IsDead) ||
+                (animal != null && animal.IsDead) || target.gameObject == gameObject)
             {
                 continue;
             }
@@ -108,7 +110,12 @@ public class PlayerMelee : MonoBehaviour
                 continue;
             }
 
-            if (damagedTargets.Add(health))
+            if (animal != null && killedAnimals.Add(animal))
+            {
+                animal.Kill();
+                hitCount++;
+            }
+            else if (health != null && damagedTargets.Add(health))
             {
                 health.TakeDamage(damage);
                 hitCount++;

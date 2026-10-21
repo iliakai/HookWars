@@ -52,6 +52,7 @@ public class PlayerMovement : MonoBehaviour
         position.y += direction.y * moveSpeed * Time.deltaTime;
 
         position = ArenaLayout.ClampToBank(position, rightBank);
+        position = WorldCollision.Slide(transform, position, ArenaLayout.HeroRadius);
 
         transform.position = position;
         Physics2D.SyncTransforms();
