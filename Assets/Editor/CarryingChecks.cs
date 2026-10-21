@@ -325,6 +325,81 @@ public static class CarryingChecks
         Check(carrier.Count == 0 && OnBank(rival.transform.position), "Living hero lands without becoming cargo");
         rival.transform.position = new Vector3(6, 6);
         CheckRegressions(hero, hook);
+        CheckLethalCargo(prefab);
+    }
+
+    private static void CheckLethalCargo(Carcass prefab)
+    {
+        // Outgoing/returning lethal hits, cancellation, and death during a live capture.
+        for (int scenario = 0; scenario < 4; scenario++)
+        {
+            GameObject killer = Hero("Cargo killer " + scenario, new Vector3(-6, -6), prefab);
+            GameObject victim = Hero("Cargo victim " + scenario, new Vector3(6, -6), prefab);
+            CarcassCarrier receiver = killer.GetComponent<CarcassCarrier>();
+            CarcassCarrier source = victim.GetComponent<CarcassCarrier>();
+            Set(source, "capacityKg", 12f);
+            Set(receiver, "capacityKg", scenario == 0 ? 18f : 10f);
+            Carcass first = Item(prefab, victim.transform.position);
+            Carcass second = Item(prefab, victim.transform.position);
+            Check(source.TryCollect(first) && source.TryCollect(second), "Victim carries two whole carcasses: " + scenario);
+            HookAbility hook = killer.GetComponent<HookAbility>();
+            Set(hook, "targetLayers", (LayerMask)(1 << victim.layer));
+            Set(hook, "damage", scenario == 3 ? 1f : 1000f);
+            Throw(hook);
+            if (scenario == 1)
+            {
+                hook.ActiveHook.position = new Vector3(8, -6);
+                Check((bool)Invoke(hook, "TryCatchOnReturn", killer.transform.position, 30f), "Return hook catches loaded victim");
+            }
+            else
+            {
+                Set(hook, "speed", 20f / Time.deltaTime);
+                Invoke(hook, "FlyHook");
+            }
+            if (scenario == 3) victim.GetComponent<Health>().TakeDamage(1000);
+            Carcass own = victim.GetComponent<HeroCarcassSpawner>().CurrentCarcass;
+            created.Add(own.gameObject);
+            Check(source.Count == 0 && hook.IsPullingTarget(victim.transform) && first.IsReserved && second.IsReserved,
+                "Whole death cargo is dropped and reserved with captured hero: " + scenario);
+            Check(!receiver.TryCollect(first) && !receiver.TryCollect(second), "No pickup while death cargo is in flight: " + scenario);
+            victim.transform.position = new Vector3(0, -6);
+            Invoke(first, "LateUpdate");
+            Invoke(second, "LateUpdate");
+            Check(first.transform.position == victim.transform.position && second.transform.position == victim.transform.position,
+                "Both dropped carcasses travel with dead hero across river: " + scenario);
+
+            if (scenario == 2)
+            {
+                hook.CancelHook();
+                Check(first.IsAvailable && second.IsAvailable && own.IsAvailable &&
+                    OnBank(first.transform.position) && OnBank(second.transform.position) &&
+                    receiver.Count == 0, "Cancelled group stays available on land without pickup");
+            }
+            else
+            {
+                Finish(hook);
+                if (scenario == 0)
+                    Check(own.IsStored && first.IsStored && second.IsStored && receiver.CurrentMassKg == 18,
+                        "Lethal hook collects own carcass plus entire cargo when 18 kg fits");
+                else
+                    Check(own.IsStored && first.IsAvailable && second.IsAvailable &&
+                        OnBank(first.transform.position) && first.transform.position.x < 0 &&
+                        OnBank(second.transform.position) && second.transform.position.x < 0 &&
+                        receiver.CurrentMassKg == 6,
+                        "Overflow cargo lands next to killer instead of remaining on victim bank: " + scenario);
+            }
+            Vector3 firstPosition = first.transform.position;
+            Vector3 secondPosition = second.transform.position;
+            victim.GetComponent<Health>().Revive();
+            Check(first.transform.position == firstPosition && second.transform.position == secondPosition &&
+                first.MassKg + second.MassKg + own.MassKg == 18,
+                "Revival preserves positions and all 18 kg from loaded victim: " + scenario);
+            killer.SetActive(false);
+            victim.SetActive(false);
+            first.gameObject.SetActive(false);
+            second.gameObject.SetActive(false);
+            own.gameObject.SetActive(false);
+        }
     }
 
     private static void ClearCreated()

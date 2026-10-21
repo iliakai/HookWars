@@ -21,13 +21,20 @@ public class Carcass : MonoBehaviour
         if (mass <= 0f || float.IsNaN(mass) || float.IsInfinity(mass))
             throw new System.ArgumentOutOfRangeException(nameof(mass));
         massKg = mass;
+        FollowHero(source);
+    }
+
+    internal void FollowHero(HookVictim source)
+    {
         sourceVictim = source;
         sourceHealth = source != null ? source.GetComponent<Health>() : null;
     }
 
+    internal bool IsLinkedTo(HookVictim source) => sourceVictim == source;
+
     private void LateUpdate()
     {
-        // Only a dead hero under active capture can move its separate carcass.
+        // The dead hero's own carcass and dropped cargo follow the same capture.
         if (!IsStored && sourceVictim != null && sourceHealth != null &&
             sourceHealth.IsDead && sourceVictim.IsCaught)
             transform.position = sourceVictim.transform.position;

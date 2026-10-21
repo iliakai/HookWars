@@ -610,14 +610,23 @@ public class HookAbility: MonoBehaviour
         {
             caughtTarget.position = landing;
             Carcass carcass = GetPulledCarcass();
+            CarcassCarrier droppedCargo = GetPulledDeathCargo();
             ClearHook();
+            CarcassCarrier carrier = GetComponent<CarcassCarrier>();
             if (carcass != null)
             {
                 carcass.ReleaseFromHero(landing);
-                CarcassCarrier carrier = GetComponent<CarcassCarrier>();
                 if (carrier != null) carrier.TryCollect(carcass);
             }
+            if (droppedCargo != null) droppedCargo.ReleaseDeathCargo(landing, carrier);
         }
+    }
+
+    private CarcassCarrier GetPulledDeathCargo()
+    {
+        if (caughtTarget == null) return null;
+        Health health = caughtTarget.GetComponent<Health>();
+        return health != null && health.IsDead ? caughtTarget.GetComponent<CarcassCarrier>() : null;
     }
 
     private Carcass GetPulledCarcass()
@@ -653,6 +662,7 @@ public class HookAbility: MonoBehaviour
     public void CancelHook()
     {
         Carcass carcass = GetPulledCarcass();
+        CarcassCarrier droppedCargo = GetPulledDeathCargo();
         // При прерывании захвата возвращаем цель в исходную
         // безопасную точку, чтобы не оставить её посреди реки.
         if (state == HookState.Pulling && caughtTarget != null)
@@ -662,6 +672,7 @@ public class HookAbility: MonoBehaviour
 
         ClearHook();
         if (carcass != null) carcass.ReleaseFromHero(targetStartPosition);
+        if (droppedCargo != null) droppedCargo.ReleaseDeathCargo(targetStartPosition);
     }
 
     protected virtual void OnDisable()

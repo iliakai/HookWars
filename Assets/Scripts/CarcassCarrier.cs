@@ -12,6 +12,7 @@ public class CarcassCarrier : MonoBehaviour
     [SerializeField] private SpriteRenderer cargoMarker;
 
     private readonly List<Carcass> cargo = new List<Carcass>();
+    private readonly List<Carcass> deathCargo = new List<Carcass>();
     private Health health;
     private HookVictim victim;
     public float CapacityKg => capacityKg;
@@ -33,6 +34,7 @@ public class CarcassCarrier : MonoBehaviour
         health = GetComponent<Health>();
         victim = GetComponent<HookVictim>();
         health.Died += OnDied;
+        health.Revived += OnRevived;
         RefreshMarker();
     }
 
@@ -69,7 +71,34 @@ public class CarcassCarrier : MonoBehaviour
         return true;
     }
 
-    private void OnDied(Health target) => DropAll();
+    private void OnDied(Health target)
+    {
+        deathCargo.AddRange(cargo);
+        DropAll();
+        // Damage is applied before a lethal hook captures the hero. Keep the link
+        // now so the whole drop is reserved as soon as that capture begins.
+        foreach (Carcass carcass in deathCargo)
+            if (carcass != null) carcass.FollowHero(victim);
+    }
+
+    private void OnRevived(Health target)
+    {
+        foreach (Carcass carcass in deathCargo)
+            if (carcass != null && carcass.IsLinkedTo(victim)) carcass.DetachFromHero();
+        deathCargo.Clear();
+    }
+
+    internal void ReleaseDeathCargo(Vector3 position, CarcassCarrier recipient = null)
+    {
+        foreach (Carcass carcass in deathCargo)
+        {
+            // A normally dropped item may have already been collected independently.
+            if (carcass == null || !carcass.IsLinkedTo(victim)) continue;
+            carcass.ReleaseFromHero(position);
+            if (recipient != null) recipient.TryCollect(carcass);
+        }
+        deathCargo.Clear();
+    }
 
     public void DropAll()
     {
@@ -87,6 +116,10 @@ public class CarcassCarrier : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (health != null) health.Died -= OnDied;
+        if (health != null)
+        {
+            health.Died -= OnDied;
+            health.Revived -= OnRevived;
+        }
     }
 }
