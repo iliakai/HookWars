@@ -11,6 +11,8 @@ public class PlayerHook : HookAbility
     {
         // Общая механика: полёт, возврат и подтягивание.
         base.LateUpdate();
+        PlayerBuilding builder = GetComponent<PlayerBuilding>();
+        if (builder != null && builder.BlocksMouseInput) return;
 
         if (Mouse.current == null || playerAim == null)
         {

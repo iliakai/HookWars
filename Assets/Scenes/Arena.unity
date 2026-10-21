@@ -146,7 +146,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.65, z: 0}
-  m_LocalScale: {x: 0.03189793, y: 0.03189793, z: 0.03189793}
+  m_LocalScale: {x: 0.03210273, y: 0.03210273, z: 0.03210273}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 923269593}
@@ -200,7 +200,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 30
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2890908579912889382, guid: 27e4418225104fa47a47e9b4f1abb8dd, type: 3}
+  m_Sprite: {fileID: 2126017655558070095, guid: fac3b72e1bcf91e43b8578f3dd9b49dc, type: 3}
   m_Color: {r: 0.8, g: 0.35, b: 0.2, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1137,6 +1137,7 @@ GameObject:
   - component: {fileID: 641424508}
   - component: {fileID: 641424507}
   - component: {fileID: 641424506}
+  - component: {fileID: 641424509}
   m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
@@ -1379,8 +1380,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fea5545d54f19449b8507f6e7da5612, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProgression
-  goldPerSecond: 10
-  experiencePerSecond: 1000
+  goldPerSecond: 2
+  experiencePerSecond: 0
   firstLevelExperience: 20
   experienceGrowth: 1.05
   gold: 0
@@ -1403,8 +1404,8 @@ MonoBehaviour:
   worldCamera: {fileID: 519420031}
   minePrefab: {fileID: 4675591880860930068, guid: 681997ca78728f242b0e94d45c4243e9, type: 3}
   universityPrefab: {fileID: 4675591880860930068, guid: f0948d86553bc1c4483d1ff10d118d72, type: 3}
-  universityCost: 75
-  mineCost: 50
+  buildingPrefabs:
+  - {fileID: 6430136431561755328, guid: 3e2d9cd8c6dcf9048bd8cce8e7a08044, type: 3}
 --- !u!114 &641424505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1463,6 +1464,18 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4096
   cargoMarker: {fileID: 1008217029}
+--- !u!114 &641424509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 641424493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6123bff6a88d09a44a66b8f9ca30837d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OwnerEconomy
 --- !u!1 &806248677
 GameObject:
   m_ObjectHideFlags: 0
@@ -1530,6 +1543,8 @@ GameObject:
   - component: {fileID: 923269597}
   - component: {fileID: 923269601}
   - component: {fileID: 923269600}
+  - component: {fileID: 923269603}
+  - component: {fileID: 923269602}
   m_Layer: 8
   m_Name: Enemy
   m_TagString: Untagged
@@ -1797,6 +1812,39 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4096
   cargoMarker: {fileID: 83017207}
+--- !u!114 &923269602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 923269590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6123bff6a88d09a44a66b8f9ca30837d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OwnerEconomy
+--- !u!114 &923269603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 923269590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fea5545d54f19449b8507f6e7da5612, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerProgression
+  goldPerSecond: 2
+  experiencePerSecond: 0
+  firstLevelExperience: 20
+  experienceGrowth: 1.25
+  gold: 0
+  experience: 0
+  level: 1
+  upgradePoints: 0
+  experienceToNextLevel: 0
 --- !u!1 &971682049
 GameObject:
   m_ObjectHideFlags: 0
@@ -2055,7 +2103,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.65, z: 0}
-  m_LocalScale: {x: 0.03189793, y: 0.03189793, z: 0.03189793}
+  m_LocalScale: {x: 0.03210273, y: 0.03210273, z: 0.03210273}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 641424495}
@@ -2109,7 +2157,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 30
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2890908579912889382, guid: 27e4418225104fa47a47e9b4f1abb8dd, type: 3}
+  m_Sprite: {fileID: 2126017655558070095, guid: fac3b72e1bcf91e43b8578f3dd9b49dc, type: 3}
   m_Color: {r: 0.8, g: 0.35, b: 0.2, a: 1}
   m_FlipX: 0
   m_FlipY: 0

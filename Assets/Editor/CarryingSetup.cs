@@ -73,7 +73,7 @@ public static class CarryingSetup
             SetInt(carrier, "carcassLayers", 1 << layer);
             SetObject(spawner, "carcassPrefab", prefab);
             SetInt(hero.GetComponent<HookAbility>(), "carcassLayers", 1 << layer);
-            if (hero.GetComponent<PlayerProgression>() != null) GetOrAdd<CarryingHUD>(hero.gameObject);
+            if (hero.GetComponent<PlayerMovement>() != null) GetOrAdd<CarryingHUD>(hero.gameObject);
             EditorUtility.SetDirty(hero.gameObject);
         }
 

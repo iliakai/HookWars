@@ -1,248 +1,112 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerBuilding : MonoBehaviour
 {
-    [Header("References")]
     [SerializeField] private Camera worldCamera;
-    [SerializeField] private MineBuilding minePrefab;
-
-    [SerializeField] private IncomeBuilding universityPrefab;
-    [SerializeField, Min(1)] private int universityCost = 75;
-
-    [Header("Construction")]
-    [SerializeField, Min(1)] private int mineCost = 50;
-
+    // Preserve old references for explicit Editor migration, never show them in the new menu.
+    [SerializeField, HideInInspector] private MineBuilding minePrefab;
+    [SerializeField, HideInInspector] private IncomeBuilding universityPrefab;
+    [SerializeField] private GameBuilding[] buildingPrefabs;
     private PlayerProgression progression;
     private Health health;
     private HookVictim victim;
-
     private SpriteRenderer preview;
-    private bool building;
-    private bool homeRightBank;
-
-    private Vector3 buildPosition;
-    private bool validPosition;
-    private string status = "";
-
-    private IncomeBuilding selectedPrefab;
-    private int selectedCost;
-    public bool IsBuilding => building;
-
+    private GameBuilding selectedPrefab;
+    private bool menuOpen, homeRightBank;
+    private string status = "B — строительство";
+    public bool IsBuilding => selectedPrefab != null;
+    private Rect MenuRect => new Rect(12, Screen.height - 206, 370, 194);
+    public bool BlocksMouseInput
+    {
+        get
+        {
+            if (IsBuilding) return true;
+            if (Mouse.current == null) return false;
+            Vector2 mouse = Mouse.current.position.ReadValue();
+            Vector2 gui = new Vector2(mouse.x, Screen.height - mouse.y);
+            BuildingUpgradeMenu upgrades = GetComponent<BuildingUpgradeMenu>();
+            return menuOpen && MenuRect.Contains(gui) || upgrades != null && upgrades.Contains(gui);
+        }
+    }
     private void Awake()
     {
-        progression = GetComponent<PlayerProgression>();
-        health = GetComponent<Health>();
-        victim = GetComponent<HookVictim>();
-
-        homeRightBank = transform.position.x > 0f;
-
-        if (worldCamera == null)
-        {
-            worldCamera = Camera.main;
-        }
+        progression = GetComponent<PlayerProgression>(); health = GetComponent<Health>(); victim = GetComponent<HookVictim>();
+        homeRightBank = transform.position.x > 0;
+        if (worldCamera == null) worldCamera = Camera.main;
     }
-
+    private bool CanAct => progression != null && (health == null || !health.IsDead) && (victim == null || !victim.IsCaught);
     private void Update()
     {
-        if (progression == null ||
-            minePrefab == null ||
-            worldCamera == null ||
-            Keyboard.current == null ||
-            Mouse.current == null)
-        {
-            return;
-        }
-
-        bool blocked =
-            (health != null && health.IsDead) ||
-            (victim != null && victim.IsCaught);
-
-        if (blocked)
-        {
-            CloseBuildMode();
-            return;
-        }
-
+        if (!CanAct) { CloseBuildMode(); menuOpen = false; return; }
         Keyboard keyboard = Keyboard.current;
-
-        if (keyboard.bKey.wasPressedThisFrame)
-        {
-            OpenBuildMode(minePrefab, mineCost);
-        }
-
-        if (keyboard.nKey.wasPressedThisFrame)
-        {
-            OpenBuildMode(universityPrefab, universityCost);
-        }
-
-        if (!building)
-        {
-            return;
-        }
-
-        if (keyboard.escapeKey.wasPressedThisFrame)
-        {
-            CloseBuildMode();
-            return;
-        }
-
-        UpdatePreview();
-
-        if (keyboard.eKey.wasPressedThisFrame)
-        {
-            TryBuild();
-        }
+        if (keyboard == null) return;
+        if (keyboard.bKey.wasPressedThisFrame) menuOpen = !menuOpen;
+        if (keyboard.escapeKey.wasPressedThisFrame) { CloseBuildMode(); menuOpen = false; }
+        if (!IsBuilding || Mouse.current == null || worldCamera == null) return;
+        Vector2 mouse = Mouse.current.position.ReadValue();
+        Vector3 point = worldCamera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -worldCamera.transform.position.z));
+        Vector3 cell = new Vector3(Mathf.Floor(point.x) + 0.5f, Mathf.Floor(point.y) + 0.5f);
+        preview.transform.position = cell;
+        bool valid = CanPlace(cell);
+        preview.color = valid ? new Color(0.2f, 1, 0.3f, 0.6f) : new Color(1, 0.2f, 0.2f, 0.6f);
+        status = valid ? "E — построить, Esc — отменить" : "Место занято, вне берега или не хватает ресурсов";
+        if (keyboard.eKey.wasPressedThisFrame) TryBuildAt(cell);
     }
-
-    private void OpenBuildMode(IncomeBuilding prefab, int cost)
+    public bool CanPlace(Vector3 cell)
     {
-        CloseBuildMode();
-
-        if (prefab == null)
-        {
-            Debug.LogWarning("Назначь заготовку здания в Player Building.", this);
-            return;
-        }
-
-        SpriteRenderer source = prefab.GetComponent<SpriteRenderer>();
-
-        if (source == null)
-        {
-            Debug.LogError("У здания должен быть Sprite Renderer.", prefab);
-            return;
-        }
-
-        selectedPrefab = prefab;
-        selectedCost = cost;
-
-        GameObject previewObject = new GameObject("BuildingPreview");
-        preview = previewObject.AddComponent<SpriteRenderer>();
-
-        preview.sprite = source.sprite;
-        preview.sharedMaterial = source.sharedMaterial;
-        preview.sortingOrder = 25;
-
-        building = true;
-    }
-
-    private void UpdatePreview()
-    {
-        Vector2 screenPosition = Mouse.current.position.ReadValue();
-
-        Vector3 worldPosition = worldCamera.ScreenToWorldPoint(
-            new Vector3(
-                screenPosition.x,
-                screenPosition.y,
-                -worldCamera.transform.position.z
-            )
-        );
-
-        // Центры метровых клеток: ... -2.5, -1.5, -0.5, 0.5 ...
-        buildPosition = new Vector3(
-            Mathf.Floor(worldPosition.x) + 0.5f,
-            Mathf.Floor(worldPosition.y) + 0.5f,
-            0f
-        );
-
-        preview.transform.position = buildPosition;
-
-        // Для метрового здания оставляем отступ полклетки от краёв.
-        bool insideBank = ArenaLayout.IsInsideBank(buildPosition, homeRightBank, 0.5f);
-
+        if (!CanAct || selectedPrefab == null || !selectedPrefab.CanBuild(progression) ||
+            !ArenaLayout.IsInsideBank(cell, homeRightBank, 0.5f) || !HasResources(selectedPrefab)) return false;
         Physics2D.SyncTransforms();
-
-        // Горы ограничивают поле через ArenaLayout.
-        // Занятость клетки проверяем по остальным объектам.
-        int placementMask = ~LayerMask.GetMask("Mountains");
-
-        bool occupied = Physics2D.OverlapBox(
-            buildPosition,
-            new Vector2(0.98f, 0.98f),
-            0f,
-            placementMask
-        ) != null;
-
-        validPosition = insideBank && !occupied;
-        bool enoughGold = progression.Gold >= selectedCost;
-
-        preview.color = validPosition && enoughGold
-            ? new Color(0.2f, 1f, 0.3f, 0.65f)
-            : new Color(1f, 0.2f, 0.2f, 0.65f);
-
-        if (!insideBank)
-        {
-            status = "Выбери клетку на своём исходном берегу.";
-        }
-        else if (occupied)
-        {
-            status = "Место занято.";
-        }
-        else if (!enoughGold)
-        {
-            status = "Недостаточно золота.";
-        }
-        else
-        {
-            status = "Место свободно. Нажми E.";
-        }
+        foreach (Collider2D hit in Physics2D.OverlapBoxAll(cell, Vector2.one * 0.9998f, 0))
+            if (!hit.isTrigger) return false;
+        return true;
     }
-
-    private void TryBuild()
+    private bool HasResources(GameBuilding prefab) => prefab.Kind == BuildingKind.Wall
+        ? progression.GetComponent<OwnerEconomy>().Bones >= prefab.BuildCost : progression.Gold >= prefab.BuildCost;
+    public GameBuilding TryBuildAt(Vector3 cell)
     {
-        if (!validPosition ||
-            selectedPrefab == null ||
-            !progression.TrySpendGold(selectedCost))
-        {
-            return;
-        }
-
-        IncomeBuilding newBuilding = Instantiate(
-            selectedPrefab,
-            buildPosition,
-            Quaternion.identity
-        );
-
-        newBuilding.Initialize(progression);
+        if (!CanPlace(cell)) return null;
+        GameBuilding prefab = selectedPrefab;
+        GameBuilding built = Instantiate(prefab, cell, Quaternion.identity);
+        if (!built.Initialize(progression)) { Destroy(built.gameObject); return null; }
+        bool paid = prefab.Kind == BuildingKind.Wall ? progression.GetComponent<OwnerEconomy>().TrySpendBones(prefab.BuildCost)
+            : progression.TrySpendGold(prefab.BuildCost);
+        if (!paid) { Destroy(built.gameObject); return null; }
         CloseBuildMode();
+        return built;
     }
-
+    public void SelectBuilding(GameBuilding prefab)
+    {
+        CloseBuildMode();
+        if (!CanAct || prefab == null) return;
+        selectedPrefab = prefab;
+        SpriteRenderer source = prefab.GetComponentInChildren<SpriteRenderer>();
+        GameObject marker = new GameObject("BuildingPreview");
+        preview = marker.AddComponent<SpriteRenderer>();
+        preview.sprite = source.sprite; preview.sharedMaterial = source.sharedMaterial; preview.sortingOrder = 25;
+        preview.transform.localScale = source.transform.localScale;
+    }
     private void CloseBuildMode()
     {
-        building = false;
-
-        if (preview != null)
-        {
-            Destroy(preview.gameObject);
-            preview = null;
-        }
+        selectedPrefab = null;
+        if (preview != null) Destroy(preview.gameObject);
+        preview = null;
     }
-
     private void OnGUI()
     {
-        if (!building)
-        {
-            return;
-        }
-
-        float left = (Screen.width - 420f) * 0.5f;
-        float top = Screen.height - 100f;
-
-        GUI.Box(new Rect(left, top, 420, 88), GUIContent.none);
-
-        GUI.Label(
-            new Rect(left + 12, top + 8, 396, 24),
-            $"{selectedPrefab.DisplayName}: {selectedCost} золота | E — построить | Esc — отмена"
-        );
-
-        GUI.Label(
-            new Rect(left + 12, top + 40, 396, 30),
-            status
-        );
+        if (!CanAct) return;
+        if (!menuOpen) { GUI.Label(new Rect(12, Screen.height - 34, 360, 26), status); return; }
+        Rect box = MenuRect;
+        GUI.Box(box, "Строительство: клетка 1×1 м");
+        if (buildingPrefabs != null)
+            for (int i = 0; i < buildingPrefabs.Length; i++)
+            {
+                GameBuilding prefab = buildingPrefabs[i];
+                if (prefab != null && GUI.Button(new Rect(box.x + 10, box.y + 26 + i * 31, 350, 28),
+                    $"{prefab.DisplayName}: {prefab.BuildCost} {(prefab.Kind == BuildingKind.Wall ? "костей" : "золота")}")) SelectBuilding(prefab);
+            }
+        GUI.Label(new Rect(box.x + 10, box.y + 158, 350, 30), status);
     }
-
-    private void OnDisable()
-    {
-        CloseBuildMode();
-    }
+    private void OnDisable() => CloseBuildMode();
 }

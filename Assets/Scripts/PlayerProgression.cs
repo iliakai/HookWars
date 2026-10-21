@@ -4,21 +4,21 @@ public class PlayerProgression : MonoBehaviour
 {
     [Header("Passive Income")]
     [SerializeField, Min(0f)] private float goldPerSecond = 2f;
-    [SerializeField, Min(0f)] private float experiencePerSecond = 1f;
+    [SerializeField, Min(0f)] private float experiencePerSecond = 0f;
 
     [Header("Level Settings")]
     [SerializeField, Min(1)] private int firstLevelExperience = 20;
     [SerializeField, Min(1f)] private float experienceGrowth = 1.25f;
 
     [Header("Current Progress")]
-    [SerializeField] private float gold;
-    [SerializeField] private float experience;
+    [SerializeField] private double gold;
+    [SerializeField] private double experience;
     [SerializeField] private int level = 1;
     [SerializeField] private int upgradePoints;
     [SerializeField] private int experienceToNextLevel;
 
-    public float Gold => gold;
-    public float Experience => experience;
+    public double Gold => gold;
+    public double Experience => experience;
     public int Level => level;
     public int UpgradePoints => upgradePoints;
     public int ExperienceToNextLevel => experienceToNextLevel;
@@ -41,7 +41,7 @@ public class PlayerProgression : MonoBehaviour
         AddExperience(experiencePerSecond * Time.deltaTime);
     }
 
-    public void AddGold(float amount)
+    public void AddGold(double amount)
     {
         if (amount > 0f)
         {
@@ -60,7 +60,7 @@ public class PlayerProgression : MonoBehaviour
         return true;
     }
 
-    public void AddExperience(float amount)
+    public void AddExperience(double amount)
     {
         if (amount <= 0f)
         {

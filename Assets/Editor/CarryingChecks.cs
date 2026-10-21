@@ -326,6 +326,7 @@ public static class CarryingChecks
         rival.transform.position = new Vector3(6, 6);
         CheckRegressions(hero, hook);
         CheckLethalCargo(prefab);
+        EconomyChecks.CheckStage(SessionState.GetInt("HookWars.EconomyStage", 0));
     }
 
     private static void CheckLethalCargo(Carcass prefab)

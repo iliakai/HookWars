@@ -81,6 +81,22 @@ public class CarcassCarrier : MonoBehaviour
             if (carcass != null) carcass.FollowHero(victim);
     }
 
+    public double DeliverTo(SausageFactory factory)
+    {
+        if (!CanCollect() || factory == null || factory.Owner != GetComponent<PlayerProgression>()) return 0;
+        double delivered = 0;
+        for (int i = 0; i < cargo.Count;)
+        {
+            Carcass carcass = cargo[i];
+            if (carcass == null || !factory.TryAcceptMass(carcass.MassKg)) { i++; continue; }
+            delivered += carcass.MassKg;
+            cargo.RemoveAt(i);
+            Destroy(carcass.gameObject);
+        }
+        RefreshMarker();
+        return delivered;
+    }
+
     private void OnRevived(Health target)
     {
         foreach (Carcass carcass in deathCargo)

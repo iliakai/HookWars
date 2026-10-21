@@ -3,56 +3,19 @@ using UnityEngine;
 public class ProgressionHUD : MonoBehaviour
 {
     [SerializeField] private PlayerProgression progression;
-
-    private GUIStyle textStyle;
-
     private void OnGUI()
     {
-        if (progression == null)
+        if (progression == null) return;
+        OwnerEconomy economy = progression.GetComponent<OwnerEconomy>();
+        GUI.Box(new Rect(12, 164, 310, 200), GUIContent.none);
+        GUI.Label(new Rect(24, 174, 290, 26), $"Золото: {progression.Gold:0.##} (+{progression.GoldPerSecond:0.##}/с)");
+        GUI.Label(new Rect(24, 204, 290, 26), $"Уровень {progression.Level}; опыт {progression.Experience:0.##}/{progression.ExperienceToNextLevel}");
+        GUI.Label(new Rect(24, 234, 290, 26), $"Очки улучшений: {progression.UpgradePoints}");
+        if (economy != null)
         {
-            return;
+            GUI.Label(new Rect(24, 264, 290, 26), $"Продукция: {economy.ProductKg:0.##} кг");
+            GUI.Label(new Rect(24, 294, 290, 26), $"Кости: {economy.Bones} (остаток {economy.BoneRemainder:0.##})");
         }
-
-        if (textStyle == null)
-        {
-            textStyle = new GUIStyle(GUI.skin.label);
-            textStyle.fontSize = 18;
-            textStyle.normal.textColor = Color.white;
-        }
-
-        // Под существующим табло убийств и смертей.
-        GUI.Box(new Rect(12, 164, 280, 174), GUIContent.none);
-
-        GUI.Label(
-            new Rect(24, 174, 255, 26),
-            $"Золото: {Mathf.FloorToInt(progression.Gold)}",
-            textStyle
-        );
-
-        GUI.Label(
-            new Rect(24, 202, 255, 26),
-            $"Уровень: {progression.Level}",
-            textStyle
-        );
-
-        GUI.Label(
-            new Rect(24, 230, 255, 26),
-            $"Опыт: {Mathf.FloorToInt(progression.Experience)}" +
-            $" / {progression.ExperienceToNextLevel}",
-            textStyle
-        );
-
-        GUI.Label(
-            new Rect(24, 258, 255, 26),
-            $"Очки улучшения: {progression.UpgradePoints}",
-            textStyle
-        );
-
-        GUI.Label(
-            new Rect(24, 290, 255, 30),
-            $"Доход: {progression.GoldPerSecond:0.#} зол./с, " +
-            $"{progression.ExperiencePerSecond:0.#} опыта/с",
-            textStyle
-        );
+        GUI.Label(new Rect(24, 326, 290, 26), "B — здания; клик по своему — улучшения");
     }
 }
