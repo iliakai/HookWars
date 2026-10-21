@@ -55,11 +55,21 @@ public class PlayerBuilding : MonoBehaviour
     }
     public bool CanPlace(Vector3 cell)
     {
+        if (Mathf.Abs(cell.x - (Mathf.Floor(cell.x) + 0.5f)) > 0.00001f ||
+            Mathf.Abs(cell.y - (Mathf.Floor(cell.y) + 0.5f)) > 0.00001f) return false;
         if (!CanAct || selectedPrefab == null || !selectedPrefab.CanBuild(progression) ||
             !ArenaLayout.IsInsideBank(cell, homeRightBank, 0.5f) || !HasResources(selectedPrefab)) return false;
         Physics2D.SyncTransforms();
         foreach (Collider2D hit in Physics2D.OverlapBoxAll(cell, Vector2.one * 0.9998f, 0))
-            if (!hit.isTrigger) return false;
+        {
+            if (hit.isTrigger) continue;
+            Bounds bounds = hit.bounds;
+            float overlapX = Mathf.Min(cell.x + 0.5f, bounds.max.x) - Mathf.Max(cell.x - 0.5f, bounds.min.x);
+            float overlapY = Mathf.Min(cell.y + 0.5f, bounds.max.y) - Mathf.Max(cell.y - 0.5f, bounds.min.y);
+            // Overlap queries can report touching shapes within the physics contact skin.
+            // Tangency has no interior area; a real intersection must still reject placement.
+            if (overlapX > 0.00001f && overlapY > 0.00001f) return false;
+        }
         return true;
     }
     private bool HasResources(GameBuilding prefab) => prefab.Kind == BuildingKind.Wall

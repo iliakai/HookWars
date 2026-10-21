@@ -122,6 +122,8 @@ MonoBehaviour:
   moveSpeed: 1
   animationReferenceSpeed: 1
   radius: 0.35
+  minimumDirectionInterval: 0.5
+  maximumDirectionInterval: 2
   carcassPrefab: {fileID: 535136966263187727, guid: e6579373cd4466745a77a33273954b02, type: 3}
   visual: {fileID: 7157298122194088141}
 --- !u!1 &7762294873330105961

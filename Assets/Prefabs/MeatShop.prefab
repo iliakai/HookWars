@@ -186,6 +186,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MeatShop
   owner: {fileID: 0}
   buildCost: 50
+  upgradeCostGrowth: 1.5
   saleKgPerSecond: 0.5
   goldPerKg: 5
   priceIncrease: 1

@@ -8,6 +8,17 @@ public static class EconomySetup
     public const string FactoryPath = "Assets/Prefabs/SausageFactory.prefab";
     public const string ShopPath = "Assets/Prefabs/MeatShop.prefab";
     public const string FarmPath = "Assets/Prefabs/AnimalFarm.prefab";
+    public const string WallPath = "Assets/Prefabs/BoneWall.prefab";
+    [MenuItem("HookWars/Economy/Setup all stages")]
+    public static void Stage5()
+    {
+        Stage4();
+        BoneWall wall = ConfigureBuilding<BoneWall>(WallPath, "BoneWall.png", 5);
+        foreach (PlayerBuilding builder in Object.FindObjectsByType<PlayerBuilding>())
+            SetPrefabs(builder, new GameBuilding[] { AssetDatabase.LoadAssetAtPath<SausageFactory>(FactoryPath),
+                AssetDatabase.LoadAssetAtPath<MeatShop>(ShopPath), AssetDatabase.LoadAssetAtPath<AnimalFarm>(FarmPath), wall });
+        Save();
+    }
     [MenuItem("HookWars/Economy/Setup stage 4")]
     public static void Stage4()
     {
@@ -94,6 +105,7 @@ public static class EconomySetup
         animalData.FindProperty("carcassPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Carcass>(CarryingSetup.PrefabPath);
         if (!exists) animalData.FindProperty("massKg").floatValue = mass;
         animalData.ApplyModifiedPropertiesWithoutUndo();
+        root.GetComponent<CircleCollider2D>().radius = animal.Radius;
         GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, path);
         if (exists) PrefabUtility.UnloadPrefabContents(root); else Object.DestroyImmediate(root);
         Debug.Log($"GIF {species}: {sprites.Length} composed frames, loop {time:0.00}s; original GIF sprite count = " +

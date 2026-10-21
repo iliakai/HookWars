@@ -31,6 +31,7 @@ public class HookAbility: MonoBehaviour
     private int bouncesLeft;
     private float flightRemaining;
     private Collider2D lastObstacle;
+    private readonly HashSet<Collider2D> wallContacts = new HashSet<Collider2D>();
     private const float Skin = 0.002f;
     public int MaxBounces => maxBounces;
     public float BounceDistancePercent => bounceDistancePercent;
@@ -264,6 +265,7 @@ public class HookAbility: MonoBehaviour
 
         bends.Clear();
         bouncesLeft = maxBounces;
+        wallContacts.Clear();
         flightRemaining = range;
         lastObstacle = null;
         nextThrowTime = Time.time + cooldown;
@@ -320,6 +322,8 @@ public class HookAbility: MonoBehaviour
         }
 
         Physics2D.SyncTransforms();
+        wallContacts.RemoveWhere(collider => collider == null || !collider.enabled ||
+            Vector2.Distance(collider.ClosestPoint(activeHook.position), activeHook.position) > width * 0.5f + Skin * 2);
         RaycastHit2D[] hits = Physics2D.CircleCastAll(activeHook.position,
             width * 0.5f, throwDirection, step, targetLayers.value | obstacleLayers.value | carcassLayers.value);
         RaycastHit2D best = default(RaycastHit2D);
@@ -354,6 +358,15 @@ public class HookAbility: MonoBehaviour
         flightRemaining -= best.distance;
         if (IsObstacle(best.collider))
         {
+            BoneWall wall = best.collider.GetComponent<BoneWall>();
+            if (wall != null && wallContacts.Add(best.collider) && wall.TakeHookDamage(GetComponent<PlayerProgression>(), damage))
+            {
+                // The wall is gone. Keep flying without spending a bounce or adding a bend.
+                activeHook.position += throwDirection * Skin;
+                flightRemaining = Mathf.Max(0, flightRemaining - Skin);
+                lastObstacle = best.collider;
+                return;
+            }
             if (bouncesLeft <= 0 || bounceDistancePercent <= 0f || best.distance <= 0.00001f)
             {
                 state = HookState.Returning;
@@ -648,6 +661,7 @@ public class HookAbility: MonoBehaviour
 
     private void ClearHook()
     {
+        wallContacts.Clear();
         bends.Clear();
         lastObstacle = null;
         if (caughtVictim != null)

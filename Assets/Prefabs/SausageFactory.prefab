@@ -94,6 +94,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SausageFactory
   owner: {fileID: 0}
   buildCost: 75
+  upgradeCostGrowth: 1.5
   capacityKg: 12
   secondsPerKg: 2
   productPerKg: 1

@@ -186,6 +186,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AnimalFarm
   owner: {fileID: 0}
   buildCost: 150
+  upgradeCostGrowth: 1.5
   animalPrefabs:
   - {fileID: 4421205369947575593, guid: 8b13fc4816056fd4886cf3e6498b8eb1, type: 3}
   - {fileID: 2821161686727648565, guid: 63a5e92c28adf244188ffc880fe28e43, type: 3}

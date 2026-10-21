@@ -112,7 +112,8 @@ def decode(path):
                     canvas[pos:pos + 4] = colors[index] + b'\xff'
         frames.append((bytes(canvas), {'durationMs': ms, 'disposal': disposal, 'rect': [left, top, fw, fh]}))
         if disposal == 2:
-            color = b'\0\0\0\0' if transparent is not None else colors[background] + b'\xff'
+            color = (b'\0\0\0\0' if transparent is not None or global_palette is None
+                     else global_palette[background] + b'\xff')
             for y in range(top, top + fh):
                 start = (y * width + left) * 4
                 canvas[start:start + fw * 4] = color * fw

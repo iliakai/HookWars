@@ -7,6 +7,8 @@ public class Animal : MonoBehaviour
     [SerializeField, Min(0.01f)] private float moveSpeed = 1;
     [SerializeField, Min(0.01f)] private float animationReferenceSpeed = 1;
     [SerializeField, Min(0.01f)] private float radius = 0.35f;
+    [SerializeField, Min(0.1f)] private float minimumDirectionInterval = 0.5f;
+    [SerializeField, Min(0.1f)] private float maximumDirectionInterval = 2f;
     [SerializeField] private Carcass carcassPrefab;
     [SerializeField] private SpriteRenderer visual;
     private Animator animator;
@@ -21,13 +23,14 @@ public class Animal : MonoBehaviour
     private void Awake()
     {
         animator = GetComponent<Animator>(); victim = GetComponent<HookVictim>();
+        GetComponent<CircleCollider2D>().radius = radius;
         rightBank = transform.position.x > 0;
         PickDirection();
     }
     private void PickDirection()
     {
         direction = Random.insideUnitCircle.normalized;
-        nextDirection = Time.time + Random.Range(0.5f, 2f);
+        nextDirection = Time.time + Random.Range(minimumDirectionInterval, Mathf.Max(minimumDirectionInterval, maximumDirectionInterval));
     }
     private void Update()
     {

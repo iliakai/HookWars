@@ -6,6 +6,32 @@ using Object = UnityEngine.Object;
 public static class EconomyChecks
 {
     private static int assertions;
+    [MenuItem("HookWars/Economy/Check all stages")]
+    public static void Run5()
+    {
+        EconomySetup.Stage5();
+        string before = SetupSignature();
+        EconomySetup.Stage5();
+        if (before != SetupSignature()) throw new InvalidOperationException("Repeated full economy setup changed saved assets");
+        Debug.Log("ECONOMY_SETUP_IDEMPOTENT: scene and all prefabs/animations unchanged after repeat");
+        SessionState.SetInt("HookWars.EconomyStage", 5);
+        CarryingChecks.Run();
+    }
+    private static string SetupSignature()
+    {
+        using (var hash = System.Security.Cryptography.SHA256.Create())
+        using (var bytes = new System.IO.MemoryStream())
+        {
+            foreach (string path in new[] { CarryingSetup.ArenaPath, EconomySetup.FactoryPath, EconomySetup.ShopPath,
+                EconomySetup.FarmPath, EconomySetup.WallPath, "Assets/Prefabs/sheep.prefab", "Assets/Prefabs/cow.prefab", "Assets/Prefabs/pig.prefab",
+                "Assets/Animations/sheep_walk.anim", "Assets/Animations/cow_walk.anim", "Assets/Animations/pig_walk.anim",
+                "Assets/Animations/sheep_walk.controller", "Assets/Animations/cow_walk.controller", "Assets/Animations/pig_walk.controller" })
+            {
+                byte[] file = System.IO.File.ReadAllBytes(path); bytes.Write(file, 0, file.Length);
+            }
+            return Convert.ToBase64String(hash.ComputeHash(bytes.ToArray()));
+        }
+    }
     [MenuItem("HookWars/Economy/Check stage 4")]
     public static void Run4()
     {
@@ -91,9 +117,116 @@ public static class EconomyChecks
                 "Death preserves owner and building resources");
             if (stage >= 3) CheckShops(root);
             if (stage >= 4) CheckAnimals(root);
+            if (stage >= 5) CheckWalls(root);
             Debug.Log($"HOOKWARS_ECONOMY_STAGE_{stage}_PASS: {assertions} assertions.");
         }
         finally { Object.DestroyImmediate(root); }
+    }
+    private static void CheckWalls(GameObject root)
+    {
+        GameObject defender = new GameObject("Wall owner"); defender.transform.SetParent(root.transform);
+        defender.AddComponent<OwnerEconomy>().AddOutput(0, 100);
+        PlayerProgression owner = defender.GetComponent<PlayerProgression>(); owner.AddGold(1000);
+        GameObject attacker = new GameObject("Wall attacker"); attacker.transform.SetParent(root.transform);
+        attacker.transform.position = new Vector3(-6, -2);
+        attacker.AddComponent<Health>(); attacker.AddComponent<HookVictim>(); attacker.AddComponent<OwnerEconomy>();
+        PlayerProgression enemy = attacker.GetComponent<PlayerProgression>();
+        HookAbility hook = attacker.AddComponent<HookAbility>();
+        Set(hook, "hookPrefab", AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Hook.prefab").transform);
+        Set(hook, "obstacleLayers", (LayerMask)LayerMask.GetMask("Buildings"));
+        Set(hook, "speed", 4f / Time.deltaTime); Set(hook, "damage", 40f);
+        BoneWall prefab = AssetDatabase.LoadAssetAtPath<BoneWall>(EconomySetup.WallPath);
+        for (int mode = 0; mode < 5; mode++)
+        {
+            BoneWall wall = Object.Instantiate(prefab, new Vector3(-4, -2), Quaternion.identity, root.transform);
+            wall.Initialize(mode == 4 ? enemy : owner);
+            Set(hook, "maxBounces", mode == 0 || mode == 2 ? 0 : 1);
+            Set(hook, "damage", mode == 2 || mode == 3 ? 1000f : 40f);
+            Set(hook, "nextThrowTime", 0f); hook.TryThrow(Vector2.right);
+            Invoke(hook, "FlyHook");
+            if (mode == 0)
+                Check(wall.CurrentHealth == 60 && !hook.IsFlyingOut, "Surviving enemy wall takes damage then returns hook without bounces");
+            if (mode == 1)
+            {
+                Check(wall.CurrentHealth == 60 && hook.IsFlyingOut && hook.ChainPointCount == 3,
+                    "Surviving enemy wall takes damage before ricochet");
+                Invoke(hook, "FlyHook");
+                Check(wall.CurrentHealth == 60, "Numerical repeated contact does not multiply wall damage");
+            }
+            if (mode == 2 || mode == 3)
+            {
+                Check(wall.IsDestroyed && !wall.GetComponent<Collider2D>().enabled && hook.IsFlyingOut && hook.ChainPointCount == 2,
+                    "Destroyed wall releases cell and does not reflect: " + mode);
+                int remainingBounces = (int)typeof(HookAbility).GetField("bouncesLeft", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(hook);
+                Check(remainingBounces == (mode == 2 ? 0 : 1), "Destroyed wall does not consume bounce budget");
+                Invoke(hook, "FlyHook");
+                Check(hook.ActiveHook.position.x > -4, "Hook continues through destroyed wall");
+            }
+            if (mode == 4) Check(wall.CurrentHealth == 100 && hook.IsFlyingOut && hook.ChainPointCount == 3,
+                "Friendly wall collides and reflects without damage");
+            hook.CancelHook(); wall.gameObject.SetActive(false);
+        }
+        BoneWall damaged = Object.Instantiate(prefab, new Vector3(-4, -2), Quaternion.identity, root.transform); damaged.Initialize(owner);
+        damaged.TakeHookDamage(enemy, 40);
+        long bonesBefore = defender.GetComponent<OwnerEconomy>().Bones;
+        double goldBefore = owner.Gold;
+        Check(damaged.TryUpgrade(0) && damaged.MaxHealth == 150 && damaged.CurrentHealth == 110 &&
+            defender.GetComponent<OwnerEconomy>().Bones == bonesBefore - 5 && owner.Gold == goldBefore,
+            "Wall upgrade spends bones only and preserves previously received damage");
+        Check(!WorldCollision.CanMove(attacker.transform, new Vector3(-2, -2), 0.5f), "Wall blocks hero walking");
+        attacker.transform.position = damaged.transform.position;
+        Check(WorldCollision.CanMove(attacker.transform, attacker.transform.position + Vector3.left, 0.5f),
+            "A hero can escape a preexisting overlap after hook landing");
+        attacker.transform.position = new Vector3(-6, -2);
+        damaged.TakeHookDamage(enemy, 1000);
+        Check(WorldCollision.CanMove(attacker.transform, new Vector3(-2, -2), 0.5f), "Destroyed wall releases walking path immediately");
+        CheckPlacement(root, prefab);
+    }
+    private static void CheckPlacement(GameObject root, BoneWall prefab)
+    {
+        GameObject hero = new GameObject("Builder"); hero.transform.SetParent(root.transform);
+        hero.transform.position = new Vector3(-4, -8);
+        hero.AddComponent<Health>(); hero.AddComponent<HookVictim>();
+        OwnerEconomy wallet = hero.AddComponent<OwnerEconomy>(); wallet.AddOutput(0, 100);
+        PlayerProgression owner = hero.GetComponent<PlayerProgression>(); owner.AddGold(1000);
+        PlayerBuilding builder = hero.AddComponent<PlayerBuilding>();
+        foreach (int depth in new[] { 4, 20 })
+        {
+            Set(ArenaLayout.Instance, "appliedDepth", depth);
+            float edge = ArenaLayout.OuterEdge;
+            GameObject mountain = new GameObject("Test mountain"); mountain.transform.SetParent(root.transform);
+            mountain.layer = LayerMask.NameToLayer("Mountains"); mountain.transform.position = new Vector3(-edge - 0.5f, 0);
+            mountain.AddComponent<BoxCollider2D>().size = new Vector2(1, 20);
+            Vector3 cell = new Vector3(-edge + 0.5f, -6.5f);
+            builder.SelectBuilding(prefab);
+            if (!builder.CanPlace(cell))
+                foreach (Collider2D hit in Physics2D.OverlapBoxAll(cell, Vector2.one * 0.9998f, 0))
+                    Debug.Log("PLACEMENT_BLOCKER: " + hit.name + " " + hit.bounds);
+            Check(builder.CanPlace(cell), "Extreme bank cell touching mountain is buildable at depth " + depth);
+            double gold = owner.Gold; long bones = wallet.Bones;
+            GameBuilding built = builder.TryBuildAt(cell);
+            Check(built != null && wallet.Bones == bones - 5 && owner.Gold == gold, "Wall construction spends only bones");
+            built.transform.SetParent(root.transform);
+            builder.SelectBuilding(prefab);
+            Check(!builder.CanPlace(cell) && builder.TryBuildAt(cell) == null && wallet.Bones == bones - 5,
+                "Occupied cell rejects overlapping build without payment");
+            Check(!builder.CanPlace(new Vector3(0.5f, 0.5f)) && !builder.CanPlace(new Vector3(4.5f, 0.5f)) &&
+                !builder.CanPlace(new Vector3(-edge - 0.5f, 0.5f)), "River, other bank and outside field reject construction");
+            GameObject enemy = new GameObject("Enemy", typeof(PlayerProgression)); enemy.transform.SetParent(root.transform);
+            ((BoneWall)built).TakeHookDamage(enemy.GetComponent<PlayerProgression>(), 1000);
+            Check(builder.CanPlace(cell), "Destroyed wall cell becomes buildable immediately");
+            Check(!builder.CanPlace(cell + Vector3.right * 0.1f), "Building API rejects positions between grid cells");
+            mountain.SetActive(false);
+        }
+        Set(ArenaLayout.Instance, "appliedDepth", 16);
+        foreach (string path in new[] { EconomySetup.FactoryPath, EconomySetup.ShopPath, EconomySetup.FarmPath, EconomySetup.WallPath })
+        {
+            GameObject building = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            SpriteRenderer visual = building.GetComponentInChildren<SpriteRenderer>();
+            Check(building.transform.localScale == Vector3.one && building.GetComponent<BoxCollider2D>().size == Vector2.one &&
+                visual.bounds.size.x <= 1.001f && visual.bounds.size.y <= 1.001f,
+                "Building collider and proportional graphic match one metre cell: " + building.name);
+        }
     }
     private static void CheckAnimals(GameObject root)
     {
@@ -186,6 +319,20 @@ public static class EconomyChecks
         GameObject cover = new GameObject("Full map"); cover.transform.SetParent(root.transform);
         cover.AddComponent<BoxCollider2D>().size = new Vector2(100, 100);
         Check(a.TrySpawn() == null, "Full map returns after bounded spawn attempts");
+        cover.SetActive(false);
+        GameObject fighter = new GameObject("Animal axe attacker"); fighter.transform.SetParent(root.transform);
+        fighter.transform.position = new Vector3(-12, 2);
+        GameObject aimRoot = new GameObject("Aim"); aimRoot.transform.SetParent(fighter.transform, false);
+        PlayerAim aim = aimRoot.AddComponent<PlayerAim>();
+        PlayerMelee axe = fighter.AddComponent<PlayerMelee>();
+        Set(axe, "playerAim", aim); Set(axe, "targetLayers", (LayerMask)LayerMask.GetMask("Animals"));
+        Animal axeVictim = Object.Instantiate(AssetDatabase.LoadAssetAtPath<Animal>("Assets/Prefabs/cow.prefab"),
+            fighter.transform.position + Vector3.right, Quaternion.identity, root.transform);
+        Invoke(axe, "TryAttack");
+        Carcass axeCarcass = (Carcass)typeof(Animal).GetField("carcass", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(axeVictim);
+        Check(axeVictim.IsDead && axeCarcass != null && axeCarcass.MassKg == 10, "One ordinary axe hit kills cow without numeric Health");
+        axeCarcass.transform.SetParent(root.transform);
+        axeCarcass.gameObject.SetActive(false);
     }
     public static object Invoke(object target, string method, params object[] args) => target.GetType().GetMethod(method,
         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(target, args);
