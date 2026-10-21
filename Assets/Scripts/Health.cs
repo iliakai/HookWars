@@ -11,6 +11,7 @@ public class Health : MonoBehaviour
         Mathf.Clamp01(currentHealth / maxHealth);
 
     public event Action<Health> Died;
+    public event Action<Health> Revived;
 
     [SerializeField] private SpriteRenderer bodyRenderer; private Color originalColor;
 
@@ -92,5 +93,6 @@ public class Health : MonoBehaviour
         {
             bodyColliders[i].enabled = originalColliderStates[i];
         }
+        Revived?.Invoke(this);
     }
 }

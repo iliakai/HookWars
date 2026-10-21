@@ -8,6 +8,7 @@ public class HookAbility: MonoBehaviour
     [SerializeField] private Transform hookPrefab;
     [SerializeField] private LayerMask targetLayers;
     [SerializeField] private LayerMask obstacleLayers;
+    [SerializeField] private LayerMask carcassLayers;
 
     [Header("Hook Stats")]
     [SerializeField, Min(0.1f)] private float range = 12f;
@@ -320,7 +321,7 @@ public class HookAbility: MonoBehaviour
 
         Physics2D.SyncTransforms();
         RaycastHit2D[] hits = Physics2D.CircleCastAll(activeHook.position,
-            width * 0.5f, throwDirection, step, targetLayers.value | obstacleLayers.value);
+            width * 0.5f, throwDirection, step, targetLayers.value | obstacleLayers.value | carcassLayers.value);
         RaycastHit2D best = default(RaycastHit2D);
         bool found = false;
         foreach (RaycastHit2D candidate in hits)
@@ -331,6 +332,8 @@ public class HookAbility: MonoBehaviour
             if (candidate.collider == lastObstacle && candidate.distance <= 0.00001f) continue;
             bool obstacle = IsObstacle(candidate.collider);
             if (!obstacle && candidate.collider.GetComponent<HookVictim>() == null) continue;
+            Carcass carcass = candidate.collider.GetComponent<Carcass>();
+            if (carcass != null && !carcass.IsAvailable) continue;
             if (!found || candidate.distance < best.distance - 0.00001f ||
                 (Mathf.Abs(candidate.distance - best.distance) <= 0.00001f && obstacle))
             {
@@ -373,9 +376,7 @@ public class HookAbility: MonoBehaviour
             state = HookState.Returning;
             return;
         }
-        Health targetHealth = best.collider.GetComponent<Health>();
-        if (targetHealth != null) targetHealth.TakeDamage(damage);
-        BeginPull(best.collider.transform);
+        HitAndPull(best.collider.transform);
     }
 
     private bool IsObstacle(Collider2D collider)
@@ -461,7 +462,7 @@ public class HookAbility: MonoBehaviour
             width * 0.5f,
             direction.normalized,
             checkDistance,
-            targetLayers
+            targetLayers.value | carcassLayers.value
         );
 
         // CircleCastAll возвращает попадания по возрастанию расстояния.
@@ -482,6 +483,9 @@ public class HookAbility: MonoBehaviour
                 continue;
             }
 
+            Carcass carcass = target.GetComponent<Carcass>();
+            if (carcass != null && !carcass.IsAvailable) continue;
+
             Health targetHealth = target.GetComponent<Health>();
 
             // Уже лежащие трупы по-прежнему не подбираем.
@@ -496,17 +500,19 @@ public class HookAbility: MonoBehaviour
                 activeHook.position.z
             );
 
-            if (targetHealth != null)
-            {
-                targetHealth.TakeDamage(damage);
-            }
-
-            // Даже смертельное попадание заканчивается подтягиванием.
-            BeginPull(target);
+            HitAndPull(target);
             return true;
         }
 
         return false;
+    }
+
+    private void HitAndPull(Transform target)
+    {
+        Health targetHealth = target.GetComponent<Health>();
+        if (targetHealth != null) targetHealth.TakeDamage(damage);
+        // Keep pulling the dead hero; its separate carcass is reserved until landing.
+        BeginPull(target);
     }
 
     private void ReturnHook()
@@ -603,8 +609,25 @@ public class HookAbility: MonoBehaviour
         if (arrived)
         {
             caughtTarget.position = landing;
+            Carcass carcass = GetPulledCarcass();
             ClearHook();
+            if (carcass != null)
+            {
+                carcass.ReleaseFromHero(landing);
+                CarcassCarrier carrier = GetComponent<CarcassCarrier>();
+                if (carrier != null) carrier.TryCollect(carcass);
+            }
         }
+    }
+
+    private Carcass GetPulledCarcass()
+    {
+        if (caughtTarget == null) return null;
+        Carcass carcass = caughtTarget.GetComponent<Carcass>();
+        if (carcass != null) return carcass;
+        Health health = caughtTarget.GetComponent<Health>();
+        HeroCarcassSpawner spawner = caughtTarget.GetComponent<HeroCarcassSpawner>();
+        return health != null && health.IsDead && spawner != null ? spawner.CurrentCarcass : null;
     }
 
     private void ClearHook()
@@ -629,6 +652,7 @@ public class HookAbility: MonoBehaviour
 
     public void CancelHook()
     {
+        Carcass carcass = GetPulledCarcass();
         // При прерывании захвата возвращаем цель в исходную
         // безопасную точку, чтобы не оставить её посреди реки.
         if (state == HookState.Pulling && caughtTarget != null)
@@ -637,6 +661,7 @@ public class HookAbility: MonoBehaviour
         }
 
         ClearHook();
+        if (carcass != null) carcass.ReleaseFromHero(targetStartPosition);
     }
 
     protected virtual void OnDisable()
