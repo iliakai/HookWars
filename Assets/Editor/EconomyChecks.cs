@@ -6,6 +6,13 @@ using Object = UnityEngine.Object;
 public static class EconomyChecks
 {
     private static int assertions;
+    [MenuItem("HookWars/Economy/Check stage 3")]
+    public static void Run3()
+    {
+        EconomySetup.Stage3();
+        SessionState.SetInt("HookWars.EconomyStage", 3);
+        CarryingChecks.Run();
+    }
     [MenuItem("HookWars/Economy/Check stage 2")]
     public static void Run2()
     {
@@ -75,9 +82,39 @@ public static class EconomyChecks
             hero.GetComponent<Health>().Revive();
             Check(Near(wallet.ProductKg, 19) && wallet.Bones == 10 && owner.Gold == beforeGold - 225,
                 "Death preserves owner and building resources");
+            if (stage >= 3) CheckShops(root);
             Debug.Log($"HOOKWARS_ECONOMY_STAGE_{stage}_PASS: {assertions} assertions.");
         }
         finally { Object.DestroyImmediate(root); }
+    }
+    private static void CheckShops(GameObject root)
+    {
+        GameObject first = new GameObject("Shop owner A"); first.transform.SetParent(root.transform);
+        GameObject second = new GameObject("Shop owner B"); second.transform.SetParent(root.transform);
+        OwnerEconomy stockA = first.AddComponent<OwnerEconomy>(), stockB = second.AddComponent<OwnerEconomy>();
+        PlayerProgression a = first.GetComponent<PlayerProgression>(), b = second.GetComponent<PlayerProgression>();
+        MeatShop prefab = AssetDatabase.LoadAssetAtPath<MeatShop>(EconomySetup.ShopPath);
+        MeatShop shopA = Object.Instantiate(prefab, root.transform), shopB = Object.Instantiate(prefab, root.transform);
+        shopA.Initialize(a); shopB.Initialize(a);
+        stockA.AddOutput(1, 0);
+        Check(Near(shopA.Advance(2) + shopB.Advance(2), 1) && Near(a.Gold, 5) && stockA.ProductKg == 0,
+            "Two shops cannot sell one stock twice");
+        Check(shopA.Advance(100) == 0 && a.Gold == 5 && a.Experience == 0, "Empty stock grants no income or experience");
+        MeatShop comparison = Object.Instantiate(prefab, root.transform); comparison.Initialize(b);
+        stockA.AddOutput(2.5, 0); stockB.AddOutput(2.5, 0);
+        double gold = a.Gold;
+        for (int i = 0; i < 100; i++) shopA.Advance(0.05);
+        comparison.Advance(5);
+        Check(Near(a.Gold - gold, b.Gold) && Near(stockA.ProductKg, stockB.ProductKg), "Sales preserve fractional results across time steps");
+        a.AddGold(100);
+        Check(shopA.TryUpgrade(0) && shopA.SaleKgPerSecond == 0.5f && shopA.GoldPerKg == 6,
+            "Local price upgrade keeps sale speed unchanged");
+        Check(shopB.GoldPerKg == 5 && comparison.GoldPerKg == 5, "Other shop prices and owners remain independent");
+        IncomeBuilding legacy = new GameObject("Legacy", typeof(MineBuilding)).GetComponent<IncomeBuilding>();
+        legacy.transform.SetParent(root.transform);
+        double rate = a.GoldPerSecond;
+        legacy.Initialize(a);
+        Check(a.GoldPerSecond == rate && !legacy.TryUpgrade(), "Legacy buildings no longer grant income or accept upgrades");
     }
     public static void Check(bool value, string message)
     {

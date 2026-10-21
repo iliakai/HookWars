@@ -6,6 +6,17 @@ using UnityEngine;
 public static class EconomySetup
 {
     public const string FactoryPath = "Assets/Prefabs/SausageFactory.prefab";
+    public const string ShopPath = "Assets/Prefabs/MeatShop.prefab";
+    [MenuItem("HookWars/Economy/Setup stage 3")]
+    public static void Stage3()
+    {
+        Stage2();
+        MeatShop shop = ConfigureBuilding<MeatShop>(ShopPath, "MeatShop.png", 50);
+        foreach (IncomeBuilding old in Object.FindObjectsByType<IncomeBuilding>()) Migrate(old, shop);
+        foreach (PlayerBuilding builder in Object.FindObjectsByType<PlayerBuilding>())
+            SetPrefabs(builder, new GameBuilding[] { AssetDatabase.LoadAssetAtPath<SausageFactory>(FactoryPath), shop });
+        Save();
+    }
     [MenuItem("HookWars/Economy/Setup stage 2")]
     public static void Stage2()
     {
