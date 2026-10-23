@@ -47,7 +47,7 @@ public sealed class ButcherHelper : MonoBehaviour
             if(Factory.InDeliveryRange(transform.position)){carrier.DeliverTo(Factory);path.Clear();return;}
             WalkTo(Factory.transform.position,1.95f);return;
         }
-        if(target!=null&&(target.IsDead||target.GetComponent<HookVictim>().IsCaught||!SameBank(target.transform.position)||target.MassKg>carrier.CapacityKg))ReleaseTarget();
+        if(target!=null&&(target.IsDead||target.GetComponent<HookVictim>().IsCaught||!SameBank(target.transform.position)))ReleaseTarget();
         if(loose!=null&&(!loose.IsAvailable||!SameBank(loose.transform.position)))loose=null;
         if(loose!=null)
         {WalkTo(loose.transform.position,.5f);if(Vector2.Distance(transform.position,loose.transform.position)<.8f)carrier.TryCollect(loose);return;}
@@ -56,11 +56,11 @@ public sealed class ButcherHelper : MonoBehaviour
             nextSearch=Time.time+.5f;float best=float.PositiveInfinity;
             // Prefer already available animal corpses, without duplicating mass.
             foreach(var corpse in FindObjectsByType<Carcass>())
-                if(corpse.AnimalSpecies.HasValue&&corpse.IsAvailable&&SameBank(corpse.transform.position)&&corpse.MassKg<=carrier.CapacityKg)
+                if(corpse.IsAvailable&&SameBank(corpse.transform.position))
                 {loose=corpse;return;}
             foreach(var animal in FindObjectsByType<Animal>())
             {
-                if(animal.IsDead||animal.GetComponent<HookVictim>().IsCaught||!SameBank(animal.transform.position)||animal.MassKg>carrier.CapacityKg)continue;
+                if(animal.IsDead||animal.GetComponent<HookVictim>().IsCaught||!SameBank(animal.transform.position))continue;
                 if(claims.TryGetValue(animal,out var helper)&&helper!=null&&helper!=this&&!helper.health.IsDead)continue;
                 float distance=(animal.transform.position-transform.position).sqrMagnitude;
                 if(distance<best){target=animal;best=distance;}

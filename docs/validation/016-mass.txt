@@ -1,0 +1,2 @@
+PASS: 17 actual Unity Play Mode assertions
+Partial hero/helper pickup and delivery, conserved mass, full stock blocking, 20/80 kill attribution, no level growth, percent regeneration and HUD frame.

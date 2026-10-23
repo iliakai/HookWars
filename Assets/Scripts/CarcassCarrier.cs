@@ -54,11 +54,12 @@ public class CarcassCarrier : MonoBehaviour
 
     public bool TryCollect(Carcass carcass)
     {
-        if (!CanCollect() || carcass == null || !carcass.IsAvailable ||
-            CurrentMassKg + carcass.MassKg > capacityKg) return false;
-        if(GetComponent<ButcherHelper>()!=null&&!carcass.AnimalSpecies.HasValue)return false;
-        if (!carcass.TryStore(this)) return false;
-        cargo.Add(carcass);
+        if (!CanCollect() || carcass == null || !carcass.IsAvailable) return false;
+        float free = Mathf.Max(0, capacityKg - CurrentMassKg);
+        if (free < .0001f) return false;
+        var portion = carcass.TakePortion(Mathf.Min(free, carcass.MassKg));
+        if (portion == null || !portion.TryStore(this)) return false;
+        cargo.Add(portion);
         return true;
     }
 
@@ -90,10 +91,12 @@ public class CarcassCarrier : MonoBehaviour
         for (int i = 0; i < cargo.Count;)
         {
             Carcass carcass = cargo[i];
-            if (carcass == null || !factory.TryAcceptMass(carcass.MassKg)) { i++; continue; }
-            delivered += carcass.MassKg;
-            cargo.RemoveAt(i);
-            Destroy(carcass.gameObject);
+            float amount = carcass != null ? (float)System.Math.Min(carcass.MassKg, factory.FreeRawKg) : 0;
+            if (amount < .0001f || !factory.TryAcceptMass(amount)) { i++; continue; }
+            delivered += amount;
+            carcass.ConsumeMass(amount);
+            if (carcass.MassKg > .0001f) { i++; continue; }
+            cargo.RemoveAt(i); Destroy(carcass.gameObject);
         }
         return delivered;
     }

@@ -5,24 +5,25 @@ public class Health : MonoBehaviour
 {
     [SerializeField, Min(1f)] private float maxHealth = 100f;
     [SerializeField] private float currentHealth;
-    [SerializeField,Min(0)] private float regenerationKgPerSecond=.1f;
+    [SerializeField,Min(0)] private float regenerationPercentPerSecond=0;
     public float CurrentKg=>currentHealth;
     public float MaximumKg=>maxHealth;
-    public float RegenerationKgPerSecond=>regenerationKgPerSecond;
-    public void ApplyLevelGrowth()
+    public float RegenerationPercentPerSecond=>regenerationPercentPerSecond;
+    public float RegenerationKgPerSecond=>maxHealth * regenerationPercentPerSecond / 100;
+    public float CarcassMassOnDeath { get; private set; }
+    public void EatEnemyMass(float amount)
     {
-        // Level growth preserves the current fraction; dead heroes stay dead.
-        float factor=1.1f;maxHealth=Mathf.Min(1e12f,maxHealth*factor);
-        if(!IsDead)currentHealth=Mathf.Min(maxHealth,currentHealth*factor);
+        if (IsDead || !float.IsFinite(amount) || amount <= 0) return;
+        maxHealth += amount; currentHealth += amount;
     }
     public bool TryUpgradeRegeneration(PlayerProgression owner)
     {
         if(owner==null||owner.gameObject!=gameObject||IsDead||!owner.TrySpendUpgradePoint())return false;
-        regenerationKgPerSecond+=.1f;return true;
+        regenerationPercentPerSecond+=.2f;return true;
     }
     private void Update()
     {
-        if(!IsDead&&GetComponent<PlayerProgression>()!=null)currentHealth=Mathf.Min(maxHealth,currentHealth+regenerationKgPerSecond*Time.deltaTime);
+        if(!IsDead&&GetComponent<PlayerProgression>()!=null)currentHealth=Mathf.Min(maxHealth,currentHealth+RegenerationKgPerSecond*Time.deltaTime);
     }
 
     public bool IsDead => currentHealth <= 0f;
@@ -48,7 +49,8 @@ public class Health : MonoBehaviour
         }
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage) => TakeDamage(damage, null);
+    public void TakeDamage(float damage, Health attacker)
     {
         if (IsDead || damage <= 0f)
         {
@@ -65,6 +67,15 @@ public class Health : MonoBehaviour
 
         if (IsDead)
         {
+            CarcassMassOnDeath = maxHealth;
+            if (attacker != null && attacker != this && !attacker.IsDead &&
+                GetComponent<PlayerProgression>() != null && attacker.GetComponent<PlayerProgression>() != null &&
+                (GetComponent<PlayerMovement>() != null) != (attacker.GetComponent<PlayerMovement>() != null))
+            {
+                float eaten = maxHealth * .2f;
+                CarcassMassOnDeath -= eaten;
+                attacker.EatEnemyMass(eaten);
+            }
             Die();
         }
     }
@@ -85,6 +96,7 @@ public class Health : MonoBehaviour
     public void Revive()
     {
         currentHealth = maxHealth;
+        CarcassMassOnDeath = 0;
 
         for (int i = 0; i < bodyColliders.Length; i++)
         {

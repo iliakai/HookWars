@@ -11,6 +11,8 @@ public class Carcass : MonoBehaviour
     private CarcassCarrier carrier;
 
     public float MassKg => massKg;
+    public float OriginalMassKg { get; private set; }
+    public float VisualMassFraction => OriginalMassKg > 0 ? Mathf.Clamp01(massKg / OriginalMassKg) : 1;
     public bool IsHeroCarcass { get; private set; }
     public Animal.Species? AnimalSpecies { get; private set; }
     public void SetAnimalSpecies(Animal.Species species) => AnimalSpecies = species;
@@ -24,9 +26,24 @@ public class Carcass : MonoBehaviour
         if (mass <= 0f || float.IsNaN(mass) || float.IsInfinity(mass))
             throw new System.ArgumentOutOfRangeException(nameof(mass));
         massKg = mass;
+        OriginalMassKg = mass;
         IsHeroCarcass = source != null && source.GetComponent<Health>() != null;
         FollowHero(source);
     }
+    internal Carcass TakePortion(float amount)
+    {
+        if (!IsAvailable || amount <= 0 || !float.IsFinite(amount)) return null;
+        if (OriginalMassKg <= 0) OriginalMassKg = massKg;
+        if (amount >= massKg) return this;
+        var portion = Instantiate(this, transform.position, transform.rotation);
+        portion.Initialize(amount);
+        portion.IsHeroCarcass = IsHeroCarcass;
+        portion.AnimalSpecies = AnimalSpecies;
+        portion.OriginalMassKg = OriginalMassKg > 0 ? OriginalMassKg : massKg;
+        massKg -= amount;
+        return portion;
+    }
+    internal void ConsumeMass(float amount) => massKg = Mathf.Max(0, massKg - amount);
 
     internal void FollowHero(HookVictim source)
     {

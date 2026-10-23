@@ -63,7 +63,7 @@ public class HookUpgradeMenu : MonoBehaviour
             case Skill.AxeDamage:return $"Урон топора\n{axe.Damage:0.##} кг   (+5)";
             case Skill.AxeSize:return $"Размах / размер топора\n{axe.AttackRange:0.##} м   (+0,2 м)";
             case Skill.Movement:return $"Скорость героя\n{progression.GetComponent<PlayerMovement>().MoveSpeed:0.##} м/с   (+0,25)";
-            case Skill.Regeneration:return $"Регенерация\n{hp.RegenerationKgPerSecond:0.##} кг/с   (+0,1)";
+            case Skill.Regeneration:return $"Регенерация\n{hp.RegenerationPercentPerSecond:0.#}%/с   (+0,2%)";
             default:return $"Переноска\n{progression.GetComponent<CarcassCarrier>().CapacityKg:0.##} кг   (+2 кг)";
         }
     }

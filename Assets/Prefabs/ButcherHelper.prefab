@@ -88,7 +88,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 100
   currentHealth: 0
-  regenerationKgPerSecond: 0.1
+  regenerationPercentPerSecond: 0
 --- !u!114 &8625640673041560599
 MonoBehaviour:
   m_ObjectHideFlags: 0

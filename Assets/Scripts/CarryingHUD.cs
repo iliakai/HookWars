@@ -21,6 +21,6 @@ public class CarryingHUD : MonoBehaviour
             "Улучшение вместимости — в меню развития");
         GUI.Label(new Rect(24, 434, 290, 26), $"Туш в грузе: {carrier.Count}");
         var hp=GetComponent<Health>();
-        GUI.Label(new Rect(24,460,290,26),$"Вес / здоровье: {hp.CurrentKg:0.0} / {hp.MaximumKg:0.0} кг");
+        GUI.Label(new Rect(24,460,290,26),$"Здоровье: {hp.CurrentKg:0.#}/{hp.MaximumKg:0.#} кг ({hp.RegenerationPercentPerSecond:0.#}%/с)");
     }
 }

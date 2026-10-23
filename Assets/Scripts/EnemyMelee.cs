@@ -81,7 +81,7 @@ public class EnemyMelee : MonoBehaviour
         Vector2 toPlayer = (Vector2)(playerHealth.transform.position - transform.position);
         if (toPlayer.sqrMagnitude > attackRange * attackRange) return;
 
-        playerHealth.TakeDamage(damage);
+        playerHealth.TakeDamage(damage, ownHealth);
     }
     private void OnDisable() => GetComponent<HeroActionTiming25D>()?.CancelAxe();
 }

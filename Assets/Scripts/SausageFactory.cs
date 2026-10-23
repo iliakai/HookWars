@@ -45,6 +45,7 @@ public class SausageFactory : GameBuilding
     private double rawKg;
     public double RawKg => rawKg;
     public double CapacityKg => capacityKg;
+    public double FreeRawKg => System.Math.Max(0, capacityKg - rawKg);
     public double ProductCapacityKg => productCapacityKg;
     public double FreeProductKg => Math.Max(0, productCapacityKg - (owner != null ? owner.GetComponent<OwnerEconomy>().ProductKg : 0));
     public bool CanProcess => RawKg > 1e-9 && FreeProductKg > 1e-9;

@@ -235,7 +235,7 @@ public class ArenaPresentation25D : MonoBehaviour
         }
         foreach (Carcass carcass in FindObjectsByType<Carcass>(FindObjectsInactive.Include))
             if (carcass.gameObject.scene == gameObject.scene)
-                View(carcass);
+                View(carcass).transform.localScale = Vector3.one * Mathf.Pow(carcass.VisualMassFraction, 1f / 3f);
         foreach (GameBuilding building in FindObjectsByType<GameBuilding>(FindObjectsInactive.Include))
         {
             if (building.gameObject.scene != gameObject.scene) continue;

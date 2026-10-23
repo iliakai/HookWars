@@ -139,7 +139,7 @@ public class PlayerMelee : MonoBehaviour
             }
             else if (health != null && damagedTargets.Add(health))
             {
-                health.TakeDamage(damage);
+                health.TakeDamage(damage, GetComponent<Health>());
                 hitCount++;
             }
         }

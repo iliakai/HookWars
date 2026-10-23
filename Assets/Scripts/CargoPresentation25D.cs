@@ -18,8 +18,9 @@ public sealed class CargoPresentation25D : MonoBehaviour
             if(!views.TryGetValue(carcass,out var view))
             {
                 var prefab=presentation.ModelFor(carcass);if(prefab==null)continue;
-                view=Instantiate(prefab,transform,false);view.transform.localScale*=.5f;views.Add(carcass,view);
+                view=Instantiate(prefab,transform,false);views.Add(carcass,view);
             }
+            view.transform.localScale=Vector3.one*.5f*Mathf.Pow(carcass.VisualMassFraction,1f/3f);
             view.transform.localPosition=new Vector3((i%2-.5f)*.32f,(i/2)*.16f,0);i++;
         }
         removed.Clear();foreach(var pair in views)if(pair.Key==null||!Contains(pair.Key)){Destroy(pair.Value);removed.Add(pair.Key);}

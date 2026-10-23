@@ -512,7 +512,7 @@ public class HookAbility: MonoBehaviour
             target = carcass.transform;
         }
         Health targetHealth = target.GetComponent<Health>();
-        if (targetHealth != null) targetHealth.TakeDamage(damage);
+        if (targetHealth != null) targetHealth.TakeDamage(damage, GetComponent<Health>());
         // Keep pulling the dead hero; its separate carcass is reserved until landing.
         BeginPull(target);
     }

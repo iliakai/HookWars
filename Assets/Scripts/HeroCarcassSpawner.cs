@@ -24,7 +24,7 @@ public class HeroCarcassSpawner : MonoBehaviour
         }
         CurrentCarcass = Instantiate(carcassPrefab,
             Carcass.SafeGroundPosition(transform.position), Quaternion.identity);
-        CurrentCarcass.Initialize(target.MaximumKg, GetComponent<HookVictim>());
+        CurrentCarcass.Initialize(target.CarcassMassOnDeath > 0 ? target.CarcassMassOnDeath : target.MaximumKg, GetComponent<HookVictim>());
     }
 
     private void OnRevived(Health target)
