@@ -1,0 +1,4 @@
+PASS: 26 actual Unity Play Mode assertions
+Both heroes; decoded PCM; one 2D source each; rejected/windup/death/capture silence; release exactly once; real playback; variation and independent RNG; pause/resume; cancel; disable/re-enable.
+Measured AudioSource output peak: 0,000000
+Speaker/headphone listening and subjective volume balance not performed by the agent.

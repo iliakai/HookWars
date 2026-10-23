@@ -1,0 +1,48 @@
+Development Windows player acceptance
+Persistent data directory:
+PASS: First/return scene MainMenu
+PASS: Menu has no match logic/chain bodies
+PASS: Invalid input rejected
+PASS: Single accepted match load
+PASS: Configured depth 4
+PASS: Fresh resources and level
+PASS: Both 3D heroes and zero world sprites
+PASS: Accepted animated hook cast
+PASS: Flight audio triggered once on actual hook release
+PASS: Native PhysX chain issued in Windows player
+PASS: Pause freezes game
+PASS: Return is accepted only once
+PASS: No residual physics scene or time scale
+PASS: First/return scene MainMenu
+PASS: Menu has no match logic/chain bodies
+PASS: Invalid input rejected
+PASS: Single accepted match load
+PASS: Configured depth 16
+PASS: Fresh resources and level
+PASS: Windows factory accepts one kg raw meat
+PASS: Windows one kg raw yields half product and half bones
+PASS: Windows full finished storage blocks raw delivery
+PASS: Updated Windows player displays total income 2.5 with level one shop
+PASS: Windows shop level upgrade accepted
+PASS: Updated Windows player displays total income 3 with level two shop
+PASS: Both 3D heroes and zero world sprites
+PASS: Accepted animated hook cast
+PASS: Flight audio triggered once on actual hook release
+PASS: Native PhysX chain issued in Windows player
+PASS: Pause freezes game
+PASS: Return is accepted only once
+PASS: No residual physics scene or time scale
+PASS: First/return scene MainMenu
+PASS: Menu has no match logic/chain bodies
+PASS: Invalid input rejected
+PASS: Single accepted match load
+PASS: Configured depth 20
+PASS: Fresh resources and level
+PASS: Both 3D heroes and zero world sprites
+PASS: Accepted animated hook cast
+PASS: Flight audio triggered once on actual hook release
+PASS: Native PhysX chain issued in Windows player
+PASS: Pause freezes game
+PASS: Return is accepted only once
+PASS: No residual physics scene or time scale
+HOOKWARS_WINDOWS_SMOKE_PASS: 45 assertions

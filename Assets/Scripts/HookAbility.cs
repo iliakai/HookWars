@@ -53,6 +53,7 @@ public class HookAbility: MonoBehaviour
     private HookState state = HookState.Ready;
 
     private Transform activeHook;
+    public event System.Action HookReleased;
     public Transform ActiveHook => activeHook;
     public bool IsPreparingThrow => GetComponent<HeroActionTiming25D>()?.HookPending ?? false;
 
@@ -251,6 +252,7 @@ public class HookAbility: MonoBehaviour
         flightRemaining = range;
         lastObstacle = null;
         state = HookState.Flying;
+        HookReleased?.Invoke();
     }
 
     // The full polyline, not the straight-line distance, consumes chain length.

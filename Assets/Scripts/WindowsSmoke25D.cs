@@ -73,6 +73,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"battle_"+depth+".png"));yield return new WaitForEndOfFrame();
             var hook=hero.GetComponent<HookAbility>();hook.TryThrow(Vector2.up);Check(hero.GetComponent<HeroActionTiming25D>().HookPending,"Accepted animated hook cast");
             yield return new WaitForSeconds(.65f);
+            Check(hero.GetComponent<HookFlightAudio>()?.PlaybackCount==1,"Flight audio triggered once on actual hook release");
             Check(FindObjectsByType<HookChain25D>().Any(c=>c.ActiveLinks>0),"Native PhysX chain issued in Windows player");
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"chain_"+depth+".png"));yield return new WaitForEndOfFrame();
             var pause=MatchPause.Instance;pause.HandleEscape();Check(pause.IsPaused&&Time.timeScale==0,"Pause freezes game");
