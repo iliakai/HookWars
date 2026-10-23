@@ -42,5 +42,7 @@ public class BuildingUpgradeMenu : MonoBehaviour
             if (GUI.Button(new Rect(box.x + 10, box.y + 104 + i * 40, 380, 36), selected.UpgradeLabel(i)))
                 selected.TryUpgrade(i);
         if (GUI.Button(new Rect(box.x + 320, box.y + box.height-38, 70, 26), "Закрыть")) selected = null;
+        if(selected!=null&&selected.Kind!=BuildingKind.Factory&&GUI.Button(new Rect(box.x+10,box.y+box.height-38,290,26),"Снести (без возврата ресурсов)"))
+            if(selected.Demolish(GetComponent<PlayerProgression>()))selected=null;
     }
 }

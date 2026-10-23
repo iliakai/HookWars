@@ -32,7 +32,7 @@ public static class GamePointer
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return true;
         Vector2 gui = new Vector2(screen.x, Screen.height - screen.y);
         return TrainingMatch.ScreenRect.Contains(gui) || ProgressionHUD.ScreenRect.Contains(gui) ||
-            CarryingHUD.ScreenRect.Contains(gui) || HookUpgradeMenu.ScreenRect.Contains(gui);
+            CarryingHUD.ScreenRect.Contains(gui) || PlayerBuilding.ScreenRect.Contains(gui) || HookUpgradeMenu.ScreenRect.Contains(gui);
     }
     public static bool OverInterface() => Mouse.current != null && OverInterface(Mouse.current.position.ReadValue());
 }

@@ -95,6 +95,8 @@ public class ArenaPresentation25D : MonoBehaviour
         preview = new GameObject("Cell preview");preview.transform.SetParent(generated.transform,false);
         var cell=Primitive("Cell highlight",PrimitiveType.Cube,preview.transform,new Vector3(.98f,.004f,.98f),Color.green);cell.transform.localPosition=Vector3.up*.003f;
         preview.SetActive(false);
+        var builder=FindAnyObjectByType<PlayerBuilding>();
+        if(builder!=null){var grid=new GameObject("Building grid");grid.transform.SetParent(generated.transform,false);grid.AddComponent<BuildGrid25D>().Bind(builder);}
     }
     private void ApplyGroundTiling(string label, GameObject ground, Bounds bounds)
     {

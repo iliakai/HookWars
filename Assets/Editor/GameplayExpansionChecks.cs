@@ -89,17 +89,58 @@ public static class GameplayExpansionChecks
                 foreach(var a in Object.FindObjectsByType<EnemyChase>())a.enabled=false;
                 foreach(var a in Object.FindObjectsByType<EnemyMelee>())a.enabled=false;
                 foreach(var c in Object.FindObjectsByType<CarcassCarrier>())c.enabled=false;
-                if(stage=="mass")Mass();else throw new InvalidOperationException("Unknown expansion stage "+stage);
+                if(stage=="mass")Mass();else if(stage=="build")Building();else throw new InvalidOperationException("Unknown expansion stage "+stage);
                 phase=2;return;
             }
             if(phase==2)
             {
-                Check(Math.Abs((player.CurrentKg-initial)-player.RegenerationKgPerSecond*(Time.time-started))<.03,"Regen heals by max percent over real game time");
-                File.WriteAllText("docs/validation/016-"+stage+".txt",$"PASS: {count} actual Unity Play Mode assertions\nPartial hero/helper pickup and delivery, conserved mass, full stock blocking, 20/80 kill attribution, no level growth, percent regeneration and HUD frame.\n");
-                SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_"+stage.ToUpperInvariant()+"_PASS: "+count);Stop();
+                if(stage=="mass")Check(Math.Abs((player.CurrentKg-initial)-player.RegenerationKgPerSecond*(Time.time-started))<.03,"Regen heals by max percent over real game time");
+                if(stage=="build")
+                {
+                    var grid=Object.FindAnyObjectByType<BuildGrid25D>();
+                    Check(grid!=null&&grid.VisibleCells==ArenaLayout.Depth*20,"One-meter grid covers only the player's own bank");
+                    Check(grid.GetComponentsInChildren<MeshRenderer>().All(r=>r.enabled&&r.sharedMaterial.GetColor("_BaseColor").a<=.11f),"Grid uses faint translucent batched meshes");
+                    ScreenCapture.CaptureScreenshot("docs/validation/016-build.png"); phase=3; due=Time.time+.3f; return;
+                }
+                Finish();
             }
+            if(phase==3)Finish();
         }
         catch(Exception e){Debug.LogError("HOOKWARS_EXPANSION_FAIL: "+e);Stop();}
     }
+    static void Finish()
+    {
+                File.WriteAllText("docs/validation/016-"+stage+".txt",$"PASS: {count} actual Unity Play Mode assertions; stage={stage}\nSee GameplayExpansionChecks for exact cases. Actual Game View snapshot saved.\n");
+                SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_"+stage.ToUpperInvariant()+"_PASS: "+count);Stop();
+    }
     static void Stop(){phase=99;EditorApplication.isPlaying=false;}
+    static void Building()
+    {
+        var builder=Object.FindAnyObjectByType<PlayerBuilding>();var owner=builder.GetComponent<PlayerProgression>();owner.AddGold(1000);
+        builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.ShopPath));
+        var bank=ArenaLayout.BankBounds(builder.HomeRightBank,.5f);Vector3 free=default;bool found=false;
+        for(float x=bank.xMin;x<=bank.xMax&&!found;x++)for(float y=bank.yMin;y<=bank.yMax&&!found;y++)
+            if(builder.CanPlace(new Vector3(x,y))){free=new Vector3(x,y);found=true;}
+        Check(found&&Vector2.Distance(free,builder.transform.position)<=4,"Free legal cell lies inside four-meter build radius");
+        double gold=owner.Gold;var far=new Vector3(builder.HomeRightBank?ArenaLayout.OuterEdge-.5f:-ArenaLayout.OuterEdge+.5f,9.5f);
+        Check(!builder.CanPlace(far)&&builder.TryBuildAt(far)==null&&owner.Gold==gold,"Remote placement rejects without charging");
+        var shop=builder.TryBuildAt(free);Check(shop!=null&&builder.IsBuilding,"Successful placement retains selected building");
+        builder.RotatePlacement();Check(builder.QuarterTurns==1,"R-rotation still supported");
+        var enemy=Object.FindObjectsByType<PlayerProgression>().First(p=>p!=owner);
+        Check(!shop.Demolish(enemy),"Enemy cannot demolish owned building");
+        Check(!owner.GetComponent<OwnerEconomy>().Factory.Demolish(owner),"Starting workshop is protected");
+        gold=owner.Gold;Check(shop.Demolish(owner)&&owner.Gold==gold,"Owned shop demolishes without refund");
+        Check(builder.CanPlace(free),"Demolition immediately frees occupancy");
+        builder.CloseInterface();
+        var rect=PlayerBuilding.ScreenRect;var point=new Vector2(rect.x+20,Screen.height-rect.y-20);
+        Check(!builder.IsBuilding&&GamePointer.OverInterface(point),"Permanent construction panel remains a UI hit target after cancellation");
+        int sequence=builder.GetComponent<HeroActionTiming25D>().HookSequence;
+        builder.GetComponent<PlayerHook>().TryThrowAtScreenPoint(point);
+        Check(builder.GetComponent<HeroActionTiming25D>().HookSequence==sequence,"Clicks on permanent panel cannot throw hooks");
+        builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.ShopPath));
+        MatchPause.Instance.HandleEscape();Check(MatchPause.Instance.IsPaused&&builder.IsBuilding,"Esc pauses while retaining build selection; Q is cancel");
+        MatchPause.Instance.SetPaused(false);
+        due=Time.time+2;
+        EditorWindow.GetWindow(typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView")).Show();ScreenCapture.CaptureScreenshot("docs/validation/016-build.png");
+    }
 }

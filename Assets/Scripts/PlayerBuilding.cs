@@ -12,8 +12,10 @@ public class PlayerBuilding : MonoBehaviour
     public Color PreviewColor {get;private set;}
     public GameBuilding SelectedPrefab=>selectedPrefab;
     private GameBuilding selectedPrefab;
-    private bool menuOpen, homeRightBank;
-    private string status = "B — строительство";
+    private bool homeRightBank;
+    public bool HomeRightBank => homeRightBank;
+    public const float BuildRadius = 4;
+    private string status = "Выберите постройку мышью";
     public Transform Preview => preview;
     public bool IsBuilding => selectedPrefab != null;
     public int QuarterTurns {get;private set;}
@@ -30,7 +32,7 @@ public class PlayerBuilding : MonoBehaviour
             Vector2 mouse = Mouse.current.position.ReadValue();
             Vector2 gui = new Vector2(mouse.x, Screen.height - mouse.y);
             BuildingUpgradeMenu upgrades = GetComponent<BuildingUpgradeMenu>();
-            return menuOpen && MenuRect.Contains(gui) || upgrades != null && (upgrades.Contains(gui) || upgrades.SelectedThisFrame);
+            return MenuRect.Contains(gui) || upgrades != null && (upgrades.Contains(gui) || upgrades.SelectedThisFrame);
         }
     }
     private void Awake()
@@ -42,37 +44,39 @@ public class PlayerBuilding : MonoBehaviour
     private bool CanAct => !MatchPause.BlocksGameplay && progression != null && (health == null || !health.IsDead) && (victim == null || !victim.IsCaught);
     public bool CloseInterface()
     {
-        bool wasOpen=menuOpen||IsBuilding;CloseBuildMode();menuOpen=false;return wasOpen;
+        bool wasOpen=IsBuilding;CloseBuildMode();return wasOpen;
     }
     private void Update()
     {
-        if (!CanAct) { CloseBuildMode(); menuOpen = false; return; }
+        if (MatchPause.BlocksGameplay) return;
+        if (!CanAct) { CloseBuildMode(); return; }
         Keyboard keyboard = Keyboard.current;
-        if (keyboard == null) return;
-        if (keyboard.bKey.wasPressedThisFrame) menuOpen = !menuOpen;
-        if (keyboard.escapeKey.wasPressedThisFrame) { CloseBuildMode(); menuOpen = false; }
+        if (keyboard?.qKey.wasPressedThisFrame == true) CloseBuildMode();
         if (!IsBuilding || Mouse.current == null || worldCamera == null) return;
         Vector2 mouse = Mouse.current.position.ReadValue();
         if (!GamePointer.TryLogicalPoint(worldCamera, mouse, out Vector3 point)) return;
-        if(keyboard.rKey.wasPressedThisFrame)RotatePlacement();
+        if(keyboard?.rKey.wasPressedThisFrame == true)RotatePlacement();
         Vector3 cell = Snap(point,PlacementSize);
         preview.position = cell;
         preview.rotation=PlacementRotation;
         bool valid = CanPlace(cell);
         PreviewColor = valid ? new Color(0.2f, 1, 0.3f, 0.6f) : new Color(1, 0.2f, 0.2f, 0.6f);
-        status = valid ? "ЛКМ — построить, R — повернуть, Esc — закончить" : "Место занято, вне берега или не хватает ресурсов";
+        status = valid ? "ЛКМ — строить; R — поворот; Q — отмена" : "Нельзя: занято / дальше 4 м / нет ресурсов";
         if (Mouse.current.leftButton.wasPressedThisFrame && !GamePointer.OverInterface() &&
-            !(menuOpen && MenuRect.Contains(new Vector2(mouse.x, Screen.height - mouse.y))) &&
+            !MenuRect.Contains(new Vector2(mouse.x, Screen.height - mouse.y)) &&
             !(GetComponent<BuildingUpgradeMenu>()?.Contains(new Vector2(mouse.x, Screen.height - mouse.y)) ?? false)) TryBuildAt(cell);
     }
     public bool CanPlace(Vector3 cell)
+        => CanPlaceInternal(cell, true);
+    public bool CanPlaceForGrid(Vector3 cell) => CanPlaceInternal(cell, false);
+    private bool CanPlaceInternal(Vector3 cell, bool syncPhysics)
     {
         Vector2Int size=PlacementSize;
         if((cell-Snap(cell,size)).sqrMagnitude>.00000001f)return false;
-        if (!CanAct || selectedPrefab == null || !selectedPrefab.CanBuild(progression) ||
+        if (!CanAct || selectedPrefab == null || Vector2.Distance(transform.position,cell)>BuildRadius || !selectedPrefab.CanBuild(progression) ||
             !ArenaLayout.IsInsideBank(cell-new Vector3(size.x*.5f,size.y*.5f),homeRightBank,0)||
             !ArenaLayout.IsInsideBank(cell+new Vector3(size.x*.5f,size.y*.5f),homeRightBank,0)||!HasResources(selectedPrefab)) return false;
-        Physics2D.SyncTransforms();
+        if(syncPhysics)Physics2D.SyncTransforms();
         foreach (Collider2D hit in Physics2D.OverlapBoxAll(cell, (Vector2)size-Vector2.one*.0002f, 0))
         {
             if (hit.isTrigger) continue;
@@ -117,14 +121,14 @@ public class PlayerBuilding : MonoBehaviour
     private void CloseBuildMode()
     {
         selectedPrefab = null;
-        status="B — строительство";
+        status="Выберите постройку мышью";
         if (preview != null) Destroy(preview.gameObject);
         preview = null;
     }
     private void OnGUI()
     {
-        if (!CanAct) return;
-        if (!menuOpen) { GUI.Label(new Rect(12, Screen.height - 34, 360, 26), status); return; }
+        if (MatchPause.BlocksGameplay) return;
+        bool wasEnabled=GUI.enabled; GUI.enabled=CanAct;
         Rect box = MenuRect;
         GUI.Box(box, "Строительство: клетка 1×1 м");
         if (buildingPrefabs != null)
@@ -135,6 +139,8 @@ public class PlayerBuilding : MonoBehaviour
                     $"{prefab.DisplayName}: {prefab.BuildCost} {(prefab.Kind == BuildingKind.Wall ? "костей" : "золота")}")) SelectBuilding(prefab);
             }
         GUI.Label(new Rect(box.x + 10, box.y + 158, 350, 30), status);
+        if(IsBuilding&&GUI.Button(new Rect(box.x+10,box.y+124,350,28),"Отменить выбор [Q]"))CloseBuildMode();
+        GUI.enabled=wasEnabled;
     }
     private void OnDisable() => CloseBuildMode();
 }

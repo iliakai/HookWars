@@ -1,0 +1,2 @@
+PASS: 13 actual Unity Play Mode assertions; stage=build
+See GameplayExpansionChecks for exact cases. Actual Game View snapshot saved.

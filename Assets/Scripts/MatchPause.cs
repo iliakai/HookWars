@@ -15,10 +15,8 @@ public sealed class MatchPause : MonoBehaviour
     {
         if(leaving)return;
         if(paused){SetPaused(false);return;}
-        var builder=FindAnyObjectByType<PlayerBuilding>();
         var upgrades=FindAnyObjectByType<BuildingUpgradeMenu>();
-        bool closed=builder!=null&&builder.CloseInterface();
-        closed=(upgrades!=null&&upgrades.CloseInterface())||closed;
+        bool closed=upgrades!=null&&upgrades.CloseInterface();
         closed=(FindAnyObjectByType<HookUpgradeMenu>()?.CloseInterface()??false)||closed;
         if(!closed)SetPaused(true);
     }

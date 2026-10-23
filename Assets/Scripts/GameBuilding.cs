@@ -17,6 +17,13 @@ public abstract class GameBuilding : MonoBehaviour
     public abstract string Info { get; }
     public abstract string UpgradeLabel(int index);
     public abstract bool TryUpgrade(int index);
+    public bool Demolish(PlayerProgression requester)
+    {
+        if (requester == null || requester != owner || Kind == BuildingKind.Factory || MatchPause.BlocksGameplay ||
+            requester.GetComponent<Health>()?.IsDead == true || requester.GetComponent<HookVictim>()?.IsCaught == true) return false;
+        foreach(var collider in GetComponentsInChildren<Collider2D>())collider.enabled=false;
+        gameObject.SetActive(false); Destroy(gameObject); return true;
+    }
     public virtual bool CanBuild(PlayerProgression candidate) => candidate != null;
     public virtual bool Initialize(PlayerProgression candidate)
     {
