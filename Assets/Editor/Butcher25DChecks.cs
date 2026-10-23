@@ -273,13 +273,25 @@ public static class Butcher25DChecks
             view.position = savedPosition; view.rotation = savedRotation; driver.ResetPose(); driver.Tick(0.02f);
             Check(driver.Owner.transform.position == logicalPosition && driver.Owner.transform.rotation == logicalRotation, "Animation never changes logical root/collider transform");
             var skin = (SkinnedMeshRenderer)Field(driver, "bodyMesh").GetValue(driver);
-            var groundMesh = new Mesh();
-            try
+            int boneIndex = Array.IndexOf(skin.bones, driver.SkinOrientation);
+            Matrix4x4 bind = skin.sharedMesh.bindposes[boneIndex];
+            foreach (int octant in Enumerable.Range(0, 8))
             {
-                skin.BakeMesh(groundMesh); float bottom = groundMesh.vertices.Min(v => skin.transform.TransformPoint(v).y);
-                Check(Mathf.Abs(bottom - driver.transform.position.y - 0.015f) < 0.002f, "Actual skinned ball rests on ground without hovering or penetration");
+                for (int frame = 0; frame < 20; frame++)
+                {
+                    float angle = octant * Mathf.PI / 4;
+                    view.position += new Vector3(Mathf.Sin(angle),0,Mathf.Cos(angle)) * .04f;
+                    view.rotation = Quaternion.Euler(0, frame * 13, 0);
+                    driver.Tick(.02f);
+                    Vector3 center = driver.SkinOrientation.position;
+                    Check(Mathf.Abs(center.y - view.position.y - driver.EffectiveRadius - .015f) < .0002f,
+                        "Ball center stays at constant height through roll and independent aim");
+                    float bottom = skin.sharedMesh.vertices.Min(v => driver.SkinOrientation.TransformPoint(bind.MultiplyPoint3x4(v)).y);
+                    Check(bottom >= view.position.y + .014f && bottom < view.position.y + .022f,
+                        "Derived spherical mesh maintains ground contact without per-frame correction");
+                }
             }
-            finally { Object.DestroyImmediate(groundMesh); }
+            view.position = savedPosition; view.rotation = savedRotation; driver.ResetPose(); driver.Tick(.02f);
             ActionPictures(driver);
         }
         CheckWallStop(drivers.Single(d => d.Owner.GetComponent<PlayerMovement>() != null));

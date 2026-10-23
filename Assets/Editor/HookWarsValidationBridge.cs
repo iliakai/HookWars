@@ -71,6 +71,10 @@ public static class HookWarsValidationBridge
             }
             File.Delete(path);
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
+            if (request.operation == "body-measure")
+            {
+                World25DDiagnostics.MeasureBody(); Write(request.operation, "passed", "See body-measurement.txt"); return;
+            }
             if (request.operation == "butcher-inspect")
             {
                 Butcher25DSetup.Inspect(); Write(request.operation, "passed", "See butcher-import.txt"); return;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -124,6 +124,9 @@ public static class Butcher25DSetup
             }
             SkinnedMeshRenderer bodySkin = rig.GetComponentsInChildren<SkinnedMeshRenderer>(true).Single(r => r.name.StartsWith("02_Body_"));
             if (!bodySkin.bones.Contains(skinOrientation)) throw new InvalidOperationException("Body skin is not attached to BodyRoll");
+            float radius = CenteredBall(bodySkin, skinOrientation);
+            // One bind-pose placement, independent of animated pose and weapons.
+            rig.transform.position += Vector3.up * (radius + 0.015f - body.position.y);
             Animator animator = rig.GetComponent<Animator>() ?? rig.AddComponent<Animator>();
             animator.applyRootMotion = false; animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             AnimatorController controller = Controller(rig);
@@ -133,7 +136,7 @@ public static class Butcher25DSetup
             Set(data, "animator", animator); Set(data, "bodyRoll", body); Set(data, "skinOrientation", skinOrientation);
             Set(data, "hookSocket", Bone(rig, "HookSocket")); Set(data, "visualRig", rig.transform); Set(data, "bodyMesh", bodySkin);
             Set(data, "restingHook", rig.GetComponentsInChildren<Renderer>(true).Single(r => r.name.StartsWith("04_Hook_Metal")));
-            data.FindProperty("effectiveRadius").floatValue = 1.04f * 0.48f; data.ApplyModifiedPropertiesWithoutUndo();
+            data.FindProperty("effectiveRadius").floatValue = radius; data.ApplyModifiedPropertiesWithoutUndo();
             PrefabUtility.SaveAsPrefabAsset(prefabRoot, HeroPrefab);
             SaveCarcass(rig);
         }
@@ -160,6 +163,32 @@ public static class Butcher25DSetup
         var matches = rig.GetComponentsInChildren<Transform>(true).Where(t => t.name == name).ToArray();
         if (matches.Length != 1) throw new InvalidOperationException("Missing/ambiguous bone " + name);
         return matches[0];
+    }
+    private static float CenteredBall(SkinnedMeshRenderer skin, Transform bone)
+    {
+        int index = Array.IndexOf(skin.bones, bone);
+        Mesh source = skin.sharedMesh;
+        if (source.boneWeights.Any(w => w.boneIndex0 != index || w.weight0 < 0.9999f))
+            throw new InvalidOperationException("Ball must be rigidly weighted to BodyRoll");
+        Matrix4x4 toBone = source.bindposes[index], fromBone = toBone.inverse;
+        Vector3[] vertices = source.vertices;
+        float radius = vertices.Max(v => toBone.MultiplyPoint3x4(v).magnitude);
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            Vector3 p = toBone.MultiplyPoint3x4(vertices[i]);
+            if (p.sqrMagnitude < 1e-12f) throw new InvalidOperationException("Ball vertex at pivot");
+            vertices[i] = fromBone.MultiplyPoint3x4(p.normalized * radius);
+        }
+        Mesh copy = Object.Instantiate(source); copy.name = "CenteredBody";
+        copy.vertices = vertices; copy.RecalculateNormals(); copy.RecalculateTangents(); copy.RecalculateBounds();
+        string path = Adapted + "/CenteredBody.asset";
+        Mesh saved = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+        if (saved == null) { saved = copy; AssetDatabase.CreateAsset(saved, path); }
+        else { EditorUtility.CopySerialized(copy, saved); Object.DestroyImmediate(copy); EditorUtility.SetDirty(saved); }
+        skin.sharedMesh = saved;
+        float worldRadius = bone.TransformVector(Vector3.up * radius).magnitude;
+        Debug.Log($"HOOKWARS_BODY_GEOMETRY: radius={worldRadius:F6}m, pivot={bone.position:F6}; original mesh/FBX preserved");
+        return worldRadius;
     }
     private static void Set(SerializedObject data, string name, Object value) => data.FindProperty(name).objectReferenceValue = value;
     private static AnimatorController Controller(GameObject rig)
@@ -293,3 +322,4 @@ public static class Butcher25DSetup
         Bounds bounds = renderers[0].bounds; foreach (Renderer r in renderers.Skip(1)) bounds.Encapsulate(r.bounds); return bounds;
     }
 }
+

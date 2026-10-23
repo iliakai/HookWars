@@ -21,7 +21,6 @@ public sealed class ButcherVisual25D : MonoBehaviour
     private Quaternion previousFacing, ballWorld;
     private bool positioned, wasAxe, wasHook;
     private int direction = -1, life = -1;
-    private Mesh baked;
     private ArenaPresentation25D presentation;
     public Transform Socket => hookSocket;
     public Health Owner => hero;
@@ -38,7 +37,6 @@ public sealed class ButcherVisual25D : MonoBehaviour
         presentation = GetComponentInParent<ArenaPresentation25D>();
         animator.applyRootMotion = false; animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         animator.enabled = false; // One controlled evaluation, after XY -> XZ presentation.
-        if (baked == null) baked = new Mesh { name = "Butcher ground contact (runtime)" };
         ResetPose();
     }
     public static int LocalDirection(Vector3 localTravel)
@@ -96,19 +94,7 @@ public sealed class ButcherVisual25D : MonoBehaviour
         if (axe || cast) animator.Update(0);
         wasAxe = axe; wasHook = cast; ballWorld = skinOrientation.rotation;
         if (restingHook != null) restingHook.enabled = hook == null || hook.ActiveHook == null;
-        AlignGround();
         if (presentation != null) presentation.UpdateHookPresentation(hook, this);
     }
-    private void AlignGround()
-    {
-        // The authored ball is slightly ellipsoidal. Evaluate its actual skinned
-        // bottom, so changes of roll pose do not cause hovering or penetration.
-        if (bodyMesh == null || baked == null) return;
-        bodyMesh.BakeMesh(baked);
-        float bottom = float.PositiveInfinity;
-        foreach (Vector3 vertex in baked.vertices) bottom = Mathf.Min(bottom, bodyMesh.transform.TransformPoint(vertex).y);
-        if (!float.IsInfinity(bottom)) visualRig.position += Vector3.up * (transform.position.y + 0.015f - bottom);
-    }
     private void OnDisable() { positioned = false; if (restingHook != null) restingHook.enabled = true; }
-    private void OnDestroy() { if (baked != null) Destroy(baked); }
 }

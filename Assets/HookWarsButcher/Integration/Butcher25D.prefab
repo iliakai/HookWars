@@ -58,7 +58,7 @@ Transform:
   m_GameObject: {fileID: 311975794113888776}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.015, z: 0}
   m_LocalScale: {x: 0.48, y: 0.48, z: 0.48}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -702,7 +702,7 @@ SkinnedMeshRenderer:
   m_Quality: 0
   m_UpdateWhenOffscreen: 1
   m_SkinnedMotionVectors: 1
-  m_Mesh: {fileID: -3465137391542644669, guid: efc0834843b8dc64381f9ef12fcd5f37, type: 3}
+  m_Mesh: {fileID: 4300000, guid: 941f764dfe7c68a49bb01de36d73186a, type: 2}
   m_Bones:
   - {fileID: 7343466532793281988}
   - {fileID: 4917428669503763963}
@@ -932,7 +932,7 @@ MonoBehaviour:
   visualRig: {fileID: 7878227442054634809}
   restingHook: {fileID: 3822747834701733029}
   bodyMesh: {fileID: 7917349970014892825}
-  effectiveRadius: 0.49919996
+  effectiveRadius: 0.49920002
   maximumVoluntarySpeed: 8
 --- !u!1 &7953645440967427144
 GameObject:
