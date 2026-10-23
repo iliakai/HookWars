@@ -16,12 +16,14 @@ public class CarryingHUD : MonoBehaviour
 
     private void Update()
     {
+        if(MatchPause.BlocksGameplay)return;
         if (Keyboard.current != null && Keyboard.current.digit8Key.wasPressedThisFrame)
             carrier.TryUpgradeCapacity(progression);
     }
 
     private void OnGUI()
     {
+        if(MatchPause.BlocksGameplay)return;
         GUI.Box(ScreenRect, GUIContent.none);
         GUI.Label(new Rect(24, 382, 290, 26),
             $"Груз: {carrier.CurrentMassKg:0.##} / {carrier.CapacityKg:0.##} кг");

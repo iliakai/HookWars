@@ -81,8 +81,9 @@ public static class CarryingSetup
         }
 
         // Preserve all other scene entries, but make the real game the first enabled scene.
-        EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ArenaPath, true) }
-            .Concat(EditorBuildSettings.scenes.Where(s => s.path != ArenaPath)).ToArray();
+        if(!System.IO.File.Exists("Assets/Scenes/MainMenu.unity"))
+            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ArenaPath, true) }
+                .Concat(EditorBuildSettings.scenes.Where(s => s.path != ArenaPath)).ToArray();
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();

@@ -36,7 +36,11 @@ public class PlayerBuilding : MonoBehaviour
         homeRightBank = transform.position.x > 0;
         if (worldCamera == null) worldCamera = Camera.main;
     }
-    private bool CanAct => progression != null && (health == null || !health.IsDead) && (victim == null || !victim.IsCaught);
+    private bool CanAct => !MatchPause.BlocksGameplay && progression != null && (health == null || !health.IsDead) && (victim == null || !victim.IsCaught);
+    public bool CloseInterface()
+    {
+        bool wasOpen=menuOpen||IsBuilding;CloseBuildMode();menuOpen=false;return wasOpen;
+    }
     private void Update()
     {
         if (!CanAct) { CloseBuildMode(); menuOpen = false; return; }

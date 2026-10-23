@@ -92,7 +92,7 @@ public class ArenaLayout : MonoBehaviour
                     return;
                 }
 
-        appliedDepth = Mathf.Clamp(bankDepth, 4, 20);
+        appliedDepth = MatchConfiguration.ConsumeDepth(bankDepth);
         appliedMountainWidth = Mathf.Max(0.1f, mountainWidth);
         Instance = this;
 

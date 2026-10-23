@@ -36,13 +36,13 @@ public sealed class HeroActionTiming25D : MonoBehaviour
     }
     public bool BeginAxe(float cooldown, Action impact)
     {
-        if (!CanAct || AxePending || HookPending || impact == null) return false;
+        if (MatchPause.BlocksGameplay || !CanAct || AxePending || HookPending || impact == null) return false;
         AxeSpeed = Mathf.Max(1f, AxeLength / Mathf.Max(0.1f, cooldown));
         AxeStarted = Time.time; AxeSequence++; axeImpact = impact; return true;
     }
     public bool BeginHook(Vector2 direction, Action release)
     {
-        if (!CanAct || HookPending || release == null) return false;
+        if (MatchPause.BlocksGameplay || !CanAct || HookPending || release == null) return false;
         HookDirection = direction.normalized; HookStarted = Time.time;
         HookSequence++; hookRelease = release; return true;
     }
@@ -50,6 +50,7 @@ public sealed class HeroActionTiming25D : MonoBehaviour
     public void Advance(float now)
     {
         if (!CanAct) { CancelAll(); return; }
+        if(MatchPause.BlocksGameplay)return;
         if (axeImpact != null && now >= AxeStarted + AxeImpact / AxeSpeed)
         { Action hit = axeImpact; axeImpact = null; hit(); }
         if (hookRelease != null && now >= HookStarted + HookRelease)

@@ -31,6 +31,7 @@ public class EnemyMelee : MonoBehaviour
 
     private void LateUpdate()
     {
+        if(MatchPause.BlocksGameplay)return;
         if (playerHealth == null || playerHook == null)
         {
             return;

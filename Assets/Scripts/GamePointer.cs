@@ -21,6 +21,7 @@ public static class GamePointer
     // with their drawing components, including panels with labels only.
     public static bool OverInterface(Vector2 screen)
     {
+        if(MatchPause.BlocksGameplay)return true;
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return true;
         Vector2 gui = new Vector2(screen.x, Screen.height - screen.y);
         return TrainingMatch.ScreenRect.Contains(gui) || ProgressionHUD.ScreenRect.Contains(gui) ||

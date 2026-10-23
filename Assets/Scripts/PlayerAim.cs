@@ -17,6 +17,7 @@ public class PlayerAim : MonoBehaviour
 
     private void LateUpdate()
     {
+        if(MatchPause.BlocksGameplay)return;
         if (Mouse.current == null || worldCamera == null)
         {
             return;

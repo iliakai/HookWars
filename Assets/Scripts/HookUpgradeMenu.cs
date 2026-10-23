@@ -16,6 +16,7 @@ public class HookUpgradeMenu : MonoBehaviour
 
     private void Update()
     {
+        if(MatchPause.BlocksGameplay)return;
         if (progression == null || hook == null)
         {
             return;
@@ -60,6 +61,7 @@ public class HookUpgradeMenu : MonoBehaviour
 
     private void BuyUpgrade(HookAbility.UpgradeStat stat)
     {
+        if(MatchPause.BlocksGameplay)return;
         if (progression.UpgradePoints <= 0)
         {
             ShowMessage("Нужно очко улучшения.");
@@ -105,6 +107,7 @@ public class HookUpgradeMenu : MonoBehaviour
 
     private void OnGUI()
     {
+        if(MatchPause.BlocksGameplay)return;
         if (progression == null || hook == null)
         {
             return;

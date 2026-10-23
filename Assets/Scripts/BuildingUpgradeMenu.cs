@@ -9,7 +9,8 @@ public class BuildingUpgradeMenu : MonoBehaviour
     private Rect Panel => new Rect(Screen.width - 412, 420, 400, 260);
     public bool Contains(Vector2 point) => selected != null && Panel.Contains(point);
     private void Awake() { if (worldCamera == null) worldCamera = Camera.main; }
-    private bool CanAct => !GetComponent<Health>().IsDead && !GetComponent<HookVictim>().IsCaught;
+    private bool CanAct => !MatchPause.BlocksGameplay && !GetComponent<Health>().IsDead && !GetComponent<HookVictim>().IsCaught;
+    public bool CloseInterface(){bool had=selected!=null;selected=null;return had;}
     private void Update()
     {
         SelectedThisFrame = false;

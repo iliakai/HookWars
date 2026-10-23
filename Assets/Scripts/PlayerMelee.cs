@@ -43,6 +43,7 @@ public class PlayerMelee : MonoBehaviour
 
     private void TryAttack()
     {
+        if(MatchPause.BlocksGameplay)return;
         PlayerBuilding builder = GetComponent<PlayerBuilding>();
         if (builder != null && builder.BlocksMouseInput) return;
         HookVictim victim = GetComponent<HookVictim>();

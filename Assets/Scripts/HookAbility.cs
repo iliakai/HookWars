@@ -95,6 +95,7 @@ public class HookAbility: MonoBehaviour
 
     protected virtual void LateUpdate()
     {
+        if(MatchPause.BlocksGameplay)return;
         Health ownHealth = GetComponent<Health>();
         HookVictim ownVictim = GetComponent<HookVictim>();
 
@@ -193,6 +194,7 @@ public class HookAbility: MonoBehaviour
 
     public void TryThrow(Vector2 direction)
     {
+        if(MatchPause.BlocksGameplay)return;
         Health ownHealth = GetComponent<Health>();
         HookVictim ownVictim = GetComponent<HookVictim>();
 
