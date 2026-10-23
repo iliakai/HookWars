@@ -1,0 +1,2 @@
+PASS: 13 assertions in real Unity Play Mode
+Repeated grid placement, rotation, matching model yaw, occupied-cell rejection, resource spending, hook/UI isolation and Esc priority.

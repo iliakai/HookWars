@@ -16,6 +16,9 @@ public class PlayerBuilding : MonoBehaviour
     private string status = "B — строительство";
     public Transform Preview => preview;
     public bool IsBuilding => selectedPrefab != null;
+    public int QuarterTurns {get;private set;}
+    public Quaternion PlacementRotation=>Quaternion.Euler(0,0,-90*QuarterTurns);
+    public Vector2Int PlacementSize=>selectedPrefab==null?Vector2Int.one:(QuarterTurns%2==0?selectedPrefab.Footprint:new Vector2Int(selectedPrefab.Footprint.y,selectedPrefab.Footprint.x));
     public static Rect ScreenRect => new Rect(12, Screen.height - 206, 370, 194);
     private Rect MenuRect => ScreenRect;
     public bool BlocksMouseInput
@@ -51,28 +54,31 @@ public class PlayerBuilding : MonoBehaviour
         if (!IsBuilding || Mouse.current == null || worldCamera == null) return;
         Vector2 mouse = Mouse.current.position.ReadValue();
         if (!GamePointer.TryLogicalPoint(worldCamera, mouse, out Vector3 point)) return;
-        Vector3 cell = new Vector3(Mathf.Floor(point.x) + 0.5f, Mathf.Floor(point.y) + 0.5f);
+        if(keyboard.rKey.wasPressedThisFrame)RotatePlacement();
+        Vector3 cell = Snap(point,PlacementSize);
         preview.position = cell;
+        preview.rotation=PlacementRotation;
         bool valid = CanPlace(cell);
         PreviewColor = valid ? new Color(0.2f, 1, 0.3f, 0.6f) : new Color(1, 0.2f, 0.2f, 0.6f);
-        status = valid ? "E — построить, Esc — отменить" : "Место занято, вне берега или не хватает ресурсов";
-        if (keyboard.eKey.wasPressedThisFrame && !GamePointer.OverInterface() &&
+        status = valid ? "ЛКМ — построить, R — повернуть, Esc — закончить" : "Место занято, вне берега или не хватает ресурсов";
+        if (Mouse.current.leftButton.wasPressedThisFrame && !GamePointer.OverInterface() &&
             !(menuOpen && MenuRect.Contains(new Vector2(mouse.x, Screen.height - mouse.y))) &&
             !(GetComponent<BuildingUpgradeMenu>()?.Contains(new Vector2(mouse.x, Screen.height - mouse.y)) ?? false)) TryBuildAt(cell);
     }
     public bool CanPlace(Vector3 cell)
     {
-        if (Mathf.Abs(cell.x - (Mathf.Floor(cell.x) + 0.5f)) > 0.00001f ||
-            Mathf.Abs(cell.y - (Mathf.Floor(cell.y) + 0.5f)) > 0.00001f) return false;
+        Vector2Int size=PlacementSize;
+        if((cell-Snap(cell,size)).sqrMagnitude>.00000001f)return false;
         if (!CanAct || selectedPrefab == null || !selectedPrefab.CanBuild(progression) ||
-            !ArenaLayout.IsInsideBank(cell, homeRightBank, 0.5f) || !HasResources(selectedPrefab)) return false;
+            !ArenaLayout.IsInsideBank(cell-new Vector3(size.x*.5f,size.y*.5f),homeRightBank,0)||
+            !ArenaLayout.IsInsideBank(cell+new Vector3(size.x*.5f,size.y*.5f),homeRightBank,0)||!HasResources(selectedPrefab)) return false;
         Physics2D.SyncTransforms();
-        foreach (Collider2D hit in Physics2D.OverlapBoxAll(cell, Vector2.one * 0.9998f, 0))
+        foreach (Collider2D hit in Physics2D.OverlapBoxAll(cell, (Vector2)size-Vector2.one*.0002f, 0))
         {
             if (hit.isTrigger) continue;
             Bounds bounds = hit.bounds;
-            float overlapX = Mathf.Min(cell.x + 0.5f, bounds.max.x) - Mathf.Max(cell.x - 0.5f, bounds.min.x);
-            float overlapY = Mathf.Min(cell.y + 0.5f, bounds.max.y) - Mathf.Max(cell.y - 0.5f, bounds.min.y);
+            float overlapX = Mathf.Min(cell.x + size.x*.5f, bounds.max.x) - Mathf.Max(cell.x - size.x*.5f, bounds.min.x);
+            float overlapY = Mathf.Min(cell.y + size.y*.5f, bounds.max.y) - Mathf.Max(cell.y - size.y*.5f, bounds.min.y);
             // Overlap queries can report touching shapes within the physics contact skin.
             // Tangency has no interior area; a real intersection must still reject placement.
             if (overlapX > 0.00001f && overlapY > 0.00001f) return false;
@@ -85,12 +91,12 @@ public class PlayerBuilding : MonoBehaviour
     {
         if (!CanPlace(cell)) return null;
         GameBuilding prefab = selectedPrefab;
-        GameBuilding built = Instantiate(prefab, cell, Quaternion.identity);
+        GameBuilding built = Instantiate(prefab, cell, PlacementRotation);
         if (!built.Initialize(progression)) { Destroy(built.gameObject); return null; }
         bool paid = prefab.Kind == BuildingKind.Wall ? progression.GetComponent<OwnerEconomy>().TrySpendBones(prefab.BuildCost)
             : progression.TrySpendGold(prefab.BuildCost);
         if (!paid) { Destroy(built.gameObject); return null; }
-        CloseBuildMode();
+        Physics2D.SyncTransforms();
         return built;
     }
     public void SelectBuilding(GameBuilding prefab)
@@ -98,8 +104,15 @@ public class PlayerBuilding : MonoBehaviour
         CloseBuildMode();
         if (!CanAct || prefab == null) return;
         selectedPrefab = prefab;
+        QuarterTurns=0;
         GameObject marker = new GameObject("BuildingPreview");
         preview = marker.transform; PreviewColor=Color.green;
+    }
+    public void RotatePlacement(){if(IsBuilding)QuarterTurns=(QuarterTurns+1)%4;}
+    public static Vector3 Snap(Vector3 point,Vector2Int size)
+    {
+        float x=size.x%2==0?0:.5f,y=size.y%2==0?0:.5f;
+        return new Vector3(Mathf.Floor(point.x-x+.5f)+x,Mathf.Floor(point.y-y+.5f)+y,0);
     }
     private void CloseBuildMode()
     {

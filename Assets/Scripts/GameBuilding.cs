@@ -10,6 +10,7 @@ public abstract class GameBuilding : MonoBehaviour
     [SerializeField, Min(1)] private float upgradeCostGrowth = 1.5f;
     public PlayerProgression Owner => owner;
     public int BuildCost => buildCost;
+    public virtual Vector2Int Footprint=>Vector2Int.one;
     public abstract BuildingKind Kind { get; }
     public abstract string DisplayName { get; }
     public virtual int UpgradeCount => 1;

@@ -207,7 +207,9 @@ public class ArenaPresentation25D : MonoBehaviour
         foreach (GameBuilding building in FindObjectsByType<GameBuilding>(FindObjectsInactive.Include))
         {
             if (building.gameObject.scene != gameObject.scene) continue;
-            View(building);
+            var buildingView=View(building);
+            buildingView.transform.rotation=Quaternion.Euler(0,-building.transform.eulerAngles.z,0);
+            buildingView.transform.localScale=new Vector3(building.Footprint.x,Mathf.Max(building.Footprint.x,building.Footprint.y),building.Footprint.y);
         }
         foreach (HookAbility hook in FindObjectsByType<HookAbility>())
         {
@@ -220,6 +222,9 @@ public class ArenaPresentation25D : MonoBehaviour
         if (marker != null)
         {
             preview.transform.position = ArenaSpace25D.ToWorld(marker.position);
+            preview.transform.rotation=Quaternion.Euler(0,-marker.eulerAngles.z,0);
+            var previewSize=builder.SelectedPrefab.Footprint;
+            preview.transform.localScale=new Vector3(previewSize.x,Mathf.Max(previewSize.x,previewSize.y),previewSize.y);
             if(previewPrefab!=builder.SelectedPrefab)
             {
                 if(previewModel!=null)Destroy(previewModel);previewPrefab=builder.SelectedPrefab;
