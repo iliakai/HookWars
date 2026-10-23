@@ -17,6 +17,12 @@ public class ArenaPresentation25D : MonoBehaviour
     [SerializeField] private RenderPipelineAsset pipeline;
     [SerializeField] private Material litMaterial;
     [SerializeField] private Material chainMaterial;
+    [SerializeField] private Mesh physicalChainMesh;
+    [SerializeField] private Material physicalChainMaterial;
+    [SerializeField, Min(.1f)] private float chainLinkScale=1;
+    [SerializeField, Min(.1f)] private float chainThickness=1;
+    [SerializeField, Range(0,.2f)] private float chainSlackRatio=.025f;
+    private Dictionary<HookAbility,HookChain25D> physicalChains=new Dictionary<HookAbility,HookChain25D>();
     [SerializeField] private ModelOverride[] models = new ModelOverride[0];
     private RenderPipelineAsset previousPipeline;
     private bool pipelineApplied;
@@ -205,7 +211,12 @@ public class ArenaPresentation25D : MonoBehaviour
             Vector2 direction = aim != null ? aim.AimDirection : (Vector2)(FindPlayerPosition() - hero.transform.position);
             HeroActionTiming25D timing = hero.GetComponent<HeroActionTiming25D>();
             if (timing != null) direction = timing.ResolveFacing(direction);
-            view.transform.rotation = ArenaSpace25D.Facing(direction);
+            Quaternion facing=ArenaSpace25D.Facing(direction);
+            // Once the cast has finished, an instantaneous 180-degree mouse turn
+            // teleports the hand socket through the live physical cable. Keep the
+            // gameplay aim independent; slew only the armed visual while flying.
+            bool cableActive=physicalChainMesh!=null&&hero.GetComponent<HookAbility>()?.ActiveHook!=null&&!(timing?.HookAnimating??false);
+            view.transform.rotation=cableActive?Quaternion.RotateTowards(view.transform.rotation,facing,360*Time.deltaTime):facing;
             CarcassCarrier carrier = hero.GetComponent<CarcassCarrier>();
             view.transform.Find("Cargo").gameObject.SetActive(carrier != null && carrier.Count > 0);
             view.transform.Find("Health").localScale = new Vector3(0.9f * hero.HealthFraction, 0.09f, 0.12f);
@@ -263,7 +274,8 @@ public class ArenaPresentation25D : MonoBehaviour
     public void UpdateHookPresentation(HookAbility hook, ButcherVisual25D butcher)
     {
         if (generated == null || hook == null) return;
-        if (!chains.TryGetValue(hook, out LineRenderer chain))
+        LineRenderer chain=null;
+        if (physicalChainMesh==null && !chains.TryGetValue(hook, out chain))
         {
             GameObject line = new GameObject(hook.name + " chain 25D"); line.transform.SetParent(generated.transform, false);
             chain = line.AddComponent<LineRenderer>(); chain.sharedMaterial = chainMaterial;
@@ -280,10 +292,21 @@ public class ArenaPresentation25D : MonoBehaviour
             float proximity = 1f - Mathf.Clamp01(Vector2.Distance(hook.ActiveHook.position, hook.transform.position) / 1.2f);
             tip += (butcher.Socket.position - ArenaSpace25D.ToWorld(hook.transform.position, 0.65f)) * proximity;
         }
-        chain.positionCount = hook.ChainPointCount;
-        for (int i = 0; i < hook.ChainPointCount; i++)
+        if(chain!=null)chain.positionCount = hook.ChainPointCount;
+        for (int i = 0; chain!=null && i < hook.ChainPointCount; i++)
             chain.SetPosition(i, i == 0 && butcher != null ? butcher.Socket.position :
                 i == hook.ChainPointCount - 1 && butcher != null ? tip : ArenaSpace25D.ToWorld(hook.GetChainPoint(i), 0.65f));
+        if(physicalChainMesh!=null)
+        {
+            physicalChains ??= new Dictionary<HookAbility,HookChain25D>();
+            if(!physicalChains.TryGetValue(hook,out var physical)||physical==null)
+            {
+                var go=new GameObject(hook.name+" physical chain");go.transform.SetParent(generated.transform,false);
+                physical=go.AddComponent<HookChain25D>();physical.Initialize(hook,physicalChainMesh,physicalChainMaterial);physicalChains[hook]=physical;
+            }
+            physical.linkScale=chainLinkScale;physical.thickness=chainThickness;physical.slackRatio=chainSlackRatio;
+            physical.Present(butcher,tip);
+        }
         if (hook.ActiveHook != null)
         {
             GameObject view = View(hook.ActiveHook, PrimitiveType.Cube, new Vector3(0.3f, 0.25f, 0.65f), Color.yellow);

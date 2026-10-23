@@ -403,14 +403,14 @@ public static class Butcher25DChecks
     }
     public static void Capture(ButcherVisual25D driver, string name)
         => CaptureAt(driver.transform.position + Vector3.up * 0.75f, name);
-    public static void CaptureAt(Vector3 focus, string name)
+    public static void CaptureAt(Vector3 focus, string name, float framingSize=1.35f)
     {
         Camera camera = Camera.main; Vector3 position = camera.transform.position; Quaternion rotation = camera.transform.rotation;
         float size = camera.orthographicSize, aspect = camera.aspect; RenderTexture old = RenderTexture.active;
         RenderTexture rt = RenderTexture.GetTemporary(768, 768, 24, RenderTextureFormat.ARGB32); Texture2D image = null;
         try
         {
-            camera.transform.position = focus + new Vector3(2.7f, 2.5f, -4.5f); camera.transform.LookAt(focus); camera.orthographicSize = 1.35f; camera.aspect = 1;
+            camera.transform.position = focus + new Vector3(2.7f, 2.5f, -4.5f); camera.transform.LookAt(focus); camera.orthographicSize = framingSize; camera.aspect = 1;
             RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = rt });
             RenderTexture.active = rt; image = new Texture2D(768, 768, TextureFormat.RGB24, false);
             image.ReadPixels(new Rect(0, 0, 768, 768), 0, 0); image.Apply();

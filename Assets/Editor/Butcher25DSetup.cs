@@ -147,11 +147,14 @@ public static class Butcher25DSetup
             if (hero.GetComponent<HookVictim>() != null && hero.GetComponent<HeroActionTiming25D>() == null) hero.gameObject.AddComponent<HeroActionTiming25D>();
         var presentation = Object.FindAnyObjectByType<ArenaPresentation25D>();
         SerializedObject sceneData = new SerializedObject(presentation);
-        var models = sceneData.FindProperty("models"); models.arraySize = 4;
+        var models = sceneData.FindProperty("models");
         int[] kinds = { 0, 1, 5, 10 }; string[] paths = { HeroPrefab, HeroPrefab, CarcassPrefab, HookPrefab };
         for (int i = 0; i < kinds.Length; i++)
         {
-            var entry = models.GetArrayElementAtIndex(i); entry.FindPropertyRelative("kind").intValue = kinds[i];
+            int index=-1;
+            for(int j=0;j<models.arraySize;j++)if(models.GetArrayElementAtIndex(j).FindPropertyRelative("kind").intValue==kinds[i])index=j;
+            if(index<0){index=models.arraySize;models.arraySize++;}
+            var entry = models.GetArrayElementAtIndex(index); entry.FindPropertyRelative("kind").intValue = kinds[i];
             entry.FindPropertyRelative("prefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(paths[i]);
         }
         sceneData.ApplyModifiedPropertiesWithoutUndo();

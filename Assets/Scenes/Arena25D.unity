@@ -3075,6 +3075,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2100000011}
   - component: {fileID: 2100000012}
+  - component: {fileID: 2100000013}
   m_Layer: 0
   m_Name: Arena25D Presentation
   m_TagString: Untagged
@@ -3112,6 +3113,11 @@ MonoBehaviour:
   pipeline: {fileID: 11400000, guid: 683606ffeb604d3c82427dab1b7f8b70, type: 2}
   litMaterial: {fileID: 2100000, guid: c8ccbc87102546de80166e7bb48bc895, type: 2}
   chainMaterial: {fileID: 2100000, guid: 9ada2c65ede648aeaca8742baa4aeae8, type: 2}
+  physicalChainMesh: {fileID: 4300000, guid: e344f1b4a92b7a34c8750231dd6bc26e, type: 2}
+  physicalChainMaterial: {fileID: 2100000, guid: 8f664c5e901d12547b7ceb9b73e4771d, type: 2}
+  chainLinkScale: 1
+  chainThickness: 1
+  chainSlackRatio: 0.025
   models:
   - kind: 0
     prefab: {fileID: 7938025703419840844, guid: 378f9ec8f6807ca4d888899dbf886d24, type: 3}
@@ -3142,6 +3148,18 @@ MonoBehaviour:
   - kind: 13
     prefab: {fileID: 3757561872863193987, guid: 41d7f5577f5a1ef4c8ade74092a5dc97, type: 3}
   spriteStates: []
+--- !u!114 &2100000013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c090ee25b91f5474089a56423cc95fff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChainEnvironment25D
 --- !u!1 &2100000020
 GameObject:
   m_ObjectHideFlags: 0
