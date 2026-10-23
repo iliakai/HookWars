@@ -20,20 +20,47 @@ public class ArenaPresentation25D : MonoBehaviour
     [SerializeField] private ModelOverride[] models = new ModelOverride[0];
     private RenderPipelineAsset previousPipeline;
     private bool pipelineApplied;
-    private readonly Dictionary<Color, Material> palette = new Dictionary<Color, Material>();
-    private readonly MaterialPropertyBlock previewProperties = new MaterialPropertyBlock();
-    private readonly Dictionary<Component, GameObject> views = new Dictionary<Component, GameObject>();
-    private readonly Dictionary<HookAbility, LineRenderer> chains = new Dictionary<HookAbility, LineRenderer>();
-    private readonly Dictionary<SpriteRenderer, bool> hidden = new Dictionary<SpriteRenderer, bool>();
-    private readonly List<Component> removed = new List<Component>();
-    private readonly List<SpriteRenderer> removedSprites = new List<SpriteRenderer>();
-    private readonly List<Material> materials = new List<Material>();
-    private readonly Dictionary<SpriteRenderer, GameObject> terrain = new Dictionary<SpriteRenderer, GameObject>();
+    [System.Serializable] private struct SpriteVisibility
+    {
+        public SpriteRenderer renderer;
+        public bool forcedOff;
+    }
+    // Unity can preserve generated Transform references across a script reload,
+    // while nonserializable runtime caches disappear. Keep the restoration data
+    // serializable and rebuild the caches/owned visuals together on re-enable.
+    [SerializeField, HideInInspector] private List<SpriteVisibility> spriteStates = new List<SpriteVisibility>();
+    private Dictionary<Color, Material> palette = new Dictionary<Color, Material>();
+    // This allocates native Unity state: never construct it in a field initializer.
+    private MaterialPropertyBlock previewProperties;
+    private Dictionary<Component, GameObject> views = new Dictionary<Component, GameObject>();
+    private Dictionary<HookAbility, LineRenderer> chains = new Dictionary<HookAbility, LineRenderer>();
+    private Dictionary<SpriteRenderer, bool> hidden = new Dictionary<SpriteRenderer, bool>();
+    private List<Component> removed = new List<Component>();
+    private List<SpriteRenderer> removedSprites = new List<SpriteRenderer>();
+    private List<Material> materials = new List<Material>();
+    private Dictionary<SpriteRenderer, GameObject> terrain = new Dictionary<SpriteRenderer, GameObject>();
     private GameObject generated;
     private GameObject preview;
     private void OnEnable()
     {
         if (!Application.isPlaying) return;
+        bool lostCaches = terrain == null || views == null || hidden == null || palette == null || terrain.Count == 0;
+        palette ??= new Dictionary<Color, Material>();
+        previewProperties ??= new MaterialPropertyBlock();
+        views ??= new Dictionary<Component, GameObject>();
+        chains ??= new Dictionary<HookAbility, LineRenderer>();
+        hidden ??= new Dictionary<SpriteRenderer, bool>();
+        removed ??= new List<Component>(); removedSprites ??= new List<SpriteRenderer>();
+        materials ??= new List<Material>(); terrain ??= new Dictionary<SpriteRenderer, GameObject>();
+        spriteStates ??= new List<SpriteVisibility>();
+        if (lostCaches && generated != null)
+        {
+            foreach (SpriteVisibility state in spriteStates)
+                if (state.renderer != null) state.renderer.forceRenderingOff = state.forcedOff;
+            spriteStates.Clear(); hidden.Clear();
+            DestroyGenerated(); views.Clear(); chains.Clear(); terrain.Clear(); palette.Clear();
+            Start();
+        }
         if (generated != null) generated.SetActive(true);
         previousPipeline = QualitySettings.renderPipeline;
         pipelineApplied = true;
@@ -41,6 +68,7 @@ public class ArenaPresentation25D : MonoBehaviour
     }
     private void Start()
     {
+        if (generated != null) return;
         generated = new GameObject("Generated 25D visuals");
         generated.transform.SetParent(transform, false);
         // Bounds come from ArenaLayout's already resized logical surfaces.
@@ -73,7 +101,7 @@ public class ArenaPresentation25D : MonoBehaviour
         if (collider != null) DestroyImmediate(collider);
         if (!palette.TryGetValue(color, out Material material))
         {
-            material = new Material(litMaterial); material.color = color;
+            material = new Material(litMaterial) { name = "Arena25D Runtime " + litMaterial.name, hideFlags = HideFlags.DontSave }; material.color = color;
             materials.Add(material); palette.Add(color, material);
         }
         part.GetComponent<Renderer>().sharedMaterial = material;
@@ -216,7 +244,11 @@ public class ArenaPresentation25D : MonoBehaviour
         foreach (SpriteRenderer sprite in FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include))
             if (sprite.gameObject.scene == gameObject.scene)
             {
-                if (!hidden.ContainsKey(sprite)) hidden.Add(sprite, sprite.forceRenderingOff);
+                if (!hidden.ContainsKey(sprite))
+                {
+                    hidden.Add(sprite, sprite.forceRenderingOff);
+                    spriteStates.Add(new SpriteVisibility { renderer = sprite, forcedOff = sprite.forceRenderingOff });
+                }
                 sprite.forceRenderingOff = true;
             }
         removed.Clear();
@@ -225,6 +257,7 @@ public class ArenaPresentation25D : MonoBehaviour
         removedSprites.Clear();
         foreach (var pair in hidden) if (pair.Key == null) removedSprites.Add(pair.Key);
         foreach (SpriteRenderer sprite in removedSprites) hidden.Remove(sprite);
+        spriteStates.RemoveAll(state => state.renderer == null);
     }
     private Vector3 FindPlayerPosition()
     {
@@ -233,16 +266,32 @@ public class ArenaPresentation25D : MonoBehaviour
     }
     private void OnDisable()
     {
-        if (!pipelineApplied) return;
+        if (pipelineApplied) QualitySettings.renderPipeline = previousPipeline;
         pipelineApplied = false;
-        QualitySettings.renderPipeline = previousPipeline;
         if (generated != null) generated.SetActive(false);
-        foreach (var pair in hidden) if (pair.Key != null) pair.Key.forceRenderingOff = pair.Value;
-        hidden.Clear();
+        if (spriteStates != null)
+        {
+            foreach (SpriteVisibility state in spriteStates)
+                if (state.renderer != null) state.renderer.forceRenderingOff = state.forcedOff;
+            spriteStates.Clear();
+        }
+        hidden?.Clear();
+    }
+    private void DestroyGenerated()
+    {
+        if (generated == null) return;
+        generated.SetActive(false);
+        generated.name = "Retired 25D visuals";
+        foreach (Renderer renderer in generated.GetComponentsInChildren<Renderer>(true))
+            foreach (Material material in renderer.sharedMaterials)
+                if (material != null && material != litMaterial && material != chainMaterial &&
+                    material.name.StartsWith("Arena25D Runtime ") &&
+                    (material.hideFlags & HideFlags.DontSave) != 0) Destroy(material);
+        Destroy(generated); generated = null; preview = null;
     }
     private void OnDestroy()
     {
-        if (generated != null) Destroy(generated);
-        foreach (Material material in materials) if (material != null) Destroy(material);
+        DestroyGenerated();
+        if (materials != null) foreach (Material material in materials) if (material != null) Destroy(material);
     }
 }

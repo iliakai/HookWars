@@ -50,7 +50,7 @@ public static class Arena25DChecks
             if (phase == 0)
             {
                 if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.timeSinceStartup < ready) return;
-                phase = 1; EditorApplication.isPlaying = true; return;
+                phase = 1; EditorApplication.isPaused = false; EditorApplication.isPlaying = true; return;
             }
             if (phase == 1)
             {
@@ -107,6 +107,13 @@ public static class Arena25DChecks
         Check(camera.WorldToScreenPoint(ArenaSpace25D.ToWorld((Vector2)saved + Vector2.right)).x > origin.x, "D projects right");
         Quaternion rotation = player.transform.rotation; Call(display, "LateUpdate");
         Check(player.transform.position == saved && player.transform.rotation == rotation, "Visual sync preserves logical transform");
+        display.enabled = false;
+        Check(Object.FindObjectsByType<SpriteRenderer>().All(s => !s.forceRenderingOff), "Disabling presentation restores original sprite visibility");
+        Set(display, "terrain", null); Set(display, "views", null); Set(display, "hidden", null);
+        Set(display, "palette", null); Set(display, "previewProperties", null);
+        display.enabled = true; Call(display, "LateUpdate");
+        Check(Object.FindObjectsByType<SpriteRenderer>().All(s => s.forceRenderingOff), "Lost runtime caches can be rebuilt without exceptions");
+        Check(display.transform.Cast<Transform>().Count(t => t.name == "Generated 25D visuals" && t.gameObject.activeSelf) == 1, "Rebuilding presentation does not duplicate active visual roots");
         Check(GamePointer.OverInterface(new Vector2(30, Screen.height - 30)), "UI blocks world actions");
         var hook = player.GetComponent<PlayerHook>(); Set(hook, "nextThrowTime", 0f); hook.TryThrow(Vector2.right);
         Check(hook.ActiveHook != null, "Hook spawned");

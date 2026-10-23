@@ -23,7 +23,10 @@ public static class CarryingSetup
 
         int layer = EnsureLayer("Carcasses");
         Health[] heroes = Object.FindObjectsByType<Health>()
-            .Where(h => h.gameObject.scene == scene && h.GetComponent<HookVictim>() != null).ToArray();
+            .Where(h => h.gameObject.scene == scene && h.GetComponent<HookVictim>() != null)
+            // Keep the original enemy sprite as the shared marker template.
+            // Unspecified object discovery order must not rewrite Arena on setup.
+            .OrderBy(h => h.GetComponent<PlayerMovement>() != null ? 1 : 0).ToArray();
         if (heroes.Length != 2)
             throw new System.InvalidOperationException("В Arena ожидаются два героя с Health и HookVictim.");
         SpriteRenderer source = heroes[0].GetComponentsInChildren<SpriteRenderer>(true)
