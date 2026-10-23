@@ -1,0 +1,9 @@
+PASS: 28 actual Unity Play Mode assertions
+Passive income; one/two real shops; shared/empty/limited stock; spending; disabled shop; pause/resume; fresh owner.
+
+Regression run in the existing Unity 6000.6.6f1 Editor:
+Economy: 175 assertions passed (updated mass balance and shop-level rules).
+Carrying: 99 assertions passed.
+Real-time animal kill -> pickup -> factory -> finished product/bones -> sales/wall: 17 assertions passed.
+Total Editor Play Mode: 319 assertions (28 new/current income-storage checks + 175 + 99 + 17).
+Actual HUD screenshot inspected: 012-income.png, integer gold, finished stock/capacity, total +3/s from two supplied level-one shops.

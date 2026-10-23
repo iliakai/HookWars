@@ -8,7 +8,8 @@ public class SausageFactory : GameBuilding
     public bool InDeliveryRange(Vector3 position)=>Vector2.Distance(position,transform.position)<=deliveryRadius+.5f;
     [SerializeField, Min(0.1f)] private float capacityKg = 12f;
     [SerializeField, Min(0.1f)] private float secondsPerKg = 2f;
-    [SerializeField, Min(0)] private float productPerKg = 1f;
+    [SerializeField, Min(0.1f)] private float productCapacityKg = 12f;
+    [SerializeField, Min(0)] private float productPerKg = 0.5f;
     [SerializeField, Min(0)] private float bonesPerKg = 0.5f;
     [SerializeField, Min(0)] private float experiencePerKg = 2f;
     [SerializeField, Min(0.1f)] private float deliveryRadius = 1.5f;
@@ -44,12 +45,15 @@ public class SausageFactory : GameBuilding
     private double rawKg;
     public double RawKg => rawKg;
     public double CapacityKg => capacityKg;
+    public double ProductCapacityKg => productCapacityKg;
+    public double FreeProductKg => Math.Max(0, productCapacityKg - (owner != null ? owner.GetComponent<OwnerEconomy>().ProductKg : 0));
+    public bool CanProcess => RawKg > 1e-9 && FreeProductKg > 1e-9;
     public float SecondsPerKg => secondsPerKg;
     public float ExperiencePerKg => experiencePerKg;
     public override BuildingKind Kind => BuildingKind.Factory;
     public override string DisplayName => "Колбасный цех";
     public override int UpgradeCount => 5;
-    public override string Info => $"Сырьё: {rawKg:0.##} / {capacityKg:0.##} кг\n{secondsPerKg:0.##} с/кг; опыт: {experiencePerKg:0.##}/кг\nВыход: {productPerKg:0.##} кг и {bonesPerKg:0.##} костей/кг";
+    public override string Info => $"Сырьё: {rawKg:0.##} / {capacityKg:0.##} кг\nГотовое мясо: {(owner != null ? owner.GetComponent<OwnerEconomy>().ProductKg : 0):0.##} / {productCapacityKg:0.##} кг\n{secondsPerKg:0.##} с/кг; опыт: {experiencePerKg:0.##}/кг\nИз 1 кг: {productPerKg:0.##} кг продукта и {bonesPerKg:0.##} кг костей";
     public override bool CanBuild(PlayerProgression candidate) => candidate != null &&
         candidate.GetComponent<OwnerEconomy>() != null && candidate.GetComponent<OwnerEconomy>().Factory == null;
     public override bool Initialize(PlayerProgression candidate)
@@ -76,7 +80,7 @@ public class SausageFactory : GameBuilding
     }
     internal bool TryAcceptMass(double mass)
     {
-        if (owner == null || !double.IsFinite(mass) || mass <= 0 || mass > capacityKg - rawKg + 1e-9) return false;
+        if (owner == null || FreeProductKg <= 1e-9 || !double.IsFinite(mass) || mass <= 0 || mass > capacityKg - rawKg + 1e-9) return false;
         queue.Enqueue(mass);
         rawKg += mass;
         owner.AddExperience(mass * experiencePerKg);
@@ -86,6 +90,8 @@ public class SausageFactory : GameBuilding
     {
         if (owner == null || !double.IsFinite(seconds) || seconds <= 0) return;
         double budget = seconds / Math.Max(minimumSecondsPerKg, secondsPerKg);
+        // Stop before producing beyond storage; preserve the unprocessed queue.
+        if (productPerKg > 0) budget = Math.Min(budget, FreeProductKg / productPerKg);
         double processed = 0;
         while (budget > 0 && (headRemaining > 0 || queue.Count > 0))
         {
@@ -103,7 +109,7 @@ public class SausageFactory : GameBuilding
         if(index==3)return $"Заказать помощника: {helperPrice} зол. (сейчас {HelperCount})";
         if(index==4)return $"Груз помощников {helperCapacityKg:0.#} → {helperCapacityKg+helperCapacityIncrease:0.#} кг: {helperCapacityCost} зол.";
         if (index == 0) return $"Обработка {secondsPerKg:0.##} → {Mathf.Max(minimumSecondsPerKg, secondsPerKg * speedMultiplier):0.##} с/кг: {speedCost} зол.";
-        if (index == 1) return $"Вместимость +{capacityIncrease} кг: {capacityCost} зол.";
+        if (index == 1) return $"Склады сырья и продукта +{capacityIncrease} кг: {capacityCost} зол.";
         return $"Опыт +{experienceIncrease}/кг: {experienceCost} зол.";
     }
     public override bool TryUpgrade(int index)
@@ -120,7 +126,7 @@ public class SausageFactory : GameBuilding
         int cost = index == 0 ? speedCost : index == 1 ? capacityCost : experienceCost;
         if (!owner.TrySpendGold(cost)) return false;
         if (index == 0) { secondsPerKg = Mathf.Max(minimumSecondsPerKg, secondsPerKg * speedMultiplier); speedCost = NextCost(cost); }
-        if (index == 1) { capacityKg += capacityIncrease; capacityCost = NextCost(cost); }
+        if (index == 1) { capacityKg += capacityIncrease; productCapacityKg += capacityIncrease; capacityCost = NextCost(cost); }
         if (index == 2) { experiencePerKg += experienceIncrease; experienceCost = NextCost(cost); }
         return true;
     }

@@ -1,0 +1,7 @@
+Unity 6000.6.6f1
+Profile=Windows platform profile (globalScenes)
+Scenes=Assets/Scenes/MainMenu.unity, Assets/Scenes/Arena25D.unity
+Result=Succeeded
+Errors=0; warnings=511
+Time=00:00:12.5601897; bytes=292158548
+Output=Builds/WindowsDevelopment/HookWars.exe

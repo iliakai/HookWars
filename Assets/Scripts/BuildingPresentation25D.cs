@@ -19,7 +19,7 @@ public sealed class BuildingPresentation25D : MonoBehaviour
     {
         if (source == null || visual == null) return;
         bool enabled = source.isActiveAndEnabled && source.Owner != null;
-        if (source is SausageFactory factory) visual.SetWorking(enabled && factory.RawKg > 1e-9);
+        if (source is SausageFactory factory) visual.SetWorking(enabled && factory.CanProcess);
         else if (source is MeatShop shop)
         {
             var economy = source.Owner != null ? source.Owner.GetComponent<OwnerEconomy>() : null;

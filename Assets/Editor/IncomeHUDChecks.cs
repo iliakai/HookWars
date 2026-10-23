@@ -14,7 +14,7 @@ public static class IncomeHUDChecks
     static float due;
     static PlayerProgression player;
     static OwnerEconomy stock;
-    static MeatShop second;
+    static MeatShop first, second;
     static double pausedGold, pausedUntil;
 
     static IncomeHUDChecks() { if (SessionState.GetBool(Key, false)) Subscribe(); }
@@ -72,16 +72,16 @@ public static class IncomeHUDChecks
             if (phase == 2)
             {
                 Rate(2, "Passive income without shops");
-                stock.AddOutput(100, 0); Shop(new Vector2(-6, -5)); Next(3); return;
+                stock.AddOutput(12, 0); first = Shop(new Vector2(-6, -5)); Next(3); return;
             }
             if (phase == 3)
             {
-                Rate(4.5, "Passive plus actual sales from one shop");
+                Rate(2.5, "Passive plus actual sales from one shop");
                 second = Shop(new Vector2(-8, -5)); Next(4); return;
             }
             if (phase == 4)
             {
-                Rate(7, "Two shops share stock and both contribute");
+                Rate(3, "Two shops share stock and both contribute");
                 Check(player.TrySpendGold(1), "Purchase accepted without changing income");
                 Directory.CreateDirectory("Temp/IncomePreview");
                 EditorWindow.GetWindow(typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView")).Show();
@@ -90,24 +90,24 @@ public static class IncomeHUDChecks
             }
             if (phase == 5)
             {
-                Rate(7, "Purchases do not reduce gross receipts");
+                Rate(3, "Purchases do not reduce gross receipts");
                 second.enabled = false; Next(6); return;
             }
             if (phase == 6)
             {
-                Rate(4.5, "Disabled shop no longer contributes");
+                Rate(2.5, "Disabled shop no longer contributes");
                 stock.TakeProduct(10000); Next(7); return;
             }
             if (phase == 7)
             {
                 Rate(2, "Empty stock contributes no theoretical shop income");
-                stock.AddOutput(.1, 0); pausedGold = player.Gold; Next(8); return;
+                stock.AddOutput(.025, 0); pausedGold = player.Gold; Next(8); return;
             }
             if (phase == 8)
             {
                 double elapsed = 2.2 + Time.time - due;
-                Check(Math.Abs((player.Gold - pausedGold) - (2 * elapsed + .5)) < .1,
-                    "Limited stock yields only its actual .5 gold, plus passive income");
+                Check(Math.Abs((player.Gold - pausedGold) - (2 * elapsed + .25)) < .1,
+                    "Limited stock yields only its actual .25 gold, plus passive income");
                 Rate(2, "Exhausted stock returns to passive rate");
                 MatchPause.Instance.SetPaused(true); pausedGold = player.Gold;
                 pausedUntil = EditorApplication.timeSinceStartup + .4; phase = 9; return;
@@ -125,7 +125,8 @@ public static class IncomeHUDChecks
                 var fresh = new GameObject("Fresh income session").AddComponent<PlayerProgression>();
                 Check(fresh.Gold == 0 && fresh.CurrentGoldIncomePerSecond == 2, "Fresh owner starts with zero gold and default income");
                 Object.Destroy(fresh.gameObject);
-                File.WriteAllText("docs/validation/011-income.txt", $"PASS: {count} actual Unity Play Mode assertions\nPassive income; one/two real shops; shared/empty/limited stock; spending; disabled shop; pause/resume; fresh owner.\n");
+                StorageChecks();
+                File.WriteAllText("docs/validation/012-income.txt", $"PASS: {count} actual Unity Play Mode assertions\nPassive income; one/two real shops; shared/empty/limited stock; spending; disabled shop; pause/resume; fresh owner.\n");
                 SessionState.SetBool(Key + ".Passed", true); Debug.Log("HOOKWARS_INCOME_PASS: " + count);
                 Stop();
             }
@@ -133,4 +134,46 @@ public static class IncomeHUDChecks
         catch (Exception error) { Debug.LogError("HOOKWARS_INCOME_FAIL: " + error); Stop(); }
     }
     static void Stop() { phase = 99; EditorApplication.isPlaying = false; }
+    static void StorageChecks()
+    {
+        var root = new GameObject("Isolated production acceptance checks");
+        try
+        {
+            var wallet = root.AddComponent<OwnerEconomy>();
+            var owner = root.GetComponent<PlayerProgression>(); owner.enabled = false;
+            var factory = Object.Instantiate(AssetDatabase.LoadAssetAtPath<SausageFactory>(EconomySetup.FactoryPath), root.transform);
+            factory.enabled = false;
+            Check(factory.Initialize(owner), "Production fixture owns its own storage");
+            Check((bool)EconomyChecks.Invoke(factory, "TryAcceptMass", 1d), "Factory accepts one kg raw meat");
+            factory.Advance(2);
+            Check(EconomyChecks.Near(wallet.ProductKg, .5) && EconomyChecks.Near(wallet.BoneKg, .5) && factory.RawKg == 0,
+                "One kg raw becomes exactly .5 kg ready meat plus .5 kg bones");
+            wallet.AddOutput(11.5, 0); double xp = owner.Experience;
+            Check(!(bool)EconomyChecks.Invoke(factory, "TryAcceptMass", 1d) && owner.Experience == xp,
+                "Full 12kg ready storage rejects raw meat without XP");
+            factory.Advance(1000);
+            Check(wallet.ProductKg == 12 && wallet.BoneKg == .5, "Blocked workshop creates no product or bones");
+            var shop = Object.Instantiate(AssetDatabase.LoadAssetAtPath<MeatShop>(EconomySetup.ShopPath), root.transform);
+            shop.enabled = false; shop.Initialize(owner);
+            double gold = owner.Gold; shop.Advance(1);
+            Check(Math.Abs(owner.Gold - gold - .5) < 1e-6 && Math.Abs(wallet.ProductKg - 11.95) < 1e-6,
+                "Level one shop sells .05kg for .5 gold, freeing storage");
+            Check((bool)EconomyChecks.Invoke(factory, "TryAcceptMass", 2d), "A real sale unblocks raw acceptance");
+            factory.Advance(1000);
+            Check(Math.Abs(wallet.ProductKg - 12) < 1e-6 && Math.Abs(factory.RawKg - 1.9) < 1e-6,
+                "Partial processing fills exact capacity and preserves remaining raw queue");
+            Check(!factory.CanProcess, "Full storage closes working visual state");
+            wallet.TakeProduct(12); factory.Advance(1000);
+            Check(factory.RawKg == 0 && Math.Abs(wallet.ProductKg - .95) < 1e-6 && Math.Abs(wallet.BoneKg - 1.5) < 1e-6,
+                "Freed storage resumes preserved queue without losing mass");
+            owner.AddGold(1000);
+            Check(factory.TryUpgrade(1) && factory.ProductCapacityKg == 24 && factory.CapacityKg == 24,
+                "Storage upgrade expands both raw and finished capacity");
+            Check(shop.TryUpgrade(0) && shop.Level == 2 && Math.Abs(shop.GoldPerSecond - 1) < 1e-6 && shop.GoldPerKg == 10,
+                "Level two shop earns one gold/s at unchanged ten gold/kg");
+            wallet.AddOutput(1, 0); gold = owner.Gold; shop.Advance(10);
+            Check(Math.Abs(owner.Gold - gold - 10) < 1e-5, "One kg finished meat sells for ten gold");
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
 }

@@ -81,13 +81,13 @@ public static class EconomyChecks
             Check(owner.Level == 2 && Math.Abs(owner.Experience - 4) < 1e-8, "Experience awarded only for accepted 12 kg");
             Check(carrier.DeliverTo(factory) == 0 && factory.RawKg == 12 && owner.Experience == 4, "Full factory leaves cargo and grants no extra experience");
             factory.Advance(12);
-            Check(Near(factory.RawKg, 6) && Near(wallet.ProductKg, 6) && wallet.Bones == 3, "Processing kg and bone coefficients");
+            Check(Near(factory.RawKg, 6) && Near(wallet.ProductKg, 3) && wallet.Bones == 3, "Processing kg and bone coefficients");
             hero.transform.position = factory.transform.position + Vector3.right;
             typeof(SausageFactory).GetMethod("Update", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(factory, null);
             Check(carrier.Count == 0 && factory.RawKg > 11 && factory.RawKg <= 12, "Automatic retry while near after capacity is freed");
             double xp = owner.Experience;
             factory.Advance(24);
-            Check(Near(wallet.ProductKg, 18) && wallet.Bones == 9 && factory.RawKg == 0 && owner.Experience == xp, "No processing XP; full mass balance");
+            Check(Near(wallet.ProductKg, 9) && wallet.Bones == 9 && factory.RawKg == 0 && owner.Experience == xp, "No processing XP; full mass balance");
             for (int i = 0; i < 10; i++) wallet.AddOutput(0, 0.05);
             Check(wallet.Bones == 9 && Near(wallet.BoneRemainder, 0.5), "Fractional bone output retained");
             GameObject other = new GameObject("Other owner"); other.transform.SetParent(root.transform);
@@ -109,10 +109,10 @@ public static class EconomyChecks
             Check(factory.TryUpgrade(0) && Near(factory.RawKg, partial), "Speed upgrade preserves partially processed carcass");
             double productBefore = wallet.ProductKg;
             factory.Advance(factory.SecondsPerKg / 2.0);
-            Check(Near(wallet.ProductKg - productBefore, 0.5), "New processing time applies without resetting progress");
+            Check(Near(wallet.ProductKg - productBefore, 0.25), "New processing time applies without resetting progress");
             hero.GetComponent<Health>().TakeDamage(1000);
             hero.GetComponent<Health>().Revive();
-            Check(Near(wallet.ProductKg, 19) && wallet.Bones == 10 && owner.Gold == beforeGold - 225,
+            Check(Near(wallet.ProductKg, 9.5) && wallet.Bones == 10 && owner.Gold == beforeGold - 225,
                 "Death preserves owner and building resources");
             if (stage >= 3) CheckShops(root);
             if (stage >= 4) CheckAnimals(root);
@@ -350,9 +350,9 @@ public static class EconomyChecks
         MeatShop shopA = Object.Instantiate(prefab, root.transform), shopB = Object.Instantiate(prefab, root.transform);
         shopA.Initialize(a); shopB.Initialize(a);
         stockA.AddOutput(1, 0);
-        Check(Near(shopA.Advance(2) + shopB.Advance(2), 1) && Near(a.Gold, 5) && stockA.ProductKg == 0,
+        Check(Near(shopA.Advance(10) + shopB.Advance(10), 1) && Near(a.Gold, 10) && stockA.ProductKg == 0,
             "Two shops cannot sell one stock twice");
-        Check(shopA.Advance(100) == 0 && a.Gold == 5 && a.Experience == 0, "Empty stock grants no income or experience");
+        Check(shopA.Advance(100) == 0 && a.Gold == 10 && a.Experience == 0, "Empty stock grants no income or experience");
         MeatShop comparison = Object.Instantiate(prefab, root.transform); comparison.Initialize(b);
         stockA.AddOutput(2.5, 0); stockB.AddOutput(2.5, 0);
         double gold = a.Gold;
@@ -360,9 +360,9 @@ public static class EconomyChecks
         comparison.Advance(5);
         Check(Near(a.Gold - gold, b.Gold) && Near(stockA.ProductKg, stockB.ProductKg), "Sales preserve fractional results across time steps");
         a.AddGold(100);
-        Check(shopA.TryUpgrade(0) && shopA.SaleKgPerSecond == 0.5f && shopA.GoldPerKg == 6,
-            "Local price upgrade keeps sale speed unchanged");
-        Check(shopB.GoldPerKg == 5 && comparison.GoldPerKg == 5, "Other shop prices and owners remain independent");
+        Check(shopA.TryUpgrade(0) && Near(shopA.SaleKgPerSecond, 0.1) && shopA.GoldPerKg == 10 && shopA.Level == 2,
+            "Local level upgrade doubles throughput and keeps price at 10");
+        Check(shopB.Level == 1 && comparison.Level == 1 && Near(shopB.SaleKgPerSecond, .05) && comparison.GoldPerKg == 10, "Other shop levels and owners remain independent");
 
     }
     public static void Check(bool value, string message)

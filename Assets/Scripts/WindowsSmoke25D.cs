@@ -47,6 +47,27 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             foreach(var ai in FindObjectsByType<EnemyHookAI>())ai.enabled=false;
             foreach(var ai in FindObjectsByType<EnemyMelee>())ai.enabled=false;
             foreach(var ai in FindObjectsByType<EnemyChase>())ai.enabled=false;
+            if(depth==16)
+            {
+                var stock = progress.GetComponent<OwnerEconomy>();
+                var factory = stock.Factory; factory.enabled = false;
+                Check(factory.TryAcceptMass(1), "Windows factory accepts one kg raw meat");
+                factory.Advance(2);
+                Check(Math.Abs(stock.ProductKg-.5)<1e-6 && Math.Abs(stock.BoneKg-.5)<1e-6,
+                    "Windows one kg raw yields half product and half bones");
+                stock.AddOutput(11.5, 0);
+                Check(!factory.TryAcceptMass(1), "Windows full finished storage blocks raw delivery");
+                var saleObject = new GameObject("Explicit economy smoke shop");
+                var shop = saleObject.AddComponent<MeatShop>(); shop.Initialize(progress);
+                yield return new WaitForSeconds(2.2f);
+                Check(Math.Abs(progress.CurrentGoldIncomePerSecond-2.5)<.03,
+                    "Updated Windows player displays total income 2.5 with level one shop");
+                progress.AddGold(100); Check(shop.TryUpgrade(0), "Windows shop level upgrade accepted");
+                yield return new WaitForSeconds(2.2f);
+                Check(Math.Abs(progress.CurrentGoldIncomePerSecond-3)<.03 && shop.GoldPerKg==10 && shop.Level==2,
+                    "Updated Windows player displays total income 3 with level two shop");
+                Destroy(saleObject); factory.enabled = true;
+            }
             yield return new WaitForSecondsRealtime(.7f);
             Check(FindObjectsByType<ButcherVisual25D>().Length==2&&FindObjectsByType<SpriteRenderer>().Length==0,"Both 3D heroes and zero world sprites");
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"battle_"+depth+".png"));yield return new WaitForEndOfFrame();

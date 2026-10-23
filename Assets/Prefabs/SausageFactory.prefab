@@ -97,7 +97,8 @@ MonoBehaviour:
   upgradeCostGrowth: 1.5
   capacityKg: 12
   secondsPerKg: 2
-  productPerKg: 1
+  productCapacityKg: 12
+  productPerKg: 0.5
   bonesPerKg: 0.5
   experiencePerKg: 2
   deliveryRadius: 1.5

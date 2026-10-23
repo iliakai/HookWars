@@ -3,17 +3,20 @@ using UnityEngine;
 
 public class MeatShop : GameBuilding
 {
-    [SerializeField, Min(0.01f)] private float saleKgPerSecond = 0.5f;
-    [SerializeField, Min(0)] private float goldPerKg = 5f;
-    [SerializeField, Min(0)] private float priceIncrease = 1f;
+    [SerializeField, Min(0.001f)] private float saleKgPerSecond = 0.05f;
+    [SerializeField, Min(0)] private float goldPerKg = 10f;
+    [SerializeField, Min(0)] private float saleSpeedIncrease = 0.05f;
+    [SerializeField, Min(1)] private int level = 1;
     [SerializeField, Min(1)] private int upgradeCost = 50;
     public float SaleKgPerSecond => saleKgPerSecond;
     public float GoldPerKg => goldPerKg;
+    public int Level => level;
+    public double GoldPerSecond => (double)saleKgPerSecond * goldPerKg;
     public float LastSaleTime { get; private set; } = float.NegativeInfinity;
     public override BuildingKind Kind => BuildingKind.Shop;
     public override string DisplayName => "Мясная лавка";
-    public override string Info => $"Продажа: {saleKgPerSecond:0.##} кг/с\nЦена: {goldPerKg:0.##} золота/кг\nИспользует общий запас владельца";
-    public override string UpgradeLabel(int index) => $"Цена +{priceIncrease} зол./кг: {upgradeCost} зол.";
+    public override string Info => $"Уровень: {level}\nПродажа: {saleKgPerSecond:0.##} кг/с, доход до {GoldPerSecond:0.#} зол./с\nЦена: {goldPerKg:0.##} золота/кг\nПродаёт готовое мясо со склада цеха";
+    public override string UpgradeLabel(int index) => $"Уровень {level} → {level+1}: +{saleSpeedIncrease*goldPerKg:0.#} зол./с за {upgradeCost} зол.";
     private void Update() => Advance(Time.deltaTime);
     public double Advance(double seconds)
     {
@@ -26,7 +29,8 @@ public class MeatShop : GameBuilding
     public override bool TryUpgrade(int index)
     {
         if (owner == null || index != 0 || !owner.TrySpendGold(upgradeCost)) return false;
-        goldPerKg += priceIncrease;
+        saleKgPerSecond += saleSpeedIncrease;
+        level++;
         upgradeCost = NextCost(upgradeCost);
         return true;
     }

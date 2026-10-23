@@ -7,6 +7,7 @@ public class OwnerEconomy : MonoBehaviour
     private double productKg;
     private double bones;
     public double ProductKg => productKg;
+    public double BoneKg => bones;
     public long Bones => (long)Math.Floor(bones + 1e-9);
     public double BoneRemainder => bones - Math.Floor(bones + 1e-9);
     public SausageFactory Factory { get; internal set; }

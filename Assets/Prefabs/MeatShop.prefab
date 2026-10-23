@@ -126,7 +126,8 @@ MonoBehaviour:
   owner: {fileID: 0}
   buildCost: 50
   upgradeCostGrowth: 1.5
-  saleKgPerSecond: 0.5
-  goldPerKg: 5
-  priceIncrease: 1
+  saleKgPerSecond: 0.05
+  goldPerKg: 10
+  saleSpeedIncrease: 0.05
+  level: 1
   upgradeCost: 50
