@@ -48,7 +48,7 @@ public static class HookWarsValidationBridge
                 Application.runInBackground = true;
                 EditorApplication.QueuePlayerLoopUpdate();
             }
-            string key = active.StartsWith("revision-") ? GameplayRevisionChecks.Key : active == "acceptance" ? MatchAcceptance25DChecks.Key : active == "launch" ? Launch25DChecks.Key : active == "chain" ? Chain25DChecks.Key : active == "animals" ? Animals25DChecks.Key : active == "world" ? World25DChecks.Key : active == "arena25d" ? "HookWars.25D.Pending" : active == "butcher" ? Butcher25DChecks.Key : "HookWars.CarryingChecks.Pending";
+            string key = active=="meat"?Meat25DChecks.Key:active.StartsWith("revision-") ? GameplayRevisionChecks.Key : active == "acceptance" ? MatchAcceptance25DChecks.Key : active == "launch" ? Launch25DChecks.Key : active == "chain" ? Chain25DChecks.Key : active == "animals" ? Animals25DChecks.Key : active == "world" ? World25DChecks.Key : active == "arena25d" ? "HookWars.25D.Pending" : active == "butcher" ? Butcher25DChecks.Key : "HookWars.CarryingChecks.Pending";
             if (SessionState.GetBool(key, false) || EditorApplication.isPlayingOrWillChangePlaymode) return;
             Application.runInBackground = SessionState.GetBool(Active + ".Background", false);
             Write(active, SessionState.GetBool(key + ".Passed", false) ? "passed" : "failed", "See log.txt");
@@ -71,6 +71,12 @@ public static class HookWarsValidationBridge
             }
             File.Delete(path);
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
+            if(request.operation=="meat-setup")
+            {Meat25DSetup.Configure();Write(request.operation,"passed","Hovering meat with authored spin configured");return;}
+            if(request.operation=="meat-build")
+            {Write(request.operation,"running","Building updated Windows player");WindowsDevelopment25D.Build("010");Write(request.operation,"passed","See docs/validation/010-windows-build.txt");return;}
+            if(request.operation=="meat-verify")
+            {Legacy25DCleanup.Verify("docs/validation/010-assets.txt");Write(request.operation,"passed","Meat assets and GUIDs verified");return;}
             if(request.operation=="revision-setup")
             {GameplayRevisionSetup.Configure();Write(request.operation,"passed","Starting factories and permanent rocks configured");return;}
             if(request.operation=="revision-verify")
@@ -120,13 +126,14 @@ public static class HookWarsValidationBridge
             {
                 Butcher25DSetup.Configure(); Write(request.operation, "passed", "Arena25D adapted butcher saved"); return;
             }
-            if (!request.operation.StartsWith("revision-") && request.operation != "acceptance" && request.operation != "launch" && request.operation != "chain" && request.operation != "animals" && request.operation != "world" && request.operation != "arena25d" && request.operation != "regressions" && request.operation != "butcher")
+            if (request.operation!="meat"&&!request.operation.StartsWith("revision-") && request.operation != "acceptance" && request.operation != "launch" && request.operation != "chain" && request.operation != "animals" && request.operation != "world" && request.operation != "arena25d" && request.operation != "regressions" && request.operation != "butcher")
                 throw new InvalidOperationException("Unsupported validation operation");
             SessionState.SetString(Active, request.operation);
             ValidationPlayScope.CurrentScene();
             SessionState.SetBool(Active + ".Background", Application.runInBackground);
             Write(request.operation, "running", "Running in existing Editor");
-            if (request.operation.StartsWith("revision-")) GameplayRevisionChecks.Run(request.operation.Substring(9));
+            if(request.operation=="meat")Meat25DChecks.Run();
+            else if (request.operation.StartsWith("revision-")) GameplayRevisionChecks.Run(request.operation.Substring(9));
             else if (request.operation == "acceptance") MatchAcceptance25DChecks.Run();
             else if (request.operation == "launch") Launch25DChecks.Run();
             else if (request.operation == "chain") Chain25DChecks.Run();

@@ -89,7 +89,7 @@ public static class Animals25DChecks
             {
                 for(int i=0;i<3;i++)
                 {
-                    var view=p.VisualFor(corpses[i]);Check(view!=null&&view.GetComponentsInChildren<Animator>(true).Length==0&&view.GetComponentsInChildren<AnimalMotion>(true).Length==0,"Static corpse has no active animal/animation scripts "+i);
+                    var view=p.VisualFor(corpses[i]);Check(Meat25DChecks.SafeVisual(view)&&view.GetComponentsInChildren<AnimalMotion>(true).Length==0,"Meat has only visual spin and no animal behaviour "+i);
                     Check(corpses[i].MassKg==new[]{4,10,6}[i],"Species mass preserved "+i);
                     Butcher25DChecks.CaptureAt(view.position+Vector3.up*.1f,"animal_corpse_"+i);
                 }

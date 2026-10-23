@@ -1,0 +1,2 @@
+PASS: 40 actual Unity Play Mode assertions
+Byte-stable setup; real animal/hero deaths; small/large models; authored spin; fixed clearance; no combat scripts/events/physics; complete mass, pickup, cargo and factory delivery preserved.

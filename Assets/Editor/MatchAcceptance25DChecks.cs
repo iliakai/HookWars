@@ -76,7 +76,7 @@ public static class MatchAcceptance25DChecks
             {
                 Check(cow==null&&Object.FindObjectsByType<Carcass>().Count(c=>c.AnimalSpecies==Animal.Species.Cow)==1,"One axe impact creates exactly one 10kg cow corpse");
                 var corpse=Object.FindObjectsByType<Carcass>().Single(c=>c.AnimalSpecies==Animal.Species.Cow);
-                var visual=presentation.VisualFor(corpse);Check(visual!=null&&visual.GetComponentsInChildren<Animator>().Length==0,"Cow corpse has a static 3D model without Animator");
+                var visual=presentation.VisualFor(corpse);Check(Meat25DChecks.SafeVisual(visual),"Cow meat has only visual spin without combat behaviour");
                 Capture("01_static_corpse");due=Time.time+.2f;phase=3;return;
             }
             if(phase==3)

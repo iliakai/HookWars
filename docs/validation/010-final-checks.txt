@@ -1,0 +1,4 @@
+﻿Log: HOOKWARS_ANIMALS_PASS: 27 assertions in Unity Play Mode
+Log: HOOKWARS_MEAT_PASS: 40 assertions
+Log: HOOKWARS_ECONOMY_STAGE_5_PASS: 175 assertions.
+Log: HOOKWARS_CARRYING_PASS: 99 assertions in Unity Play Mode.

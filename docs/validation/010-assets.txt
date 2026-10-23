@@ -1,0 +1,5 @@
+Checked hierarchy objects=290
+Missing scripts=0
+World sprites/line renderers/GIF animators=0
+Unresolved scene/prefab/material GUIDs=0
+Build scenes: MainMenu, Arena25D

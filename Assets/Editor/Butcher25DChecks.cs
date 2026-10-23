@@ -146,7 +146,7 @@ public static class Butcher25DChecks
                     Check(killedOwn != null && killedOwn.IsHeroCarcass && killedOwn.IsAvailable&&Mathf.Abs(killedOwn.MassKg-sceneEnemy.MaximumKg)<.001f, "Animated lethal hook lands the intact overweight hero corpse");
                     Check(firstCargo.IsStored && secondCargo.IsAvailable && firstCargo.MassKg + secondCargo.MassKg + killedOwn.MassKg == 112&&carrier.CurrentMassKg==6, "Animated lethal hook preserves all 112kg and stores only the cargo that fits");
                     var display = Object.FindAnyObjectByType<ArenaPresentation25D>();
-                    Check(display.VisualFor(firstCargo) != null && display.VisualFor(firstCargo).GetComponentsInChildren<Animator>(true).Length == 0, "Dropped hero corpse has static 3D graphics without combat animator");
+                    Check(Meat25DChecks.SafeVisual(display.VisualFor(firstCargo)), "Dropped meat has no combat scripts or events");
                     firstLanded = firstCargo.transform.position; secondLanded = secondCargo.transform.position;
                     CaptureAt(display.VisualFor(firstCargo).position + Vector3.up * 0.3f, "live_carcass");
                     phase = 9; return;
@@ -299,8 +299,8 @@ public static class Butcher25DChecks
             ActionPictures(driver);
         }
         CheckWallStop(drivers.Single(d => d.Owner.GetComponent<PlayerMovement>() != null));
-        GameObject corpse = AssetDatabase.LoadAssetAtPath<GameObject>(Butcher25DSetup.CarcassPrefab);
-        Check(corpse.GetComponentsInChildren<Animator>(true).Length == 0 && corpse.GetComponentsInChildren<MonoBehaviour>(true).Length == 0 && corpse.GetComponentsInChildren<Collider>(true).Length == 0, "Corpse prefab contains static graphics only");
+        GameObject corpse = AssetDatabase.LoadAssetAtPath<GameObject>(Meat25DSetup.HeroPrefab)??AssetDatabase.LoadAssetAtPath<GameObject>(Butcher25DSetup.CarcassPrefab);
+        Check(Meat25DChecks.SafeVisual(corpse.transform)&&corpse.GetComponentsInChildren<Collider>(true).Length==0,"Corpse prefab contains visual animation only, without combat logic");
         Bounds projectile = AssetDatabase.LoadAssetAtPath<GameObject>(Butcher25DSetup.HookPrefab).GetComponent<MeshFilter>().sharedMesh.bounds;
         Check(projectile.size.z > projectile.size.y && Mathf.Abs(projectile.size.z - 0.45f) < 0.001f, "HookProjectile FBX static adaptation points forward +Z at 0.45m");
     }

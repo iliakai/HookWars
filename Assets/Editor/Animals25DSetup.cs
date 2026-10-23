@@ -28,6 +28,7 @@ public static class Animals25DSetup
             try { var data=new SerializedObject(root.GetComponent<Animal>()); data.FindProperty("species").intValue=i; data.ApplyModifiedPropertiesWithoutUndo(); PrefabUtility.SaveAsPrefabAsset(root,path); }
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
+        Meat25DSetup.ApplyIfConfigured(presentation);
         EditorSceneManager.SaveScene(presentation.gameObject.scene);AssetDatabase.SaveAssets();
         Debug.Log("HOOKWARS_ANIMALS_SETUP_PASS: three live models and three static corpse prefabs");
     }

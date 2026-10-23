@@ -158,6 +158,7 @@ public static class Butcher25DSetup
             entry.FindPropertyRelative("prefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(paths[i]);
         }
         sceneData.ApplyModifiedPropertiesWithoutUndo();
+        Meat25DSetup.ApplyIfConfigured(presentation);
         EditorSceneManager.SaveScene(presentation.gameObject.scene); AssetDatabase.SaveAssets();
         Debug.Log("HOOKWARS_BUTCHER_SETUP_PASS: model scale 0.48, radius 0.4992m; four layers; no demo/3D physics");
     }
@@ -325,4 +326,3 @@ public static class Butcher25DSetup
         Bounds bounds = renderers[0].bounds; foreach (Renderer r in renderers.Skip(1)) bounds.Encapsulate(r.bounds); return bounds;
     }
 }
-
