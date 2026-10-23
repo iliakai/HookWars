@@ -4,6 +4,12 @@ using UnityEngine.InputSystem;
 
 public static class GamePointer
 {
+    // Reserve both sides symmetrically even when a contextual panel is closed,
+    // so opening construction never moves the camera or hides an edge cell.
+    public static float FieldSideInset => Mathf.Max(
+        Mathf.Max(TrainingMatch.ScreenRect.xMax,ProgressionHUD.ScreenRect.xMax),
+        Mathf.Max(Mathf.Max(CarryingHUD.ScreenRect.xMax,PlayerBuilding.ScreenRect.xMax),
+            Mathf.Max(Screen.width-HookUpgradeMenu.ScreenRect.x,Screen.width-BuildingUpgradeMenu.ScreenRect.x)))+12;
     public static bool TryLogicalPoint(Camera camera, Vector2 screen, out Vector3 point)
     {
         point = Vector3.zero;

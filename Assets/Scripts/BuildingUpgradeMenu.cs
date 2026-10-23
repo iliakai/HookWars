@@ -6,7 +6,8 @@ public class BuildingUpgradeMenu : MonoBehaviour
     [SerializeField] private Camera worldCamera;
     private GameBuilding selected;
     public bool SelectedThisFrame { get; private set; }
-    private Rect Panel => new Rect(Screen.width - 412, 420, 400, 260);
+    public static Rect ScreenRect => new Rect(Screen.width - 412, 420, 400, 260);
+    private Rect Panel => ScreenRect;
     public bool Contains(Vector2 point) => selected != null && Panel.Contains(point);
     private void Awake() { if (worldCamera == null) worldCamera = Camera.main; }
     private bool CanAct => !MatchPause.BlocksGameplay && !GetComponent<Health>().IsDead && !GetComponent<HookVictim>().IsCaught;

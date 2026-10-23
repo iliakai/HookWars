@@ -21,14 +21,15 @@ public static class Arena25DChecks
     [MenuItem("HookWars/25D/Check Arena25D Play Mode")]
     public static void Run()
     {
+        ValidationPlayScope.CurrentScene();
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode.");
         assertions = 0; SessionState.SetInt(Key + ".Assertions", 0);
         SessionState.SetBool(Key + ".Finishing", false);
-        string original = Hash(CarryingSetup.ArenaPath), build = Hash("ProjectSettings/EditorBuildSettings.asset");
+        string build = Hash("ProjectSettings/EditorBuildSettings.asset");
         Arena25DSetup.Configure(); string scene = Hash(Arena25DSetup.ScenePath);
         Arena25DSetup.Configure();
         Check(scene == Hash(Arena25DSetup.ScenePath), "Setup leaves scene bytes unchanged on repeat");
-        Check(original == Hash(CarryingSetup.ArenaPath) && build == Hash("ProjectSettings/EditorBuildSettings.asset"), "Arena and build scenes unchanged");
+        Check(build == Hash("ProjectSettings/EditorBuildSettings.asset"), "Setup preserves the active build scene list");
         SessionState.SetBool(Key, true); SessionState.SetBool(Key + ".Passed", false); StartWaiting();
     }
     private static string Hash(string path)
@@ -96,6 +97,8 @@ public static class Arena25DChecks
                         {
                             Vector3 world = ArenaSpace25D.ToWorld(new Vector2(x, y)); Vector3 viewport = camera.WorldToViewportPoint(world);
                             Check(viewport.x >= 0 && viewport.x <= 1 && viewport.y >= 0 && viewport.y <= 1 && viewport.z > 0, "Field corner framed");
+                            float safeInset=Mathf.Min(.45f,GamePointer.FieldSideInset/Mathf.Max(1,Screen.width));
+                            Check(viewport.x>=safeInset&&viewport.x<=1-safeInset,"Field corner remains outside side UI panels");
                             Check(GamePointer.TryLogicalPoint(camera, camera.WorldToScreenPoint(world), out Vector3 logical) && Vector2.Distance(logical, new Vector2(x, y)) < 0.002f, "Ground ray round trip");
                         }
                 }

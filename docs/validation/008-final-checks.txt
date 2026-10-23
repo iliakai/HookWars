@@ -1,0 +1,9 @@
+﻿Log: HOOKWARS_BUTCHER_PASS: 809 assertions in Unity Play Mode; live-frame previews and real respawns checked
+Log: HOOKWARS_25D_PASS: 246 assertions
+Log: HOOKWARS_WORLD_PASS: 31 building assertions in Unity Play Mode
+Log: HOOKWARS_ANIMALS_PASS: 27 assertions in Unity Play Mode
+Log: HOOKWARS_CHAIN_PASS: 32 assertions, real Physics and pooled retraction
+Log: HOOKWARS_LAUNCH_PASS: 102 assertions, 4/16/20m menu cycles and direct Arena25D default
+Log: HOOKWARS_ACCEPTANCE_PASS: 16 assertions in real-time Play Mode
+Log: HOOKWARS_ECONOMY_STAGE_5_PASS: 175 assertions.
+Log: HOOKWARS_CARRYING_PASS: 97 assertions in Unity Play Mode.

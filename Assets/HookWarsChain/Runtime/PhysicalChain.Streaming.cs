@@ -41,6 +41,7 @@ namespace HookWars.Chain
                 previousStart=start;previousEnd=end;MaximumAnchorError=0;
             }
             buildOnStart=false;streaming=true;requestedStart=start;requestedEnd=end;issuedLength=metres;
+            EnsureStream();
         }
         private void EnsureStream()
         {
@@ -56,7 +57,7 @@ namespace HookWars.Chain
         private Rigidbody Mount(string label,Vector3 position)
         {
             var go=new GameObject(label);go.transform.SetParent(streamRoot.transform,false);go.transform.position=position;
-            var rb=go.AddComponent<Rigidbody>();rb.isKinematic=true;rb.interpolation=RigidbodyInterpolation.Interpolate;return rb;
+            var rb=go.AddComponent<Rigidbody>();rb.isKinematic=true;rb.interpolation=RigidbodyInterpolation.None;return rb;
         }
         private void ConfigureDistance(ConfigurableJoint joint)
         {
@@ -76,7 +77,7 @@ namespace HookWars.Chain
                 meshObject.transform.localScale=new Vector3(linkScale*visualThickness,linkScale*visualThickness,linkScale);
                 meshObject.AddComponent<MeshFilter>().sharedMesh=linkMesh;meshObject.AddComponent<MeshRenderer>().sharedMaterial=material;
                 var rb=go.AddComponent<Rigidbody>();rb.mass=massPerLink;rb.solverIterations=solverIterations;rb.solverVelocityIterations=8;
-                rb.interpolation=RigidbodyInterpolation.Interpolate;rb.collisionDetectionMode=CollisionDetectionMode.ContinuousSpeculative;
+                rb.interpolation=RigidbodyInterpolation.None;rb.collisionDetectionMode=CollisionDetectionMode.ContinuousSpeculative;
                 rb.maxAngularVelocity=25;rb.maxDepenetrationVelocity=2;rb.linearDamping=.15f;rb.angularDamping=.2f;
                 var collider=go.AddComponent<CapsuleCollider>();collider.direction=2;collider.height=.24f*linkScale;collider.radius=.07f*linkScale*visualThickness;collider.contactOffset=.001f;
                 collider.sharedMaterial=streamContact;
@@ -91,8 +92,9 @@ namespace HookWars.Chain
             Rigidbody body=streamPool[index];body.gameObject.SetActive(true);body.position=position;body.rotation=orientation;
             body.linearVelocity=velocity;body.angularVelocity=Vector3.zero;body.WakeUp();return body;
         }
-        private void StepStreaming()
+        public void PrepareStreamingStep()
         {
+            if(!streaming)return;
             if(issuedLength<.003f){StopStreaming();return;}
             EnsureStream();
             previousStart=streamStart.position;previousEnd=streamEnd.position;
@@ -143,6 +145,11 @@ namespace HookWars.Chain
                     float distance=Vector3.Distance(body.position+body.rotation*joint.anchor,joint.connectedBody.position+joint.connectedBody.rotation*joint.connectedAnchor);
                     MaximumAnchorError=Mathf.Max(MaximumAnchorError,distance);
                 }
+            if(handJoint!=null&&handJoint.connectedBody!=null&&handJoint.xMotion==ConfigurableJointMotion.Locked)
+            {
+                var body=handJoint.GetComponent<Rigidbody>();
+                MaximumAnchorError=Mathf.Max(MaximumAnchorError,Vector3.Distance(body.position+body.rotation*handJoint.anchor,handJoint.connectedBody.position));
+            }
         }
         public void StreamSubstep(float fraction)
         {

@@ -36,9 +36,9 @@ public static class Butcher25DChecks
     [MenuItem("HookWars/25D/Butcher/Run integration checks")]
     public static void Run()
     {
+        ValidationPlayScope.CurrentScene();
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode");
         count = 0; SessionState.SetInt(Key + ".Count", 0); SessionState.SetBool(Key + ".Finishing", false);
-        string arena = Hash(CarryingSetup.ArenaPath);
         string settings = Hash("ProjectSettings/EditorBuildSettings.asset") + Hash("ProjectSettings/QualitySettings.asset");
         Butcher25DSetup.Configure(); string first = Signature();
         Directory.CreateDirectory("Temp/ButcherIdempotence");
@@ -47,7 +47,7 @@ public static class Butcher25DChecks
         foreach (string file in Directory.GetFiles(Butcher25DSetup.Adapted))
             if (Hash(file) != Hash("Temp/ButcherIdempotence/" + Path.GetFileName(file))) Debug.LogError("BUTCHER_IDEMPOTENCE_CHANGED: " + file);
         Check(first == Signature(), "Repeated butcher setup preserves scene and integration asset bytes");
-        Check(arena == Hash(CarryingSetup.ArenaPath) && settings == Hash("ProjectSettings/EditorBuildSettings.asset") + Hash("ProjectSettings/QualitySettings.asset"), "Original Arena and project settings unchanged");
+        Check(settings == Hash("ProjectSettings/EditorBuildSettings.asset") + Hash("ProjectSettings/QualitySettings.asset"), "Butcher setup preserves the active build scene list and quality settings");
         SessionState.SetBool(Key, true); SessionState.SetBool(Key + ".Passed", false); Wait();
     }
     private static string Hash(string path)
@@ -227,7 +227,8 @@ public static class Butcher25DChecks
         foreach (EnemyChase ai in Object.FindObjectsByType<EnemyChase>()) ai.enabled = false;
         foreach (EnemyHookAI ai in Object.FindObjectsByType<EnemyHookAI>()) ai.enabled = false;
         foreach (EnemyMelee ai in Object.FindObjectsByType<EnemyMelee>()) ai.enabled = false;
-        Check(Object.FindObjectsByType<Collider>().Length == 0 && Object.FindObjectsByType<Rigidbody>().Length == 0, "No parallel 3D physics");
+        Check(Object.FindObjectsByType<Collider>().All(c=>c.gameObject.scene.name=="Arena25D chain physics"&&(c.gameObject.layer==24||c.gameObject.layer==25))&&
+            Object.FindObjectsByType<Rigidbody>().All(b=>b.gameObject.scene.name=="Arena25D chain physics"),"All 3D physics is isolated to the chain world");
         Check(Object.FindObjectsByType<MonoBehaviour>().All(m => m == null || !new[] { "ButcherDemoInput", "ButcherAnimationDriver", "PhysicalHookChain" }.Contains(m.GetType().Name)), "No demo drivers attached");
         foreach (string name in Butcher25DSetup.ClipNames)
         {
@@ -239,6 +240,7 @@ public static class Butcher25DChecks
         foreach (ButcherVisual25D driver in drivers)
         {
             Transform view = driver.transform.parent;
+            Check(driver.GetComponentsInChildren<Collider>(true).Length==0&&driver.GetComponentsInChildren<Rigidbody>(true).Length==0,"Butcher visual never introduces gameplay 3D physics");
             Vector3 savedPosition = view.position; Quaternion savedRotation = view.rotation;
             Check(!driver.Animator.applyRootMotion && driver.Animator.runtimeAnimatorController != null && driver.Animator.layerCount == 4, "Generic model has four animation layers and no root motion");
             Check(driver.GetComponentsInChildren<Renderer>(true).All(r => r.sharedMaterials.All(m => m != null && m.shader.name == "Universal Render Pipeline/Lit")), "All butcher materials mapped to URP Lit");

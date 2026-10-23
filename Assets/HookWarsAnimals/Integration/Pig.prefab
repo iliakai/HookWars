@@ -223,6 +223,7 @@ MonoBehaviour:
   animator: {fileID: 6594500260669694883}
   automaticSpeed: 0
   referenceWalkSpeed: 0.19526938
+  maximumWalkRate: 8
   startThreshold: 0.045
   stopThreshold: 0.02
   stopDelay: 0.22

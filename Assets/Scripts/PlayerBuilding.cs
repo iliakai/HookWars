@@ -16,7 +16,8 @@ public class PlayerBuilding : MonoBehaviour
     private string status = "B — строительство";
     public Transform Preview => preview;
     public bool IsBuilding => selectedPrefab != null;
-    private Rect MenuRect => new Rect(12, Screen.height - 206, 370, 194);
+    public static Rect ScreenRect => new Rect(12, Screen.height - 206, 370, 194);
+    private Rect MenuRect => ScreenRect;
     public bool BlocksMouseInput
     {
         get

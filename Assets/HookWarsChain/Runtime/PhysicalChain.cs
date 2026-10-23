@@ -136,7 +136,7 @@ namespace HookWars.Chain
         Vector3 EndPosition()=>endBody!=null?endBody.transform.TransformPoint(endBodyLocalPoint):endSocket.position;
         void FixedUpdate()
         {
-            if(streaming){StepStreaming();return;}
+            if(streaming)return; // Dedicated world prepares after the final visual pose.
             if(!built)return;
             if(startFollower!=null)startFollower.MovePosition(StartPosition());
             if(endFollower!=null&&endSocket!=null)endFollower.MovePosition(endSocket.position);

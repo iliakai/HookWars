@@ -13,8 +13,10 @@ public static class Animals25DChecks
     static int phase,count; static double ready; static float due;
     static Animal[] animals; static Vector3[] initial; static Carcass[] corpses;
     static Animals25DChecks(){if(SessionState.GetBool(Key,false))Subscribe();}
+    [MenuItem("HookWars/25D/World/Check animals Play Mode")]
     public static void Run()
     {
+        ValidationPlayScope.CurrentScene();
         Animals25DSetup.Configure();string before=Signature();Animals25DSetup.Configure();Check(before==Signature(),"Animal setup is byte stable");
         SessionState.SetBool(Key,true);SessionState.SetBool(Key+".Passed",false);Subscribe();
     }

@@ -1,0 +1,3 @@
+PASS: 16 assertions
+Real accepted axe -> static cow corpse -> automatic 10kg cargo -> proximity delivery -> 21s native game processing/sales -> 5 bones -> paid BoneWall
+Funding: explicit test-only 1000 gold after fresh-state assertion; AI disabled only for this test. No production/sale timer acceleration.

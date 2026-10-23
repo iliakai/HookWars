@@ -16,7 +16,7 @@ public sealed class MainMenuController : MonoBehaviour
     {
         number=text;
         if(int.TryParse(number,out int depth)&&MatchConfiguration.Valid(depth))
-        {sliderValue=depth;PlayerPrefs.SetInt(MatchConfiguration.SavedDepth,depth);}
+        {sliderValue=depth;MatchConfiguration.RememberDepth(depth);}
     }
     public bool StartBattle()
     {
@@ -51,5 +51,4 @@ public sealed class MainMenuController : MonoBehaviour
         if(GUI.Button(new Rect(350,540,260,44),"Выход",button))Application.Quit();
         GUI.enabled=true;GUI.matrix=previous;
     }
-    private void OnDisable(){if(IsValid)PlayerPrefs.Save();}
 }

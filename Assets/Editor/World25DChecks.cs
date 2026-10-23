@@ -16,8 +16,10 @@ public static class World25DChecks
     private static GameBuilding[] buildings;
     private static PlayerProgression owner;
     static World25DChecks() { if(SessionState.GetBool(Key,false)) Subscribe(); }
+    [MenuItem("HookWars/25D/World/Check buildings Play Mode")]
     public static void Run()
     {
+        ValidationPlayScope.CurrentScene();
         WorldModels25DSetup.ConfigureBuildings(); string before=Signature();
         Directory.CreateDirectory("Temp/WorldIdempotence");
         foreach(string p in Directory.GetFiles(WorldModels25DSetup.Output)) File.Copy(p,"Temp/WorldIdempotence/"+Path.GetFileName(p),true);

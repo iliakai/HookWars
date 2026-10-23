@@ -30,6 +30,7 @@ public class ArenaCamera25D : MonoBehaviour
                     extentX = Mathf.Max(extentX, Mathf.Abs(relative.x));
                     extentY = Mathf.Max(extentY, Mathf.Abs(relative.y));
                 }
-        view.orthographicSize = Mathf.Max(extentY + margin, (extentX + margin) / Mathf.Max(0.01f, view.aspect));
+        float usableFraction=Mathf.Max(.1f,1-2*GamePointer.FieldSideInset/Mathf.Max(1,Screen.width));
+        view.orthographicSize = Mathf.Max(extentY + margin, (extentX + margin) / Mathf.Max(0.01f, view.aspect*usableFraction));
     }
 }

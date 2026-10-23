@@ -25,8 +25,10 @@ public static class Chain25DChecks
     static readonly List<double> localCosts=new List<double>();
     static float maximumError;
     static Chain25DChecks(){if(SessionState.GetBool(Key,false))Subscribe();}
+    [MenuItem("HookWars/25D/World/Check chain stress Play Mode")]
     public static void Run()
     {
+        ValidationPlayScope.CurrentScene();
         Chain25DSetup.Configure();string before=Signature();Chain25DSetup.Configure();Check(before==Signature(),"Chain setup is byte stable");
         SessionState.SetBool(Key,true);SessionState.SetBool(Key+".Passed",false);Subscribe();
     }
@@ -70,7 +72,7 @@ public static class Chain25DChecks
                     if(d.Name.Contains("Physics")&&(d.Name.Contains("Simulate")||d.Name.Contains("Processing")||d.Name.Contains("FetchResults")))
                     {var r=ProfilerRecorder.StartNew(d.Category,d.Name,256);if(r.Valid){recorders.Add(r);recorderNames.Add(d.Name);samples[d.Name]=new List<long>();}}
                 }
-                due=Time.time+3.7f;phase=2;return;
+                due=Time.time+4.95f;phase=2;return;
             }
             if(chains.Length>0)
             {
@@ -85,7 +87,7 @@ public static class Chain25DChecks
             }
             if(phase==2)
             {
-                Check(chains.Length==2&&chains.All(c=>c.ActiveLinks>100),"Two real long hooks pay out more than 100 physical links each");
+                Check(chains.Length==2&&chains.All(c=>c.ActiveLinks>160),"Two near-full 30m hooks pay out more than 160 physical links each");
                 foreach(var c in chains)
                 {
                     Debug.Log("CHAIN_CHECK: Long throw maximum constraint error="+c.Spans.Max(s=>s.MaximumAnchorError));
@@ -109,12 +111,14 @@ public static class Chain25DChecks
                 Butcher25DChecks.CaptureAt(Vector3.zero,"physical_chains_long",18);
                 // Return along the actual gameplay route and observe pooled retraction.
                 foreach(var h in hooks)EconomyChecks.Set(h,"state",Enum.Parse(typeof(HookAbility).GetNestedType("HookState",BindingFlags.NonPublic),"Returning"));
-                due=Time.time+4.5f;phase=3;return;
+                due=Time.time+6f;phase=3;return;
             }
             if(phase==3)
             {
                 Check(hooks.All(h=>h.ActiveHook==null)&&chains.All(c=>c.ActiveLinks==0),"Both hooks return and all issued links retire");
                 int pooled=chains.Sum(c=>c.PooledLinks);SessionState.SetInt(Key+".Pool",pooled);
+                SessionState.SetInt(Key+".Bodies",Object.FindObjectsByType<Rigidbody>(FindObjectsInactive.Include).Length);
+                SessionState.SetInt(Key+".Joints",Object.FindObjectsByType<ConfigurableJoint>(FindObjectsInactive.Include).Length);
                 foreach(var h in hooks)EconomyChecks.Set(h,"range",5f);
                 Throw(0);Throw(1);due=Time.time+2;phase=4;return;
             }
@@ -122,6 +126,7 @@ public static class Chain25DChecks
             {
                 foreach(var h in hooks)h.CancelHook();
                 Check(chains.Sum(c=>c.PooledLinks)==SessionState.GetInt(Key+".Pool",0),"Repeated short throws reuse the existing pool");
+                Check(Object.FindObjectsByType<Rigidbody>(FindObjectsInactive.Include).Length==SessionState.GetInt(Key+".Bodies",0)&&Object.FindObjectsByType<ConfigurableJoint>(FindObjectsInactive.Include).Length==SessionState.GetInt(Key+".Joints",0),"Native Rigidbody and joint counts do not grow across the throw series");
                 if(++series<5){Throw(0);Throw(1);due=Time.time+2;return;}
                 EconomyChecks.Set(hooks[0],"range",10f);EconomyChecks.Set(hooks[0],"speed",4f);EconomyChecks.Set(hooks[0],"maxBounces",1);
                 EconomyChecks.Set(hooks[0],"obstacleLayers",(LayerMask)LayerMask.GetMask("Buildings"));
@@ -162,8 +167,10 @@ public static class Chain25DChecks
             if(phase==10)
             {
                 Check(chains.All(c=>c.ActiveLinks==0),"Death cancels issued physical chain bodies");
+                Check(maximumError<.35f,"Whole-scenario constraint error stays below 0.35m including payout/hand attachment: "+maximumError);
                 string report=$"Peak dynamic links={peakBodies}; link colliders={peakColliders}; total rigidbodies including pooled/kinematic={Object.FindObjectsByType<Rigidbody>(FindObjectsInactive.Include).Length}\n";
-                report+=$"Dedicated local PhysX base substeps={ChainPhysicsWorld25D.Instance.substeps} (adaptive up to 64): samples={localCosts.Count}, mean={localCosts.Average():F4}ms, peak={localCosts.Max():F4}ms\n";
+                var world=ChainPhysicsWorld25D.Instance;
+                report+=$"Dedicated local PhysX base substeps={world.substeps} (adaptive up to 64): actual active steps={world.SimulationSteps}, mean={world.TotalSimulationMilliseconds/Math.Max(1,world.SimulationSteps):F4}ms, peak={world.PeakSimulationMilliseconds:F4}ms\n";
                 foreach(var pair in samples)report+=pair.Key+": samples="+pair.Value.Count+", mean ns="+(pair.Value.Count>0?pair.Value.Average():0)+", peak ns="+(pair.Value.Count>0?pair.Value.Max():0)+"\n";
                 report+="maximum measured constraint excess across all throws="+maximumError+"m\n";
                 File.WriteAllText("Temp/HookWarsAutomation/chain-profile.txt",report);Debug.Log("HOOKWARS_CHAIN_PROFILE: "+report);

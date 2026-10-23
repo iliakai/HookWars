@@ -24,6 +24,7 @@ public static class Launch25DChecks
     static HeroActionTiming25D timing;
     static Vector3 pausePosition;
     static Launch25DChecks(){if(SessionState.GetBool(Key,false))Subscribe();}
+    [MenuItem("HookWars/25D/Launch/Check match sessions Play Mode")]
     public static void Run()
     {
         Launch25DSetup.Configure();string before=File.ReadAllText(Launch25DSetup.MenuPath)+File.ReadAllText(Arena25DSetup.ScenePath)+File.ReadAllText("ProjectSettings/EditorBuildSettings.asset");
@@ -70,7 +71,7 @@ public static class Launch25DChecks
                 if(!EditorApplication.isPlayingOrWillChangePlaymode)
                 {
                     SessionState.SetBool(Key,false);EditorApplication.update-=Tick;SceneManager.sceneLoaded-=Loaded;
-                    PlayerPrefs.SetInt(MatchConfiguration.SavedDepth,SessionState.GetInt(Key+".SavedDepth",16));PlayerPrefs.Save();
+                    MatchConfiguration.RememberDepth(SessionState.GetInt(Key+".SavedDepth",16));
                 }
                 return;
             }
