@@ -1,0 +1,3 @@
+PASS: actual Unity Play Mode frames captured; imported river texture assigned; UV offset advances; actual mesh V follows +Z; world -Z projects down; flow freezes during pause.
+Frames: 014-river-a.png and 014-river-b.png, approximately one game second apart.
+Actual rendered water image correlation: best vertical shift +13 pixels (down), MSE 13,326. Both frames visually inspected.

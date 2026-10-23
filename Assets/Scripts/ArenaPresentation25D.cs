@@ -18,6 +18,10 @@ public class ArenaPresentation25D : MonoBehaviour
     [SerializeField] private Material litMaterial;
     [SerializeField] private Material bankMaterial;
     [SerializeField, Min(.1f)] private float grassTileMeters = 4;
+    [SerializeField] private Material riverMaterial;
+    [SerializeField] private Mesh riverSurfaceMesh;
+    [SerializeField, Min(.1f)] private float riverTileMeters = 4;
+    [SerializeField, Min(0)] private float riverFlowMetersPerSecond = .6f;
     private MaterialPropertyBlock groundProperties;
     [SerializeField] private Mesh physicalChainMesh;
     [SerializeField] private Material physicalChainMaterial;
@@ -80,6 +84,11 @@ public class ArenaPresentation25D : MonoBehaviour
             ground.transform.position = ArenaSpace25D.ToWorld(bounds.center, mountain ? height / 2 : -height / 2);
             if (label.EndsWith("bank") && bankMaterial != null)
                 ground.GetComponent<Renderer>().sharedMaterial = bankMaterial;
+            if (label == "river" && riverMaterial != null && riverSurfaceMesh != null)
+            {
+                ground.GetComponent<Renderer>().sharedMaterial = riverMaterial;
+                ground.GetComponent<MeshFilter>().sharedMesh = riverSurfaceMesh;
+            }
             ApplyGroundTiling(label, ground, bounds);
             terrain.Add(label, ground);
         }
@@ -89,10 +98,14 @@ public class ArenaPresentation25D : MonoBehaviour
     }
     private void ApplyGroundTiling(string label, GameObject ground, Bounds bounds)
     {
-        if (!label.EndsWith("bank") || bankMaterial == null) return;
+        bool water = label == "river" && riverMaterial != null && riverSurfaceMesh != null;
+        if (!water && (!label.EndsWith("bank") || bankMaterial == null)) return;
         groundProperties ??= new MaterialPropertyBlock();
-        float tile = Mathf.Max(.1f, grassTileMeters);
-        groundProperties.SetVector("_BaseMap_ST", new Vector4(bounds.size.x / tile, bounds.size.y / tile, 0, 0));
+        float tile = Mathf.Max(.1f, water ? riverTileMeters : grassTileMeters);
+        // River mesh UV: U=+X, V=+Z. Increasing V offset moves features toward
+        // -Z (logical -Y, screen down). Scaled game time freezes flow on pause.
+        float flow = water ? (float)((Time.timeAsDouble * riverFlowMetersPerSecond / tile) % 1d) : 0;
+        groundProperties.SetVector("_BaseMap_ST", new Vector4(bounds.size.x / tile, bounds.size.y / tile, 0, flow));
         ground.GetComponent<Renderer>().SetPropertyBlock(groundProperties);
     }
     private GameObject Primitive(string label, PrimitiveType shape, Transform parent, Vector3 size, Color color)
