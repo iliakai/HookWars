@@ -108,6 +108,11 @@ MonoBehaviour:
   minimumSecondsPerKg: 0.1
   capacityIncrease: 12
   experienceIncrease: 1
+  helperPrefab: {fileID: 7522472835275687091, guid: 3776f4407d207a94ea243c2e98fac681, type: 3}
+  helperPrice: 100
+  helperCapacityCost: 50
+  helperCapacityKg: 10
+  helperCapacityIncrease: 2
 --- !u!1 &3593699298149390708
 GameObject:
   m_ObjectHideFlags: 0

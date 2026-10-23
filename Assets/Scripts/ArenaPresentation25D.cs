@@ -130,7 +130,7 @@ public class ArenaPresentation25D : MonoBehaviour
     public GameObject ModelFor(Component source)
     {
         VisualKind kind;
-        if (source is Health) kind = source.GetComponent<PlayerMovement>() != null ? VisualKind.Player : VisualKind.Enemy;
+        if (source is Health) kind = source.GetComponent<PlayerMovement>() != null||source.GetComponent<ButcherHelper>()?.Factory?.Owner.GetComponent<PlayerMovement>()!=null ? VisualKind.Player : VisualKind.Enemy;
         else if (source is Animal animal) kind = animal.Kind == Animal.Species.Cow ? VisualKind.Cow : animal.Kind == Animal.Species.Pig ? VisualKind.Pig : VisualKind.Sheep;
         else if (source is Carcass carcass)
         {
@@ -163,8 +163,11 @@ public class ArenaPresentation25D : MonoBehaviour
         foreach (Health hero in FindObjectsByType<Health>(FindObjectsInactive.Include))
         {
             if (hero.gameObject.scene != gameObject.scene) continue;
-            Color color = hero.GetComponent<PlayerMovement>() != null ? new Color(0.2f, 0.65f, 1) : new Color(0.95f, 0.24f, 0.18f);
+            var helper=hero.GetComponent<ButcherHelper>();
+            bool friendly=hero.GetComponent<PlayerMovement>()!=null||helper?.Factory?.Owner.GetComponent<PlayerMovement>()!=null;
+            Color color = friendly ? new Color(0.2f, 0.65f, 1) : new Color(0.95f, 0.24f, 0.18f);
             GameObject view = View(hero);
+            view.transform.localScale=helper!=null?Vector3.one*.5f:Vector3.one;
             view.SetActive(hero.gameObject.activeInHierarchy && !hero.IsDead);
             if (view.transform.Find("Facing") == null)
             {
@@ -182,7 +185,7 @@ public class ArenaPresentation25D : MonoBehaviour
                 team.transform.localPosition = Vector3.up * 0.007f;
             }
             PlayerAim aim = hero.GetComponentInChildren<PlayerAim>();
-            Vector2 direction = aim != null ? aim.AimDirection : (Vector2)(FindPlayerPosition() - hero.transform.position);
+            Vector2 direction = aim != null ? aim.AimDirection : helper!=null?helper.AimDirection:(Vector2)(FindPlayerPosition() - hero.transform.position);
             HeroActionTiming25D timing = hero.GetComponent<HeroActionTiming25D>();
             if (timing != null) direction = timing.ResolveFacing(direction);
             Quaternion facing=ArenaSpace25D.Facing(direction);

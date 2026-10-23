@@ -17,6 +17,28 @@ public class SausageFactory : GameBuilding
     [SerializeField, Min(0.01f)] private float minimumSecondsPerKg = 0.1f;
     [SerializeField, Min(0.1f)] private float capacityIncrease = 12f;
     [SerializeField, Min(0)] private float experienceIncrease = 1f;
+    [Header("Helper economy (temporary balance)")]
+    [SerializeField] private ButcherHelper helperPrefab;
+    [SerializeField,Min(1)] private int helperPrice=100,helperCapacityCost=50;
+    [SerializeField,Min(.1f)] private float helperCapacityKg=10,helperCapacityIncrease=2;
+    private readonly List<ButcherHelper> helpers=new List<ButcherHelper>();
+    public float HelperCapacityKg=>helperCapacityKg;
+    public int HelperPrice=>helperPrice;
+    public int HelperCapacityCost=>helperCapacityCost;
+    public int HelperCount{get{helpers.RemoveAll(h=>h==null||h.GetComponent<Health>().IsDead);return helpers.Count;}}
+    public bool TryOrderHelper()
+    {
+        if(owner==null||helperPrefab==null||owner.Gold<helperPrice)return false;
+        for(int attempt=0;attempt<48;attempt++)
+        {
+            Vector2 offset=UnityEngine.Random.insideUnitCircle.normalized*UnityEngine.Random.Range(1.5f,2.5f);
+            Vector3 position=transform.position+(Vector3)offset;
+            if(!ArenaLayout.IsInsideBank(position,transform.position.x>0,.27f)||!WorldCollision.FreeCircle(position,.27f))continue;
+            if(!owner.TrySpendGold(helperPrice))return false;
+            var helper=Instantiate(helperPrefab,position,Quaternion.identity,transform);helper.Bind(this,helperCapacityKg);helpers.Add(helper);return true;
+        }
+        return false;
+    }
     private readonly Queue<double> queue = new Queue<double>();
     private double headRemaining;
     private double rawKg;
@@ -26,7 +48,7 @@ public class SausageFactory : GameBuilding
     public float ExperiencePerKg => experiencePerKg;
     public override BuildingKind Kind => BuildingKind.Factory;
     public override string DisplayName => "Колбасный цех";
-    public override int UpgradeCount => 3;
+    public override int UpgradeCount => 5;
     public override string Info => $"Сырьё: {rawKg:0.##} / {capacityKg:0.##} кг\n{secondsPerKg:0.##} с/кг; опыт: {experiencePerKg:0.##}/кг\nВыход: {productPerKg:0.##} кг и {bonesPerKg:0.##} костей/кг";
     public override bool CanBuild(PlayerProgression candidate) => candidate != null &&
         candidate.GetComponent<OwnerEconomy>() != null && candidate.GetComponent<OwnerEconomy>().Factory == null;
@@ -78,12 +100,21 @@ public class SausageFactory : GameBuilding
     }
     public override string UpgradeLabel(int index)
     {
+        if(index==3)return $"Заказать помощника: {helperPrice} зол. (сейчас {HelperCount})";
+        if(index==4)return $"Груз помощников {helperCapacityKg:0.#} → {helperCapacityKg+helperCapacityIncrease:0.#} кг: {helperCapacityCost} зол.";
         if (index == 0) return $"Обработка {secondsPerKg:0.##} → {Mathf.Max(minimumSecondsPerKg, secondsPerKg * speedMultiplier):0.##} с/кг: {speedCost} зол.";
         if (index == 1) return $"Вместимость +{capacityIncrease} кг: {capacityCost} зол.";
         return $"Опыт +{experienceIncrease}/кг: {experienceCost} зол.";
     }
     public override bool TryUpgrade(int index)
     {
+        if(index==3)return TryOrderHelper();
+        if(index==4)
+        {
+            if(owner==null||!owner.TrySpendGold(helperCapacityCost))return false;
+            helperCapacityKg+=helperCapacityIncrease;helperCapacityCost=NextCost(helperCapacityCost);
+            foreach(var helper in helpers)if(helper!=null)helper.GetComponent<CarcassCarrier>().SetHelperCapacity(helperCapacityKg);return true;
+        }
         if (owner == null || index < 0 || index > 2) return false;
         if (index == 0 && secondsPerKg <= minimumSecondsPerKg) return false;
         int cost = index == 0 ? speedCost : index == 1 ? capacityCost : experienceCost;

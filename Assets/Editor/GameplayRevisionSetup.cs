@@ -8,6 +8,7 @@ using Object=UnityEngine.Object;
 public static class GameplayRevisionSetup
 {
     public const string Rocks="Assets/HookWarsRocks",Output=Rocks+"/Integration",RockLogic="Assets/Prefabs/PermanentRock.prefab";
+    public const string HelperPath="Assets/Prefabs/ButcherHelper.prefab";
     [MenuItem("HookWars/25D/Revision/Setup map and factories")]
     public static void Configure()
     {
@@ -40,6 +41,25 @@ public static class GameplayRevisionSetup
         finally{Object.DestroyImmediate(root);}
         root=PrefabUtility.LoadPrefabContents(EconomySetup.FactoryPath);
         try{root.GetComponent<BoxCollider2D>().size=Vector2.one*2;PrefabUtility.SaveAsPrefabAsset(root,EconomySetup.FactoryPath);}
+        finally{PrefabUtility.UnloadPrefabContents(root);}
+        root=new GameObject("ButcherHelper");
+        try
+        {
+            root.AddComponent<CircleCollider2D>().radius=.25f;
+            root.AddComponent<Health>();root.AddComponent<HookVictim>();root.AddComponent<CarcassCarrier>();
+            root.AddComponent<HeroActionTiming25D>();root.AddComponent<ButcherHelper>();
+            var corpse=root.AddComponent<HeroCarcassSpawner>();var data=new SerializedObject(corpse);
+            data.FindProperty("carcassPrefab").objectReferenceValue=AssetDatabase.LoadAssetAtPath<Carcass>(CarryingSetup.PrefabPath);data.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.SaveAsPrefabAsset(root,HelperPath);
+        }
+        finally{Object.DestroyImmediate(root);}
+        root=PrefabUtility.LoadPrefabContents(EconomySetup.FactoryPath);
+        try
+        {
+            var data=new SerializedObject(root.GetComponent<SausageFactory>());
+            data.FindProperty("helperPrefab").objectReferenceValue=AssetDatabase.LoadAssetAtPath<ButcherHelper>(HelperPath);data.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.SaveAsPrefabAsset(root,EconomySetup.FactoryPath);
+        }
         finally{PrefabUtility.UnloadPrefabContents(root);}
         var scene=EditorSceneManager.OpenScene(Arena25DSetup.ScenePath);
         var map=Object.FindAnyObjectByType<MatchMap25D>();if(map==null)map=new GameObject("Match map generator").AddComponent<MatchMap25D>();

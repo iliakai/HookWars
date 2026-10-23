@@ -6,7 +6,7 @@ public class BuildingUpgradeMenu : MonoBehaviour
     [SerializeField] private Camera worldCamera;
     private GameBuilding selected;
     public bool SelectedThisFrame { get; private set; }
-    public static Rect ScreenRect => new Rect(Screen.width - 412, 420, 400, 260);
+    public static Rect ScreenRect => new Rect(Screen.width - 412, Mathf.Max(70,Screen.height-390), 400, 378);
     private Rect Panel => ScreenRect;
     public bool Contains(Vector2 point) => selected != null && Panel.Contains(point);
     private void Awake() { if (worldCamera == null) worldCamera = Camera.main; }
@@ -41,6 +41,6 @@ public class BuildingUpgradeMenu : MonoBehaviour
         for (int i = 0; i < selected.UpgradeCount; i++)
             if (GUI.Button(new Rect(box.x + 10, box.y + 104 + i * 40, 380, 36), selected.UpgradeLabel(i)))
                 selected.TryUpgrade(i);
-        if (GUI.Button(new Rect(box.x + 340, box.y + 228, 50, 24), "Закрыть")) selected = null;
+        if (GUI.Button(new Rect(box.x + 320, box.y + box.height-38, 70, 26), "Закрыть")) selected = null;
     }
 }

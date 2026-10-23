@@ -14,6 +14,8 @@ public class CarcassCarrier : MonoBehaviour
     private readonly List<Carcass> deathCargo = new List<Carcass>();
     private Health health;
     private HookVictim victim;
+    public void ConfigureHelper(float capacity){capacityKg=capacity;pickupRadius=.8f;carcassLayers=LayerMask.GetMask("Carcasses");}
+    public void SetHelperCapacity(float capacity){if(GetComponent<ButcherHelper>()!=null)capacityKg=Mathf.Max(capacityKg,capacity);}
     public float CapacityKg => capacityKg;
     public float CapacityPerUpgrade => capacityPerUpgrade;
     public int Count => cargo.Count;
@@ -54,6 +56,7 @@ public class CarcassCarrier : MonoBehaviour
     {
         if (!CanCollect() || carcass == null || !carcass.IsAvailable ||
             CurrentMassKg + carcass.MassKg > capacityKg) return false;
+        if(GetComponent<ButcherHelper>()!=null&&!carcass.AnimalSpecies.HasValue)return false;
         if (!carcass.TryStore(this)) return false;
         cargo.Add(carcass);
         return true;
@@ -81,7 +84,8 @@ public class CarcassCarrier : MonoBehaviour
 
     public double DeliverTo(SausageFactory factory)
     {
-        if (!CanCollect() || factory == null || factory.Owner != GetComponent<PlayerProgression>()) return 0;
+        var helper=GetComponent<ButcherHelper>();var economicOwner=helper!=null?helper.Factory?.Owner:GetComponent<PlayerProgression>();
+        if (!CanCollect() || factory == null || factory.Owner != economicOwner) return 0;
         double delivered = 0;
         for (int i = 0; i < cargo.Count;)
         {

@@ -29,7 +29,7 @@ public sealed class ButcherVisual25D : MonoBehaviour
     public Transform BodyRoll => bodyRoll;
     public Transform SkinOrientation => skinOrientation;
     public Animator Animator => animator;
-    public float EffectiveRadius => effectiveRadius;
+    public float EffectiveRadius => effectiveRadius*Mathf.Abs(transform.lossyScale.x);
     public int DirectionIndex => direction;
     public float RollRate { get; private set; }
     public void Bind(Health owner)
@@ -82,7 +82,7 @@ public sealed class ButcherVisual25D : MonoBehaviour
         float speed = deltaTime > 0 ? travel.magnitude / deltaTime : 0;
         float allowedSpeed=Mathf.Max(maximumVoluntarySpeed,(hero.GetComponent<PlayerMovement>()?.MoveSpeed??0)*1.5f);
         bool ordinary = victim != null && !victim.IsCaught && travel.magnitude < 2f && speed <= allowedSpeed;
-        RollRate = ordinary && speed > 0.01f ? speed / (2f * Mathf.PI * Mathf.Max(0.01f, effectiveRadius)) : 0;
+        RollRate = ordinary && speed > 0.01f ? speed / (2f * Mathf.PI * Mathf.Max(0.01f, EffectiveRadius)) : 0;
         if (Quaternion.Angle(previousFacing, transform.rotation) > 0.0001f) skinOrientation.rotation = ballWorld;
         previousFacing = transform.rotation;
         if (ordinary && speed > 0.01f)

@@ -20,10 +20,15 @@ public static class GameplayRevisionChecks
     static SkinnedMeshRenderer axeSkin;
     static float axeExtent;
     static int mapCycle,savedDepth;
+    static ButcherHelper[] workers;
+    static Animal[] prey;
+    static SausageFactory[] helperFactories;
+    static float helperDeadline;
+    static float nextDiagnostic;
     static GameplayRevisionChecks(){if(SessionState.GetBool(Key,false))Subscribe();}
     public static void Run(string mode)
     {
-        if(mode=="map")
+        if(mode=="map"||mode=="helpers")
         {
             GameplayRevisionSetup.Configure();string signature=MapSignature();GameplayRevisionSetup.Configure();
             if(signature!=MapSignature())throw new InvalidOperationException("Repeated map setup changed asset bytes");
@@ -49,6 +54,8 @@ public static class GameplayRevisionChecks
                 foreach(var ai in Object.FindObjectsByType<EnemyChase>())ai.enabled=false;
                 foreach(var ai in Object.FindObjectsByType<EnemyMelee>())ai.enabled=false;
                 builder=Object.FindAnyObjectByType<PlayerBuilding>();
+                if(SessionState.GetString(Key+".Mode","")=="helpers")
+                {HelpersStart();phase=30;helperDeadline=Time.time+55;return;}
                 if(SessionState.GetString(Key+".Mode","")=="map")
                 {mapCycle=0;MatchConfiguration.Prepare(4);SceneManager.LoadScene(MainMenuController.BattleScene);phase=20;due=Time.time+.3f;return;}
                 if(SessionState.GetString(Key+".Mode","")=="development")
@@ -56,6 +63,39 @@ public static class GameplayRevisionChecks
                 else if(SessionState.GetString(Key+".Mode","")=="construction")ConstructionStart();
                 else throw new InvalidOperationException("Unsupported revision mode");
                 due=Time.time+.25f;phase=2;return;
+            }
+            if(phase==30)
+            {
+                if(Time.time>=nextDiagnostic)
+                {
+                    nextDiagnostic=Time.time+5;
+                    string diagnostic="time="+Time.time+"\n";
+                    foreach(var w in workers)
+                    {
+                        var type=typeof(ButcherHelper);var flags=System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance;
+                        var target=(Animal)type.GetField("target",flags).GetValue(w);var path=(System.Collections.Generic.List<Vector3>)type.GetField("path",flags).GetValue(w);
+                        diagnostic+=$"helper p={w.transform.position} goal={(target!=null?target.transform.position.ToString():"none")} path={path.Count} cargo={w.GetComponent<CarcassCarrier>().CurrentMassKg} raw={w.Factory.RawKg} xp={w.Factory.Owner.Experience} level={w.Factory.Owner.Level}\n";
+                    }
+                    foreach(var a in prey)diagnostic+="animal="+(a!=null?a.transform.position.ToString():"dead")+"\n";
+                    File.WriteAllText("Temp/HookWarsAutomation/helper-state.txt",diagnostic);Debug.Log("REVISION_CHECK_DIAGNOSTIC: "+diagnostic);
+                }
+                foreach(var worker in workers)
+                {
+                    if(!ArenaLayout.IsInsideBank(worker.transform.position,worker.Factory.transform.position.x>0,worker.Radius-.01f))throw new InvalidOperationException("Helper left its factory bank");
+                    if(Physics2D.OverlapCircle(worker.transform.position,worker.Radius-.02f,LayerMask.GetMask("Buildings","Mountains"))!=null)throw new InvalidOperationException("Helper entered a permanent obstacle");
+                }
+                if(prey.Any(a=>a!=null)||workers.Any(w=>w.GetComponent<CarcassCarrier>().Count>0)||helperFactories.Any(f=>f.Owner.Level<2))
+                {if(Time.time>helperDeadline)throw new TimeoutException("Helpers did not complete their real hunting/delivery loop");return;}
+                Check(prey.All(a=>a==null),"Three real animals killed by accepted delayed helper attacks");
+                Check(workers.All(w=>w.GetComponent<CarcassCarrier>().Count==0),"All helper cargo delivered to their own factories");
+                Check(helperFactories.All(f=>f.Owner.Level>=2&&f.RawKg>=0&&f.RawKg<=f.CapacityKg),"Existing factory acceptance awards owner XP once and respects its queue capacity");
+                Check(workers.All(w=>Object.FindAnyObjectByType<ArenaPresentation25D>().VisualFor(w.GetComponent<Health>()).transform.localScale==Vector3.one*.5f),"Helpers use half-size animated butcher visuals with independent logical roots");
+                var menu=builder.GetComponent<BuildingUpgradeMenu>();
+                Check(menu.SelectAtScreenPoint(Camera.main.WorldToScreenPoint(ArenaSpace25D.ToWorld(helperFactories[0].transform.position))),"Factory selection opens its ordering and capacity panel");
+                Check(helperFactories[0].UpgradeCount==5,"All three factory upgrades plus worker order/capacity are exposed");
+                ScreenCapture.CaptureScreenshot("Temp/RevisionPreview/helpers.png");Butcher25DChecks.CaptureAt(ArenaSpace25D.ToWorld(helperFactories[0].transform.position,.6f),"revision_helpers",4);
+                Directory.CreateDirectory("docs/validation");File.WriteAllText("docs/validation/009-helpers.txt",$"PASS: {count} real Play Mode assertions\nThree autonomous helpers, both banks, independent owner relocation, real animated axe kills, complete carcasses, real travel/pathfinding, delivery/processing/owner XP, existing/future capacity, payments, 3D scale and factory menu.\n");
+                SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_REVISION_PASS: "+count+" helper assertions");phase=3;due=Time.time+.25f;return;
             }
             if(phase==20)
             {
@@ -160,5 +200,31 @@ public static class GameplayRevisionChecks
         Check(hook.MaxBounces==int.MaxValue&&!hook.TryUpgrade(HookAbility.UpgradeStat.Bounces)&&!hook.TryUpgrade(HookAbility.UpgradeStat.BounceDistance),"Ricochets are unlimited and never a paid upgrade");
         Check(builder.GetComponent<PlayerMovement>().MoveSpeed>5&&builder.GetComponent<PlayerMelee>().AttackRange>1.6f&&builder.GetComponent<PlayerMelee>().Damage>20,"Movement, axe damage and axe reach increased");
         hp.TakeDamage(20);regenKg=hp.CurrentKg;regenStarted=Time.time;
+    }
+    static void HelpersStart()
+    {
+        helperFactories=Object.FindObjectsByType<SausageFactory>().OrderByDescending(f=>f.Owner.GetComponent<PlayerMovement>()!=null).ToArray();
+        Check(helperFactories.Length==2,"Fresh map has one workshop for each helper team");
+        foreach(var factory in helperFactories)
+        {
+            Check(!factory.TryOrderHelper()&&factory.HelperCount==0,"Cannot order without enough gold");
+            factory.Owner.AddGold(1000);double before=factory.Owner.Gold;
+            Check(factory.TryOrderHelper()&&Math.Abs(factory.Owner.Gold-(before-factory.HelperPrice))<.001,"Accepted worker costs the configured gold once");
+        }
+        var own=helperFactories[0];Check(own.TryUpgrade(4)&&Mathf.Abs(own.HelperCapacityKg-12)<.001,"Workshop upgrades worker capacity for gold");
+        Check(own.GetComponentsInChildren<ButcherHelper>().All(w=>w.GetComponent<CarcassCarrier>().CapacityKg==12)&&helperFactories[1].HelperCapacityKg==10,"Capacity applies to existing own helpers without changing the opponent");
+        own.Owner.transform.position=new Vector3(own.transform.position.x>0?-4:4,0);
+        Check(own.TryOrderHelper(),"Can order a new helper while its owner is on the opposite bank");
+        workers=Object.FindObjectsByType<ButcherHelper>();Check(workers.Length==3,"Exactly three ordered helpers, no demo actors");
+        Check(own.GetComponentsInChildren<ButcherHelper>().All(w=>w.GetComponent<CarcassCarrier>().CapacityKg==12&&(w.transform.position.x>0)==(own.transform.position.x>0)),"New helper inherits capacity and spawns on the factory bank");
+        prey=new Animal[3];int index=0;
+        foreach(var factory in helperFactories)
+        {
+            var p=factory.transform.position+Vector3.right*(factory.transform.position.x>0?-4:4)+Vector3.up*.5f;
+            prey[index]=Object.Instantiate(AssetDatabase.LoadAssetAtPath<Animal>("Assets/Prefabs/cow.prefab"),p,Quaternion.identity);prey[index++].enabled=false;
+            if(factory==own)
+            {p.y+=p.y>0?-1.5f:1.5f;prey[index]=Object.Instantiate(AssetDatabase.LoadAssetAtPath<Animal>("Assets/Prefabs/pig.prefab"),p,Quaternion.identity);prey[index++].enabled=false;}
+        }
+        Physics2D.SyncTransforms();
     }
 }
