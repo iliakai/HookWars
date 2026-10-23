@@ -15,7 +15,6 @@ public class HookAbility: MonoBehaviour
     [SerializeField, Min(0.1f)] private float speed = 10f;
     [SerializeField, Min(0.1f)] private float width = 0.2f;
 
-    [SerializeField, Min(0.1f)] private float hookVisualSize = 1.5f;
     [SerializeField, Min(0f)] private float cooldown = 6f;
     [SerializeField, Min(0f)] private float damage = 40f;
 
@@ -65,6 +64,8 @@ public class HookAbility: MonoBehaviour
     public float Damage => damage;
     public float Speed => speed;
     public float Width => width;
+    public Vector2 VisualDirection => throwDirection;
+    public float VisualScale => initialHookWidth>0?width/initialHookWidth:1;
     public float Cooldown => cooldown;
 
     public const float MinimumCooldown = 1f;
@@ -247,38 +248,9 @@ public class HookAbility: MonoBehaviour
             Quaternion.identity
         );
 
-        SpriteRenderer hookSprite = activeHook.GetComponent<SpriteRenderer>();
-
-        float spriteSize = 1f;
-
-        if (hookSprite != null && hookSprite.sprite != null)
-        {
-            Vector2 size = hookSprite.sprite.bounds.size;
-            spriteSize = Mathf.Max(size.x, size.y);
-        }
-
         RememberInitialWidth();
-
-        float widthMultiplier = width / initialHookWidth;
-
-        float visualScale =
-            hookVisualSize * widthMultiplier / Mathf.Max(spriteSize, 0.0001f);
-
-        activeHook.localScale = new Vector3(
-            visualScale,
-            visualScale,
-            1f
-        );
-
-        HookVisual visual = activeHook.GetComponent<HookVisual>();
-
-        if (visual != null)
-        {
-            visual.Initialize(this, new Vector2(
-                throwDirection.x,
-                throwDirection.y
-            ));
-        }
+        activeHook.localScale=Vector3.one;
+        activeHook.up=throwDirection;
 
         bends.Clear();
         bouncesLeft = maxBounces;

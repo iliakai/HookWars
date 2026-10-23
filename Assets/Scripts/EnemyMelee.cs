@@ -7,7 +7,6 @@ public class EnemyMelee : MonoBehaviour
     [Header("References")]
     [SerializeField] private Health playerHealth;
     [SerializeField] private PlayerHook playerHook;
-    [SerializeField] private MeleeSwingVisual swingVisual;
 
     [Header("Attack Stats")]
     [SerializeField, Min(0f)] private float damage = 15f;
@@ -81,11 +80,6 @@ public class EnemyMelee : MonoBehaviour
             GetComponent<HookVictim>()?.IsCaught == true || !playerHealth.gameObject.activeInHierarchy) return;
         Vector2 toPlayer = (Vector2)(playerHealth.transform.position - transform.position);
         if (toPlayer.sqrMagnitude > attackRange * attackRange) return;
-
-        if (swingVisual != null)
-        {
-            swingVisual.PlaySwing(toPlayer.normalized, 100f);
-        }
 
         playerHealth.TakeDamage(damage);
     }

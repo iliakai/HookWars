@@ -91,6 +91,18 @@ public static class HookWarsValidationBridge
             {
                 Launch25DSetup.Configure();Write(request.operation,"passed","MainMenu and active build scenes configured");return;
             }
+            if(request.operation=="cleanup-migrate")
+            {
+                Legacy25DCleanup.Migrate();Write(request.operation,"passed","Logical surfaces and 3D-only components migrated");return;
+            }
+            if(request.operation=="cleanup-audit"||request.operation=="cleanup-delete")
+            {
+                Legacy25DCleanup.Audit(request.operation=="cleanup-delete");Write(request.operation,"passed","See docs/validation/008-legacy-asset-audit.txt");return;
+            }
+            if(request.operation=="cleanup-verify")
+            {
+                Legacy25DCleanup.Migrate();Legacy25DCleanup.Verify();Write(request.operation,"passed","No obsolete world graphics or broken GUIDs");return;
+            }
             if (request.operation == "butcher-inspect")
             {
                 Butcher25DSetup.Inspect(); Write(request.operation, "passed", "See butcher-import.txt"); return;

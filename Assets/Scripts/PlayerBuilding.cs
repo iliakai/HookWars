@@ -4,18 +4,17 @@ using UnityEngine.InputSystem;
 public class PlayerBuilding : MonoBehaviour
 {
     [SerializeField] private Camera worldCamera;
-    // Preserve old references for explicit Editor migration, never show them in the new menu.
-    [SerializeField, HideInInspector] private MineBuilding minePrefab;
-    [SerializeField, HideInInspector] private IncomeBuilding universityPrefab;
     [SerializeField] private GameBuilding[] buildingPrefabs;
     private PlayerProgression progression;
     private Health health;
     private HookVictim victim;
-    private SpriteRenderer preview;
+    private Transform preview;
+    public Color PreviewColor {get;private set;}
+    public GameBuilding SelectedPrefab=>selectedPrefab;
     private GameBuilding selectedPrefab;
     private bool menuOpen, homeRightBank;
     private string status = "B — строительство";
-    public SpriteRenderer Preview => preview;
+    public Transform Preview => preview;
     public bool IsBuilding => selectedPrefab != null;
     private Rect MenuRect => new Rect(12, Screen.height - 206, 370, 194);
     public bool BlocksMouseInput
@@ -52,9 +51,9 @@ public class PlayerBuilding : MonoBehaviour
         Vector2 mouse = Mouse.current.position.ReadValue();
         if (!GamePointer.TryLogicalPoint(worldCamera, mouse, out Vector3 point)) return;
         Vector3 cell = new Vector3(Mathf.Floor(point.x) + 0.5f, Mathf.Floor(point.y) + 0.5f);
-        preview.transform.position = cell;
+        preview.position = cell;
         bool valid = CanPlace(cell);
-        preview.color = valid ? new Color(0.2f, 1, 0.3f, 0.6f) : new Color(1, 0.2f, 0.2f, 0.6f);
+        PreviewColor = valid ? new Color(0.2f, 1, 0.3f, 0.6f) : new Color(1, 0.2f, 0.2f, 0.6f);
         status = valid ? "E — построить, Esc — отменить" : "Место занято, вне берега или не хватает ресурсов";
         if (keyboard.eKey.wasPressedThisFrame && !GamePointer.OverInterface() &&
             !(menuOpen && MenuRect.Contains(new Vector2(mouse.x, Screen.height - mouse.y))) &&
@@ -98,11 +97,8 @@ public class PlayerBuilding : MonoBehaviour
         CloseBuildMode();
         if (!CanAct || prefab == null) return;
         selectedPrefab = prefab;
-        SpriteRenderer source = prefab.GetComponentInChildren<SpriteRenderer>();
         GameObject marker = new GameObject("BuildingPreview");
-        preview = marker.AddComponent<SpriteRenderer>();
-        preview.sprite = source.sprite; preview.sharedMaterial = source.sharedMaterial; preview.sortingOrder = 25;
-        preview.transform.localScale = source.transform.localScale;
+        preview = marker.transform; PreviewColor=Color.green;
     }
     private void CloseBuildMode()
     {

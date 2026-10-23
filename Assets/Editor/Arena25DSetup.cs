@@ -18,7 +18,7 @@ public static class Arena25DSetup
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode first.");
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
-        if (!File.Exists(ScenePath)) AssetDatabase.CopyAsset(CarryingSetup.ArenaPath, ScenePath);
+        if (!File.Exists(ScenePath)) throw new InvalidOperationException("Missing versioned Arena25D scene");
         Scene scene = EditorSceneManager.OpenScene(ScenePath);
         UniversalRendererData renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/Arena25D-Renderer.asset");
         if (renderer == null)
@@ -29,7 +29,7 @@ public static class Arena25DSetup
         UniversalRenderPipelineAsset pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PipelinePath);
         if (pipeline == null)
         {
-            pipeline = Object.Instantiate(AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/UniversalRP.asset"));
+            pipeline = ScriptableObject.CreateInstance<UniversalRenderPipelineAsset>();
             pipeline.name = "Arena25D-URP";
             AssetDatabase.CreateAsset(pipeline, PipelinePath);
         }
@@ -40,9 +40,7 @@ public static class Arena25DSetup
         pipe.FindProperty("m_MainLightShadowsSupported").boolValue = true;
         pipe.ApplyModifiedPropertiesWithoutUndo();
         Material lit = MaterialAt("Assets/Settings/Arena25D-Lit.mat", "Universal Render Pipeline/Lit", Color.white);
-        Material chain = MaterialAt("Assets/Settings/Arena25D-Chain.mat", "Universal Render Pipeline/Unlit", new Color(0.95f, 0.82f, 0.42f));
         ArenaLayout layout = Object.FindAnyObjectByType<ArenaLayout>();
-        SerializedObject arena = new SerializedObject(layout); arena.FindProperty("fitCamera").boolValue = false; arena.ApplyModifiedPropertiesWithoutUndo();
         Camera camera = Camera.main;
         if (camera.GetComponent<ArenaCamera25D>() == null) camera.gameObject.AddComponent<ArenaCamera25D>();
         camera.GetUniversalAdditionalCameraData().SetRenderer(0);
@@ -55,7 +53,6 @@ public static class Arena25DSetup
         SerializedObject visual = new SerializedObject(presentation);
         visual.FindProperty("pipeline").objectReferenceValue = pipeline;
         visual.FindProperty("litMaterial").objectReferenceValue = lit;
-        visual.FindProperty("chainMaterial").objectReferenceValue = chain;
         visual.ApplyModifiedPropertiesWithoutUndo();
         var sunObject = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "Arena25D Sun");
         if (sunObject == null) sunObject = new GameObject("Arena25D Sun");

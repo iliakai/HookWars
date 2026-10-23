@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -23,9 +24,7 @@ public static class EconomyChecks
         using (var bytes = new System.IO.MemoryStream())
         {
             foreach (string path in new[] { CarryingSetup.ArenaPath, EconomySetup.FactoryPath, EconomySetup.ShopPath,
-                EconomySetup.FarmPath, EconomySetup.WallPath, "Assets/Prefabs/sheep.prefab", "Assets/Prefabs/cow.prefab", "Assets/Prefabs/pig.prefab",
-                "Assets/Animations/sheep_walk.anim", "Assets/Animations/cow_walk.anim", "Assets/Animations/pig_walk.anim",
-                "Assets/Animations/sheep_walk.controller", "Assets/Animations/cow_walk.controller", "Assets/Animations/pig_walk.controller" })
+                EconomySetup.FarmPath, EconomySetup.WallPath, "Assets/Prefabs/sheep.prefab", "Assets/Prefabs/cow.prefab", "Assets/Prefabs/pig.prefab" })
             {
                 byte[] file = System.IO.File.ReadAllBytes(path); bytes.Write(file, 0, file.Length);
             }
@@ -222,10 +221,11 @@ public static class EconomyChecks
         foreach (string path in new[] { EconomySetup.FactoryPath, EconomySetup.ShopPath, EconomySetup.FarmPath, EconomySetup.WallPath })
         {
             GameObject building = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            SpriteRenderer visual = building.GetComponentInChildren<SpriteRenderer>();
+            int kind=path==EconomySetup.FactoryPath?0:path==EconomySetup.ShopPath?1:path==EconomySetup.FarmPath?2:3;
+            var visual=AssetDatabase.LoadAssetAtPath<GameObject>(WorldModels25DSetup.Output+"/"+WorldModels25DSetup.Names[kind]+".prefab");
             Check(building.transform.localScale == Vector3.one && building.GetComponent<BoxCollider2D>().size == Vector2.one &&
-                visual.bounds.size.x <= 1.001f && visual.bounds.size.y <= 1.001f,
-                "Building collider and proportional graphic match one metre cell: " + building.name);
+                visual!=null && visual.GetComponentsInChildren<Renderer>(true).Length>0,
+                "One-metre logical cell has a ready 3D visual asset: " + building.name);
         }
     }
     private static void CheckAnimals(GameObject root)
@@ -250,19 +250,13 @@ public static class EconomyChecks
             "Animal death gives exactly one carcass and stops walking animation");
         second.gameObject.SetActive(false);
         carcass.gameObject.SetActive(false);
-        foreach (string species in new[] { "sheep", "cow", "pig" })
+        foreach (string species in Animals25DSetup.Names)
         {
-            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Animations/" + species + "_walk.anim");
-            var binding = AnimationUtility.GetObjectReferenceCurveBindings(clip)[0];
-            var frames = AnimationUtility.GetObjectReferenceCurve(clip, binding);
-            Check(frames.Length == 5 && Near(clip.length, 0.64) && AnimationUtility.GetAnimationClipSettings(clip).loopTime,
-                "Four GIF frames and exact looping 160 ms timing: " + species);
-            foreach (var frame in frames)
-            {
-                Sprite sprite = (Sprite)frame.value;
-                Check(sprite.rect.width == 384 && sprite.rect.height == 384 && sprite.pivot == new Vector2(192, 0) && sprite.pixelsPerUnit == 480,
-                    "Stable animal canvas/pivot/scale: " + species);
-            }
+            var clips=AssetDatabase.LoadAllAssetsAtPath(Animals25DSetup.Root+"/Models/"+species+".fbx").OfType<AnimationClip>().Where(c=>!c.name.StartsWith("__preview__")).ToArray();
+            var walk=clips.Single(c=>Butcher25DSetup.Matches(c.name,"Walk"));
+            var graze=clips.Single(c=>Butcher25DSetup.Matches(c.name,"Graze"));
+            Check(Mathf.Abs(walk.length-(species=="Cow"?1.2f:.9f))<.002f&&walk.isLooping,"Imported Walk timing and looping: "+species);
+            Check(Mathf.Abs(graze.length-6.4f)<.002f&&graze.isLooping,"Imported Graze timing and looping: "+species);
         }
         GameObject killer = new GameObject("Animal hook owner"); killer.transform.SetParent(root.transform);
         killer.transform.position = new Vector3(-6, -6);
@@ -293,13 +287,14 @@ public static class EconomyChecks
         Set(walker, "direction", Vector2.right); Set(walker, "nextDirection", float.MaxValue);
         Set(walker, "moveSpeed", 1f / Time.deltaTime);
         Invoke(walker, "Update");
-        Check(ArenaLayout.IsInsideBank(walker.transform.position, false, walker.Radius) && walker.GetComponent<Animator>().speed == 0,
+        Check(ArenaLayout.IsInsideBank(walker.transform.position, false, walker.Radius) && walker.VoluntaryVelocity == Vector2.zero,
             "Animal update rejects crossing the river and stops animation");
         UnityEngine.Random.State randomBefore = UnityEngine.Random.state;
         UnityEngine.Random.InitState(1021);
         foreach (int depth in new[] { 4, 20 })
         {
             Set(ArenaLayout.Instance, "appliedDepth", depth);
+            a.transform.position=new Vector3(-(2+depth*.5f),-8);b.transform.position=new Vector3(2+depth*.5f,-8);
             bool left = false, right = false;
             for (int i = 0; i < 24; i++)
             {
@@ -326,7 +321,8 @@ public static class EconomyChecks
         var leftCover = new GameObject("Only left bank occupied"); leftCover.transform.SetParent(root.transform);
         leftCover.transform.position = new Vector3(-12,0);
         leftCover.AddComponent<BoxCollider2D>().size = new Vector2(20,20);
-        Check(a.TrySpawn() == null && b.TrySpawn() != null,"Blocked left farm never falls back to free right bank");
+        Animal rightSpawn=b.TrySpawn();if(rightSpawn!=null){rightSpawn.transform.SetParent(root.transform);rightSpawn.gameObject.SetActive(false);}
+        Check(a.TrySpawn()==null&&rightSpawn!=null,"Blocked left farm never falls back to free right bank");
         leftCover.SetActive(false);
         Animal overdue = a.Advance(10000); if(overdue!=null) { overdue.transform.SetParent(root.transform); overdue.gameObject.SetActive(false); }
         Check(overdue != null && a.Advance(.01) == null,"Long overdue farm starts a fresh interval without burst queue");
@@ -369,11 +365,7 @@ public static class EconomyChecks
         Check(shopA.TryUpgrade(0) && shopA.SaleKgPerSecond == 0.5f && shopA.GoldPerKg == 6,
             "Local price upgrade keeps sale speed unchanged");
         Check(shopB.GoldPerKg == 5 && comparison.GoldPerKg == 5, "Other shop prices and owners remain independent");
-        IncomeBuilding legacy = new GameObject("Legacy", typeof(MineBuilding)).GetComponent<IncomeBuilding>();
-        legacy.transform.SetParent(root.transform);
-        double rate = a.GoldPerSecond;
-        legacy.Initialize(a);
-        Check(a.GoldPerSecond == rate && !legacy.TryUpgrade(), "Legacy buildings no longer grant income or accept upgrades");
+
     }
     public static void Check(bool value, string message)
     {

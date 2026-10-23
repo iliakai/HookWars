@@ -13,24 +13,12 @@ public class Health : MonoBehaviour
     public event Action<Health> Died;
     public event Action<Health> Revived;
 
-    [SerializeField] private SpriteRenderer bodyRenderer; private Color originalColor;
-
     private Collider2D[] bodyColliders;
     private bool[] originalColliderStates;
 
     private void Awake()
     {
         currentHealth = maxHealth;
-
-        if (bodyRenderer == null)
-        {
-            bodyRenderer = GetComponent<SpriteRenderer>();
-        }
-
-        if (bodyRenderer != null)
-        {
-            originalColor = bodyRenderer.color;
-        }
 
         bodyColliders = GetComponents<Collider2D>();
         originalColliderStates = new bool[bodyColliders.Length];
@@ -69,11 +57,6 @@ public class Health : MonoBehaviour
             bodyCollider.enabled = false;
         }
 
-        if (bodyRenderer != null)
-        {
-            bodyRenderer.color = Color.gray;
-        }
-
         Debug.Log(name + " погиб.", this);
 
         // Сообщаем другим скриптам о смерти.
@@ -83,11 +66,6 @@ public class Health : MonoBehaviour
     public void Revive()
     {
         currentHealth = maxHealth;
-
-        if (bodyRenderer != null)
-        {
-            bodyRenderer.color = originalColor;
-        }
 
         for (int i = 0; i < bodyColliders.Length; i++)
         {

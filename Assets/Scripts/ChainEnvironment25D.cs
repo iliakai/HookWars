@@ -33,7 +33,12 @@ public sealed class ChainEnvironment25D : MonoBehaviour
             if(!proxies.TryGetValue(shape,out var box)){box=Create(shape.name+" chain proxy");proxies.Add(shape,box);}
             box.enabled=shape.enabled&&shape.gameObject.activeInHierarchy&&!shape.isTrigger;
             if(!box.enabled)continue;
-            Bounds b=shape.bounds;float height=mountain?1.5f:shape.GetComponent<BoneWall>()!=null?.7f:1.1f;
+            Bounds b=shape.bounds;float height=1.5f;
+            if(!mountain)
+            {
+                var display=GetComponent<ArenaPresentation25D>();var model=display.ModelFor(shape.GetComponent<GameBuilding>());
+                height=model!=null?(model.GetComponent<BuildingPresentation25D>()?.CollisionHeight??1):1;
+            }
             box.transform.position=ArenaSpace25D.ToWorld(b.center,height*.5f);box.size=new Vector3(b.size.x,height,b.size.y);
         }
         removed.Clear();foreach(var pair in proxies)if(pair.Key==null){Destroy(pair.Value.gameObject);removed.Add(pair.Key);}

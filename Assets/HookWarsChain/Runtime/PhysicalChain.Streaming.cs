@@ -78,7 +78,7 @@ namespace HookWars.Chain
                 var rb=go.AddComponent<Rigidbody>();rb.mass=massPerLink;rb.solverIterations=solverIterations;rb.solverVelocityIterations=8;
                 rb.interpolation=RigidbodyInterpolation.Interpolate;rb.collisionDetectionMode=CollisionDetectionMode.ContinuousSpeculative;
                 rb.maxAngularVelocity=25;rb.maxDepenetrationVelocity=2;rb.linearDamping=.15f;rb.angularDamping=.2f;
-                var collider=go.AddComponent<CapsuleCollider>();collider.direction=2;collider.height=.24f*linkScale;collider.radius=.04f*linkScale*visualThickness;collider.contactOffset=.001f;
+                var collider=go.AddComponent<CapsuleCollider>();collider.direction=2;collider.height=.24f*linkScale;collider.radius=.07f*linkScale*visualThickness;collider.contactOffset=.001f;
                 collider.sharedMaterial=streamContact;
                 // A single envelope replaces the original 16-capsule wire collider.
                 // Only chain-environment proxies collide; no owner/cargo/link contacts.

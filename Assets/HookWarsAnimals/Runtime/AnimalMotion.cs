@@ -8,6 +8,7 @@ namespace HookWars.Animals
         [Tooltip("Read actual world movement. Turn off to call SetSpeed from your movement system.")]
         public bool automaticSpeed = true;
         [Min(.01f)] public float referenceWalkSpeed = .54f;
+        [Min(1)] public float maximumWalkRate = 8;
         [Min(0)] public float startThreshold = .045f;
         [Min(0)] public float stopThreshold = .02f;
         [Min(0)] public float stopDelay = .22f;
@@ -45,7 +46,7 @@ namespace HookWars.Animals
             }
             else stillTime = 0;
             if (speed < stopThreshold) animator.SetFloat(Rate, 0);
-            else animator.SetFloat(Rate, Mathf.Clamp(speed / Mathf.Max(.01f, referenceWalkSpeed), 0, 3f), .10f, Time.deltaTime);
+            else animator.SetFloat(Rate, Mathf.Clamp(speed / Mathf.Max(.01f, referenceWalkSpeed), 0, maximumWalkRate), .10f, Time.deltaTime);
             if (next != IsWalking)
             {
                 IsWalking = next;

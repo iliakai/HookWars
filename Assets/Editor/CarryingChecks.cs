@@ -174,8 +174,8 @@ public static class CarryingChecks
         foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects()) root.SetActive(false);
         Scene isolated = SceneManager.CreateScene("CarryingChecks (unsaved)");
         SceneManager.SetActiveScene(isolated);
-        Check(EditorBuildSettings.scenes[0].path == CarryingSetup.ArenaPath &&
-            EditorBuildSettings.scenes[0].enabled, "Arena is the enabled starting scene");
+        Check(EditorBuildSettings.scenes[0].path == Launch25DSetup.MenuPath &&
+            EditorBuildSettings.scenes[0].enabled, "MainMenu is the enabled starting scene");
         int layer = LayerMask.NameToLayer("Carcasses");
         Check(layer >= 0, "Carcass layer exists");
         Carcass prefab = AssetDatabase.LoadAssetAtPath<Carcass>(CarryingSetup.PrefabPath);
@@ -476,12 +476,11 @@ public static class CarryingChecks
         wall.SetActive(false);
         Set(hook, "maxBounces", 0);
         Throw(hook);
-        SpriteRenderer sprite = hook.ActiveHook.GetComponent<SpriteRenderer>();
-        float size = Mathf.Max(sprite.sprite.bounds.size.x, sprite.sprite.bounds.size.y) * hook.ActiveHook.localScale.x;
-        Check(Mathf.Abs(size - 1.5f) < 0.001f, "Initial hook visual size is preserved");
+        var visualPrefab=AssetDatabase.LoadAssetAtPath<GameObject>(Butcher25DSetup.HookPrefab);
+        float size=visualPrefab.GetComponentInChildren<MeshFilter>().sharedMesh.bounds.size.z;
+        Check(Mathf.Abs(size-.45f)<.001f && hook.ActiveHook.GetComponent<SpriteRenderer>()==null,"Initial hook uses volumetric .45m model without sprites");
         Quaternion rotation = hook.ActiveHook.rotation;
         Invoke(hook, "FlyHook");
-        Invoke(hook.ActiveHook.GetComponent<HookVisual>(), "LateUpdate");
         Check(Quaternion.Angle(hook.ActiveHook.rotation, rotation) < 0.01f, "Hook visual follows the original outgoing orientation");
         hook.CancelHook();
     }

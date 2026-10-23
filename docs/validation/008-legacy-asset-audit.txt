@@ -1,0 +1,116 @@
+Checkpoint: checkpoint/before-legacy-cleanup-20261023 (35d6ef1)
+Audit: AssetDatabase dependencies, ProjectSettings GUID/path refs, source path/string loaders, Resources and Addressables.
+Resources assets=0; Addressables data=0
+Welcome assets are retained: Editor landing-page configuration is outside gameplay cleanup, including user settings.
+UNREFERENCED Assets/Animations/cow_walk.anim
+UNREFERENCED Assets/Animations/cow_walk.controller
+UNREFERENCED Assets/Animations/pig_walk.anim
+UNREFERENCED Assets/Animations/pig_walk.controller
+UNREFERENCED Assets/Animations/sheep_walk.anim
+UNREFERENCED Assets/Animations/sheep_walk.controller
+UNREFERENCED Assets/Materials/RiverFlowMaterial.mat
+UNREFERENCED Assets/Prefabs/Mine.prefab
+UNREFERENCED Assets/Prefabs/University.prefab
+UNREFERENCED Assets/Scenes/Arena.unity
+UNREFERENCED Assets/Scenes/SampleScene.unity
+UNREFERENCED Assets/Scripts/EnemyBodyVisual.cs
+UNREFERENCED Assets/Scripts/HealthBarVisual.cs
+UNREFERENCED Assets/Scripts/HookChain.cs
+UNREFERENCED Assets/Scripts/HookVisual.cs
+UNREFERENCED Assets/Scripts/IncomeBuilding.cs
+UNREFERENCED Assets/Scripts/MeleeSwingVisual.cs
+UNREFERENCED Assets/Scripts/MineBuilding.cs
+UNREFERENCED Assets/Scripts/PlayerBodyVisual.cs
+UNREFERENCED Assets/Settings/Arena25D-Chain.mat
+UNREFERENCED Assets/Settings/Lit2DSceneTemplate.scenetemplate
+UNREFERENCED Assets/Settings/Renderer2D.asset
+UNREFERENCED Assets/Settings/Scenes/URP2DSceneTemplate.unity
+UNREFERENCED Assets/Settings/UniversalRP.asset
+UNREFERENCED Assets/Shaders/RiverFlow.shader
+UNREFERENCED Assets/Textures/8749ca23-94a3-471d-a09f-ca36b648fb3e.png
+UNREFERENCED Assets/Textures/Animals/cow_walk.gif
+UNREFERENCED Assets/Textures/Animals/Frames/cow_walk/frame_000.png
+UNREFERENCED Assets/Textures/Animals/Frames/cow_walk/frame_001.png
+UNREFERENCED Assets/Textures/Animals/Frames/cow_walk/frame_002.png
+UNREFERENCED Assets/Textures/Animals/Frames/cow_walk/frame_003.png
+UNREFERENCED Assets/Textures/Animals/Frames/cow_walk/frames.json
+UNREFERENCED Assets/Textures/Animals/Frames/pig_walk/frame_000.png
+UNREFERENCED Assets/Textures/Animals/Frames/pig_walk/frame_001.png
+UNREFERENCED Assets/Textures/Animals/Frames/pig_walk/frame_002.png
+UNREFERENCED Assets/Textures/Animals/Frames/pig_walk/frame_003.png
+UNREFERENCED Assets/Textures/Animals/Frames/pig_walk/frames.json
+UNREFERENCED Assets/Textures/Animals/Frames/sheep_walk/frame_000.png
+UNREFERENCED Assets/Textures/Animals/Frames/sheep_walk/frame_001.png
+UNREFERENCED Assets/Textures/Animals/Frames/sheep_walk/frame_002.png
+UNREFERENCED Assets/Textures/Animals/Frames/sheep_walk/frame_003.png
+UNREFERENCED Assets/Textures/Animals/Frames/sheep_walk/frames.json
+UNREFERENCED Assets/Textures/Animals/pig_walk.gif
+UNREFERENCED Assets/Textures/Animals/sheep_walk.gif
+UNREFERENCED Assets/Textures/Buildings/AnimalFarm.png
+UNREFERENCED Assets/Textures/Buildings/BoneWall.png
+UNREFERENCED Assets/Textures/Buildings/Factory.png
+UNREFERENCED Assets/Textures/Buildings/MeatShop.png
+UNREFERENCED Assets/Textures/Золотая руда среди скал.png
+UNREFERENCED Assets/Textures/Кованый тесак с кожаной рукоятью.png
+UNREFERENCED Assets/Textures/Пудж в коралловом фартуке.png
+UNREFERENCED Assets/Textures/Пудж сверху в голубом фартуке.png
+UNREFERENCED Assets/Textures/Скалистая граница с переходом в траву.png
+UNREFERENCED Assets/Textures/Средневековая академия с открытой книгой.png
+UNREFERENCED Assets/Textures/Стилизованная бесшовная трава арены-1.png
+UNREFERENCED Assets/Textures/Тяжёлый стальной крюк с кольцом.png
+DELETED WITH META Assets/Animations/cow_walk.anim
+DELETED WITH META Assets/Animations/cow_walk.controller
+DELETED WITH META Assets/Animations/pig_walk.anim
+DELETED WITH META Assets/Animations/pig_walk.controller
+DELETED WITH META Assets/Animations/sheep_walk.anim
+DELETED WITH META Assets/Animations/sheep_walk.controller
+DELETED WITH META Assets/Materials/RiverFlowMaterial.mat
+DELETED WITH META Assets/Prefabs/Mine.prefab
+DELETED WITH META Assets/Prefabs/University.prefab
+DELETED WITH META Assets/Scenes/Arena.unity
+DELETED WITH META Assets/Scenes/SampleScene.unity
+DELETED WITH META Assets/Settings/Arena25D-Chain.mat
+DELETED WITH META Assets/Settings/Lit2DSceneTemplate.scenetemplate
+DELETED WITH META Assets/Settings/Renderer2D.asset
+DELETED WITH META Assets/Settings/Scenes/URP2DSceneTemplate.unity
+DELETED WITH META Assets/Settings/UniversalRP.asset
+DELETED WITH META Assets/Shaders/RiverFlow.shader
+DELETED WITH META Assets/Textures/8749ca23-94a3-471d-a09f-ca36b648fb3e.png
+DELETED WITH META Assets/Textures/Animals/cow_walk.gif
+DELETED WITH META Assets/Textures/Animals/Frames/cow_walk/frame_000.png
+DELETED WITH META Assets/Textures/Animals/Frames/cow_walk/frame_001.png
+DELETED WITH META Assets/Textures/Animals/Frames/cow_walk/frame_002.png
+DELETED WITH META Assets/Textures/Animals/Frames/cow_walk/frame_003.png
+DELETED WITH META Assets/Textures/Animals/Frames/cow_walk/frames.json
+DELETED WITH META Assets/Textures/Animals/Frames/pig_walk/frame_000.png
+DELETED WITH META Assets/Textures/Animals/Frames/pig_walk/frame_001.png
+DELETED WITH META Assets/Textures/Animals/Frames/pig_walk/frame_002.png
+DELETED WITH META Assets/Textures/Animals/Frames/pig_walk/frame_003.png
+DELETED WITH META Assets/Textures/Animals/Frames/pig_walk/frames.json
+DELETED WITH META Assets/Textures/Animals/Frames/sheep_walk/frame_000.png
+DELETED WITH META Assets/Textures/Animals/Frames/sheep_walk/frame_001.png
+DELETED WITH META Assets/Textures/Animals/Frames/sheep_walk/frame_002.png
+DELETED WITH META Assets/Textures/Animals/Frames/sheep_walk/frame_003.png
+DELETED WITH META Assets/Textures/Animals/Frames/sheep_walk/frames.json
+DELETED WITH META Assets/Textures/Animals/pig_walk.gif
+DELETED WITH META Assets/Textures/Animals/sheep_walk.gif
+DELETED WITH META Assets/Textures/Buildings/AnimalFarm.png
+DELETED WITH META Assets/Textures/Buildings/BoneWall.png
+DELETED WITH META Assets/Textures/Buildings/Factory.png
+DELETED WITH META Assets/Textures/Buildings/MeatShop.png
+DELETED WITH META Assets/Textures/Золотая руда среди скал.png
+DELETED WITH META Assets/Textures/Кованый тесак с кожаной рукоятью.png
+DELETED WITH META Assets/Textures/Пудж в коралловом фартуке.png
+DELETED WITH META Assets/Textures/Пудж сверху в голубом фартуке.png
+DELETED WITH META Assets/Textures/Скалистая граница с переходом в траву.png
+DELETED WITH META Assets/Textures/Средневековая академия с открытой книгой.png
+DELETED WITH META Assets/Textures/Стилизованная бесшовная трава арены-1.png
+DELETED WITH META Assets/Textures/Тяжёлый стальной крюк с кольцом.png
+DELETED WITH META Assets/Scripts/EnemyBodyVisual.cs
+DELETED WITH META Assets/Scripts/HealthBarVisual.cs
+DELETED WITH META Assets/Scripts/HookChain.cs
+DELETED WITH META Assets/Scripts/HookVisual.cs
+DELETED WITH META Assets/Scripts/IncomeBuilding.cs
+DELETED WITH META Assets/Scripts/MeleeSwingVisual.cs
+DELETED WITH META Assets/Scripts/MineBuilding.cs
+DELETED WITH META Assets/Scripts/PlayerBodyVisual.cs

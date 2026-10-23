@@ -79,8 +79,8 @@ public static class Arena25DChecks
         Camera camera = Camera.main; var rig = camera.GetComponent<ArenaCamera25D>();
         var display = Object.FindAnyObjectByType<ArenaPresentation25D>();
         Check(rig != null && display != null, "25D presentation active");
-        Check(Object.FindObjectsByType<Collider>().Length == 0 && Object.FindObjectsByType<Rigidbody>().Length == 0, "No parallel 3D physics");
-        Check(Object.FindObjectsByType<SpriteRenderer>().All(s => s.forceRenderingOff), "Old sprites hidden");
+        Check(Object.FindObjectsByType<Collider>().All(c=>c.gameObject.layer==24||c.gameObject.layer==25), "3D collision belongs only to isolated chain layers");
+        Check(Object.FindObjectsByType<SpriteRenderer>().Length==0, "No old world sprites remain");
         foreach (int depth in new[] { 4, 20 })
         {
             Set(ArenaLayout.Instance, "bankDepth", depth); Call(ArenaLayout.Instance, "Awake"); Call(display, "LateUpdate");
@@ -108,11 +108,11 @@ public static class Arena25DChecks
         Quaternion rotation = player.transform.rotation; Call(display, "LateUpdate");
         Check(player.transform.position == saved && player.transform.rotation == rotation, "Visual sync preserves logical transform");
         display.enabled = false;
-        Check(Object.FindObjectsByType<SpriteRenderer>().All(s => !s.forceRenderingOff), "Disabling presentation restores original sprite visibility");
-        Set(display, "terrain", null); Set(display, "views", null); Set(display, "hidden", null);
+        Check(Object.FindObjectsByType<SpriteRenderer>().Length==0, "Disabling presentation does not expose old graphics");
+        Set(display, "terrain", null); Set(display, "views", null);
         Set(display, "palette", null); Set(display, "previewProperties", null);
         display.enabled = true; Call(display, "LateUpdate");
-        Check(Object.FindObjectsByType<SpriteRenderer>().All(s => s.forceRenderingOff), "Lost runtime caches can be rebuilt without exceptions");
+        Check(Object.FindObjectsByType<SpriteRenderer>().Length==0, "Lost runtime caches rebuild a fully 3D presentation");
         Check(display.transform.Cast<Transform>().Count(t => t.name == "Generated 25D visuals" && t.gameObject.activeSelf) == 1, "Rebuilding presentation does not duplicate active visual roots");
         Check(GamePointer.OverInterface(new Vector2(30, Screen.height - 30)), "UI blocks world actions");
         var hook = player.GetComponent<PlayerHook>(); Set(hook, "nextThrowTime", 0f); hook.TryThrow(Vector2.right);
@@ -121,18 +121,14 @@ public static class Arena25DChecks
         var bends = (List<Vector3>)typeof(HookAbility).GetField("bends", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(hook);
         bends.Add(saved + Vector3.right); hook.ActiveHook.position = saved + new Vector3(1, 2);
         Call(display, "LateUpdate");
-        LineRenderer chain = display.GetComponentsInChildren<LineRenderer>().First(l => l.name == player.name + " chain 25D");
-        Check(chain.positionCount == 3 && chain.positionCount == hook.ChainPointCount, "Chain includes logical bend");
-        var butcher = display.GetComponentsInChildren<ButcherVisual25D>().FirstOrDefault(b => b.name == "Model" && b.transform.parent.name == player.name + " 25D");
-        for (int i = 0; i < chain.positionCount; i++)
-        {
-            Vector3 expected = i == 0 && butcher != null ? butcher.Socket.position : ArenaSpace25D.ToWorld(hook.GetChainPoint(i), 0.65f);
-            Check(Vector3.Distance(chain.GetPosition(i), expected) < 0.001f, "Chain point agrees with logic/socket");
-        }
+        HookChain25D chain=display.GetComponentsInChildren<HookChain25D>().First(c=>c.name==player.name+" physical chain");
+        Check(chain.Spans.Count==2&&hook.ChainPointCount==3,"Logical bend creates two physical guide spans");
+        Check(Object.FindObjectsByType<LineRenderer>().Length==0,"Physical links are not replaced by a line renderer");
+        Check(chain.IssuedPhysicalLength>=chain.LogicalLength-.8f,"Physical length accounts for the hand socket");
         Type state = typeof(HookAbility).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance).FieldType;
         Set(hook, "state", Enum.Parse(state, "Returning")); Call(display, "LateUpdate");
-        Check(!hook.IsFlyingOut && chain.positionCount == 3, "Return keeps bent route visible");
-        hook.CancelHook(); Call(display, "LateUpdate"); Check(chain.positionCount == 0, "Chain hides after cancel");
+        Check(!hook.IsFlyingOut && chain.Spans.Count==2, "Return keeps bent physical route");
+        hook.CancelHook(); Call(display, "LateUpdate"); Check(chain.IssuedPhysicalLength==0, "Physical chain retires after cancel");
         // Existing gameplay entry points produce new visual objects without 3D physics.
         var builder = player.GetComponent<PlayerBuilding>(); player.GetComponent<PlayerProgression>().AddGold(1000);
         builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.ShopPath));

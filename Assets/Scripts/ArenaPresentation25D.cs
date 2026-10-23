@@ -16,7 +16,6 @@ public class ArenaPresentation25D : MonoBehaviour
     }
     [SerializeField] private RenderPipelineAsset pipeline;
     [SerializeField] private Material litMaterial;
-    [SerializeField] private Material chainMaterial;
     [SerializeField] private Mesh physicalChainMesh;
     [SerializeField] private Material physicalChainMaterial;
     [SerializeField, Min(.1f)] private float chainLinkScale=1;
@@ -26,47 +25,31 @@ public class ArenaPresentation25D : MonoBehaviour
     [SerializeField] private ModelOverride[] models = new ModelOverride[0];
     private RenderPipelineAsset previousPipeline;
     private bool pipelineApplied;
-    [System.Serializable] private struct SpriteVisibility
-    {
-        public SpriteRenderer renderer;
-        public bool forcedOff;
-    }
-    // Unity can preserve generated Transform references across a script reload,
-    // while nonserializable runtime caches disappear. Keep the restoration data
-    // serializable and rebuild the caches/owned visuals together on re-enable.
-    [SerializeField, HideInInspector] private List<SpriteVisibility> spriteStates = new List<SpriteVisibility>();
     private Dictionary<Color, Material> palette = new Dictionary<Color, Material>();
     // This allocates native Unity state: never construct it in a field initializer.
     private MaterialPropertyBlock previewProperties;
     private Dictionary<Component, GameObject> views = new Dictionary<Component, GameObject>();
-    private Dictionary<HookAbility, LineRenderer> chains = new Dictionary<HookAbility, LineRenderer>();
     private Dictionary<HookAbility, GameObject> projectiles = new Dictionary<HookAbility, GameObject>();
-    private Dictionary<SpriteRenderer, bool> hidden = new Dictionary<SpriteRenderer, bool>();
     private List<Component> removed = new List<Component>();
-    private List<SpriteRenderer> removedSprites = new List<SpriteRenderer>();
     private List<Material> materials = new List<Material>();
-    private Dictionary<SpriteRenderer, GameObject> terrain = new Dictionary<SpriteRenderer, GameObject>();
+    private Dictionary<string, GameObject> terrain = new Dictionary<string, GameObject>();
     private GameObject generated;
     private GameObject preview;
+    private GameObject previewModel;
+    private GameBuilding previewPrefab;
     private void OnEnable()
     {
         if (!Application.isPlaying) return;
-        bool lostCaches = terrain == null || views == null || hidden == null || palette == null || terrain.Count == 0;
+        bool lostCaches = terrain == null || views == null || palette == null || terrain.Count == 0;
         palette ??= new Dictionary<Color, Material>();
         previewProperties ??= new MaterialPropertyBlock();
         views ??= new Dictionary<Component, GameObject>();
-        chains ??= new Dictionary<HookAbility, LineRenderer>();
         projectiles ??= new Dictionary<HookAbility, GameObject>();
-        hidden ??= new Dictionary<SpriteRenderer, bool>();
-        removed ??= new List<Component>(); removedSprites ??= new List<SpriteRenderer>();
-        materials ??= new List<Material>(); terrain ??= new Dictionary<SpriteRenderer, GameObject>();
-        spriteStates ??= new List<SpriteVisibility>();
+        removed ??= new List<Component>();
+        materials ??= new List<Material>(); terrain ??= new Dictionary<string, GameObject>();
         if (lostCaches && generated != null)
         {
-            foreach (SpriteVisibility state in spriteStates)
-                if (state.renderer != null) state.renderer.forceRenderingOff = state.forcedOff;
-            spriteStates.Clear(); hidden.Clear();
-            DestroyGenerated(); views.Clear(); chains.Clear(); projectiles.Clear(); terrain.Clear(); palette.Clear();
+            DestroyGenerated(); views.Clear(); physicalChains.Clear(); projectiles.Clear(); terrain.Clear(); palette.Clear();
             Start();
         }
         if (generated != null) generated.SetActive(true);
@@ -77,16 +60,13 @@ public class ArenaPresentation25D : MonoBehaviour
     private void Start()
     {
         if (generated != null) return;
+        physicalChains ??= new Dictionary<HookAbility,HookChain25D>();
         generated = new GameObject("Generated 25D visuals");
         generated.transform.SetParent(transform, false);
         // Bounds come from ArenaLayout's already resized logical surfaces.
-        foreach (SpriteRenderer sprite in FindObjectsByType<SpriteRenderer>())
+        foreach (string label in new[]{"left bank","right bank","river","left mountains","right mountains"})
         {
-            if (sprite.gameObject.scene != gameObject.scene) continue;
-            string label = sprite.name.ToLowerInvariant();
-            if (label != "left bank" && label != "right bank" && label != "river" &&
-                label != "left mountains" && label != "right mountains") continue;
-            Bounds bounds = sprite.bounds;
+            Bounds bounds = TerrainBounds(label);
             bool mountain = label.Contains("mountains");
             Color color = mountain ? new Color(0.26f, 0.29f, 0.33f) : label == "river"
                 ? new Color(0.12f, 0.4f, 0.65f) : new Color(0.25f, 0.43f, 0.23f);
@@ -95,9 +75,10 @@ public class ArenaPresentation25D : MonoBehaviour
                 new Vector3(bounds.size.x, height, bounds.size.y), color);
             // Bank and water top are both exactly Y=0; adjacent edges do not overlap.
             ground.transform.position = ArenaSpace25D.ToWorld(bounds.center, mountain ? height / 2 : -height / 2);
-            terrain.Add(sprite, ground);
+            terrain.Add(label, ground);
         }
-        preview = Primitive("Cell preview", PrimitiveType.Cube, generated.transform, new Vector3(0.98f, 0.04f, 0.98f), Color.green);
+        preview = new GameObject("Cell preview");preview.transform.SetParent(generated.transform,false);
+        var cell=Primitive("Cell highlight",PrimitiveType.Cube,preview.transform,new Vector3(.98f,.004f,.98f),Color.green);cell.transform.localPosition=Vector3.up*.003f;
         preview.SetActive(false);
     }
     private GameObject Primitive(string label, PrimitiveType shape, Transform parent, Vector3 size, Color color)
@@ -115,33 +96,24 @@ public class ArenaPresentation25D : MonoBehaviour
         part.GetComponent<Renderer>().sharedMaterial = material;
         return part;
     }
-    private GameObject View(Component source, PrimitiveType shape, Vector3 size, Color color)
+    private GameObject View(Component source)
     {
         if (!views.TryGetValue(source, out GameObject view))
         {
-            view = new GameObject(source.name + " 25D"); view.transform.SetParent(generated.transform, false);
             GameObject prefab = ModelFor(source);
-            if (prefab != null && (prefab.GetComponentsInChildren<Collider>(true).Length > 0 ||
+            if(prefab==null)throw new System.InvalidOperationException("Missing 3D model for "+source.name);
+            if (prefab.GetComponentsInChildren<Collider>(true).Length > 0 ||
                 prefab.GetComponentsInChildren<Collider2D>(true).Length > 0 ||
                 prefab.GetComponentsInChildren<Rigidbody>(true).Length > 0 ||
-                prefab.GetComponentsInChildren<Rigidbody2D>(true).Length > 0))
-            {
-                Debug.LogError("25D model must contain no physics components: " + prefab.name, prefab);
-                prefab = null;
-            }
-            GameObject model;
-            if (prefab != null)
-            {
-                model = Instantiate(prefab, view.transform, false); model.name = "Model";
-                model.transform.localPosition = Vector3.zero;
-                model.transform.localRotation = Quaternion.identity;
-            }
-            else
-            {
-                model = Primitive("Model", shape, view.transform, size, color);
-                float halfHeight = shape == PrimitiveType.Capsule ? size.y : size.y / 2;
-                model.transform.localPosition = Vector3.up * (halfHeight + 0.03f);
-            }
+                prefab.GetComponentsInChildren<Rigidbody2D>(true).Length > 0 || prefab.GetComponentsInChildren<SpriteRenderer>(true).Length>0)
+                throw new System.InvalidOperationException("3D model must contain no gameplay physics or sprites: "+prefab.name);
+            foreach(var script in prefab.GetComponentsInChildren<MonoBehaviour>(true))
+                if(script==null||!(script is ButcherVisual25D||script is BuildingPresentation25D||script is AnimalPresentation25D||
+                    script is HookWars.Animals.AnimalMotion||script is HookWars.Buildings.BuildingVisualController))
+                    throw new System.InvalidOperationException("Unexpected script in visual prefab: "+prefab.name);
+            view = new GameObject(source.name + " 25D"); view.transform.SetParent(generated.transform, false);
+            GameObject model=Instantiate(prefab, view.transform, false);model.name="Model";
+            model.transform.localPosition=Vector3.zero;model.transform.localRotation=Quaternion.identity;
             views.Add(source, view);
             if (source is Health hero)
             {
@@ -155,7 +127,7 @@ public class ArenaPresentation25D : MonoBehaviour
         view.transform.position = ArenaSpace25D.ToWorld(source.transform.position);
         return view;
     }
-    private GameObject ModelFor(Component source)
+    public GameObject ModelFor(Component source)
     {
         VisualKind kind;
         if (source is Health) kind = source.GetComponent<PlayerMovement>() != null ? VisualKind.Player : VisualKind.Enemy;
@@ -178,8 +150,8 @@ public class ArenaPresentation25D : MonoBehaviour
         if (generated == null) return;
         foreach (var pair in terrain)
         {
-            Bounds bounds = pair.Key.bounds;
-            bool mountain = pair.Key.name.ToLowerInvariant().Contains("mountains");
+            Bounds bounds = TerrainBounds(pair.Key);
+            bool mountain = pair.Key.Contains("mountains");
             float height = mountain ? 1.5f : 0.15f;
             pair.Value.transform.position = ArenaSpace25D.ToWorld(bounds.center, mountain ? height / 2 : -height / 2);
             pair.Value.transform.localScale = new Vector3(bounds.size.x, height, bounds.size.y);
@@ -191,7 +163,7 @@ public class ArenaPresentation25D : MonoBehaviour
         {
             if (hero.gameObject.scene != gameObject.scene) continue;
             Color color = hero.GetComponent<PlayerMovement>() != null ? new Color(0.2f, 0.65f, 1) : new Color(0.95f, 0.24f, 0.18f);
-            GameObject view = View(hero, PrimitiveType.Capsule, new Vector3(0.8f, 0.9f, 0.8f), color);
+            GameObject view = View(hero);
             view.SetActive(hero.gameObject.activeInHierarchy && !hero.IsDead);
             if (view.transform.Find("Facing") == null)
             {
@@ -200,8 +172,9 @@ public class ArenaPresentation25D : MonoBehaviour
                 GameObject tip = Primitive("Tip", PrimitiveType.Cube, view.transform, new Vector3(0.35f, 0.12f, 0.35f), Color.yellow);
                 tip.transform.localPosition = new Vector3(0, 0.12f, 1.15f);
                 tip.transform.localRotation = Quaternion.Euler(0, 45, 0);
-                GameObject cargo = Primitive("Cargo", PrimitiveType.Cube, view.transform, Vector3.one * 0.45f, new Color(1, 0.5f, 0.08f));
-                cargo.transform.localPosition = new Vector3(0, 1.3f, -0.45f);
+                GameObject cargo = new GameObject("Cargo");cargo.transform.SetParent(view.transform,false);
+                cargo.transform.localPosition = new Vector3(0, .25f, -.8f);
+                cargo.AddComponent<CargoPresentation25D>().Bind(hero.GetComponent<CarcassCarrier>(),this);
                 GameObject hp = Primitive("Health", PrimitiveType.Cube, view.transform, new Vector3(0.9f, 0.09f, 0.12f), Color.green);
                 hp.transform.localPosition = Vector3.up * (view.GetComponentInChildren<ButcherVisual25D>() != null ? 1.65f : 2.1f);
                 GameObject team = Primitive("Team", PrimitiveType.Cylinder, view.transform, new Vector3(1.1f, 0.005f, 1.1f), color);
@@ -220,23 +193,21 @@ public class ArenaPresentation25D : MonoBehaviour
             CarcassCarrier carrier = hero.GetComponent<CarcassCarrier>();
             view.transform.Find("Cargo").gameObject.SetActive(carrier != null && carrier.Count > 0);
             view.transform.Find("Health").localScale = new Vector3(0.9f * hero.HealthFraction, 0.09f, 0.12f);
+            if(Camera.main!=null)view.transform.Find("Health").rotation=Camera.main.transform.rotation;
         }
         foreach (Animal animal in FindObjectsByType<Animal>(FindObjectsInactive.Include))
         {
             if (animal.gameObject.scene != gameObject.scene) continue;
-            GameObject view = View(animal, PrimitiveType.Sphere, new Vector3(0.65f, 0.65f, 0.9f),
-                animal.MassKg >= 10 ? new Color(0.6f, 0.48f, 0.3f) : animal.MassKg >= 6 ? new Color(0.95f, 0.55f, 0.6f) : Color.white);
+            GameObject view = View(animal);
             view.SetActive(animal.gameObject.activeInHierarchy && !animal.IsDead);
         }
         foreach (Carcass carcass in FindObjectsByType<Carcass>(FindObjectsInactive.Include))
             if (carcass.gameObject.scene == gameObject.scene)
-                View(carcass, PrimitiveType.Cube, new Vector3(0.65f, 0.25f, 0.5f), new Color(0.65f, 0.22f, 0.2f));
+                View(carcass);
         foreach (GameBuilding building in FindObjectsByType<GameBuilding>(FindObjectsInactive.Include))
         {
             if (building.gameObject.scene != gameObject.scene) continue;
-            Color color = building is BoneWall ? new Color(0.85f, 0.8f, 0.6f) : building is AnimalFarm ? new Color(0.6f, 0.8f, 0.3f)
-                : building is MeatShop ? new Color(0.9f, 0.4f, 0.25f) : new Color(0.45f, 0.5f, 0.65f);
-            View(building, PrimitiveType.Cube, new Vector3(1, building is BoneWall ? 0.85f : 1.3f, 1), color);
+            View(building);
         }
         foreach (HookAbility hook in FindObjectsByType<HookAbility>())
         {
@@ -244,44 +215,33 @@ public class ArenaPresentation25D : MonoBehaviour
             UpdateHookPresentation(hook, null);
         }
         PlayerBuilding builder = FindAnyObjectByType<PlayerBuilding>();
-        SpriteRenderer marker = builder != null ? builder.Preview : null;
+        Transform marker = builder != null ? builder.Preview : null;
         preview.SetActive(marker != null);
         if (marker != null)
         {
-            preview.transform.position = ArenaSpace25D.ToWorld(marker.transform.position, 0.035f);
-            previewProperties.SetColor("_BaseColor", marker.color);
-            preview.GetComponent<Renderer>().SetPropertyBlock(previewProperties);
-        }
-        // forceRenderingOff survives old scripts/Animator toggling enabled and color.
-        foreach (SpriteRenderer sprite in FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include))
-            if (sprite.gameObject.scene == gameObject.scene)
+            preview.transform.position = ArenaSpace25D.ToWorld(marker.position);
+            if(previewPrefab!=builder.SelectedPrefab)
             {
-                if (!hidden.ContainsKey(sprite))
+                if(previewModel!=null)Destroy(previewModel);previewPrefab=builder.SelectedPrefab;
+                var prefab=ModelFor(previewPrefab);previewModel=prefab!=null?Instantiate(prefab,preview.transform,false):null;
+                if(previewModel!=null)
                 {
-                    hidden.Add(sprite, sprite.forceRenderingOff);
-                    spriteStates.Add(new SpriteVisibility { renderer = sprite, forcedOff = sprite.forceRenderingOff });
+                    foreach(var script in previewModel.GetComponentsInChildren<MonoBehaviour>())script.enabled=false;
+                    foreach(var animator in previewModel.GetComponentsInChildren<Animator>())animator.enabled=false;
+                    foreach(var particles in previewModel.GetComponentsInChildren<ParticleSystem>())particles.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);
+                    foreach(var light in previewModel.GetComponentsInChildren<Light>())light.enabled=false;
                 }
-                sprite.forceRenderingOff = true;
             }
+            previewProperties.SetColor("_BaseColor", builder.PreviewColor);
+            foreach(var renderer in preview.GetComponentsInChildren<Renderer>())renderer.SetPropertyBlock(previewProperties);
+        }
         removed.Clear();
         foreach (var pair in views) if (pair.Key == null) { Destroy(pair.Value); removed.Add(pair.Key); }
         foreach (Component key in removed) views.Remove(key);
-        removedSprites.Clear();
-        foreach (var pair in hidden) if (pair.Key == null) removedSprites.Add(pair.Key);
-        foreach (SpriteRenderer sprite in removedSprites) hidden.Remove(sprite);
-        spriteStates.RemoveAll(state => state.renderer == null);
     }
     public void UpdateHookPresentation(HookAbility hook, ButcherVisual25D butcher)
     {
         if (generated == null || hook == null) return;
-        LineRenderer chain=null;
-        if (physicalChainMesh==null && !chains.TryGetValue(hook, out chain))
-        {
-            GameObject line = new GameObject(hook.name + " chain 25D"); line.transform.SetParent(generated.transform, false);
-            chain = line.AddComponent<LineRenderer>(); chain.sharedMaterial = chainMaterial;
-            chain.startWidth = chain.endWidth = 0.08f; chain.useWorldSpace = true;
-            chain.shadowCastingMode = ShadowCastingMode.Off; chains.Add(hook, chain);
-        }
         if (butcher == null && hook.GetComponent<Health>() is Health owner && views.TryGetValue(owner, out GameObject heroView))
             butcher = heroView.GetComponentInChildren<ButcherVisual25D>(true);
         Vector3 tip = hook.ActiveHook != null ? ArenaSpace25D.ToWorld(hook.ActiveHook.position, 0.65f) : Vector3.zero;
@@ -292,10 +252,6 @@ public class ArenaPresentation25D : MonoBehaviour
             float proximity = 1f - Mathf.Clamp01(Vector2.Distance(hook.ActiveHook.position, hook.transform.position) / 1.2f);
             tip += (butcher.Socket.position - ArenaSpace25D.ToWorld(hook.transform.position, 0.65f)) * proximity;
         }
-        if(chain!=null)chain.positionCount = hook.ChainPointCount;
-        for (int i = 0; chain!=null && i < hook.ChainPointCount; i++)
-            chain.SetPosition(i, i == 0 && butcher != null ? butcher.Socket.position :
-                i == hook.ChainPointCount - 1 && butcher != null ? tip : ArenaSpace25D.ToWorld(hook.GetChainPoint(i), 0.65f));
         if(physicalChainMesh!=null)
         {
             physicalChains ??= new Dictionary<HookAbility,HookChain25D>();
@@ -309,16 +265,23 @@ public class ArenaPresentation25D : MonoBehaviour
         }
         if (hook.ActiveHook != null)
         {
-            GameObject view = View(hook.ActiveHook, PrimitiveType.Cube, new Vector3(0.3f, 0.25f, 0.65f), Color.yellow);
+            GameObject view = View(hook.ActiveHook);
             if (projectiles.TryGetValue(hook, out GameObject previousView) && previousView != null && previousView != view) previousView.SetActive(false);
             projectiles[hook] = view;
             view.transform.position = butcher != null ? tip : ArenaSpace25D.ToWorld(hook.ActiveHook.position, 0.5f);
-            Vector2 forward = hook.ActiveHook.up;
-            view.transform.rotation = ArenaSpace25D.Facing(forward);
+            view.transform.rotation = ArenaSpace25D.Facing(hook.VisualDirection);
+            view.transform.localScale=Vector3.one*hook.VisualScale;
         }
         else if (projectiles.TryGetValue(hook, out GameObject retiredView) && retiredView != null) retiredView.SetActive(false);
     }
     public Transform VisualFor(Component source) => source != null && views.TryGetValue(source, out GameObject view) && view != null ? view.transform : null;
+    private static Bounds TerrainBounds(string label)
+    {
+        bool mountain=label.Contains("mountains"),right=label.StartsWith("right");
+        float width=label=="river"?ArenaLayout.RiverWidth:mountain?ArenaLayout.MountainWidth:ArenaLayout.Depth;
+        float center=label=="river"?0:(mountain?ArenaLayout.OuterEdge+width*.5f:ArenaLayout.RiverHalfWidth+width*.5f)*(right?1:-1);
+        return new Bounds(new Vector3(center,0,0),new Vector3(width,ArenaLayout.FieldHeight,0));
+    }
     private Vector3 FindPlayerPosition()
     {
         PlayerMovement player = FindAnyObjectByType<PlayerMovement>();
@@ -329,13 +292,6 @@ public class ArenaPresentation25D : MonoBehaviour
         if (pipelineApplied) QualitySettings.renderPipeline = previousPipeline;
         pipelineApplied = false;
         if (generated != null) generated.SetActive(false);
-        if (spriteStates != null)
-        {
-            foreach (SpriteVisibility state in spriteStates)
-                if (state.renderer != null) state.renderer.forceRenderingOff = state.forcedOff;
-            spriteStates.Clear();
-        }
-        hidden?.Clear();
     }
     private void DestroyGenerated()
     {
@@ -344,7 +300,7 @@ public class ArenaPresentation25D : MonoBehaviour
         generated.name = "Retired 25D visuals";
         foreach (Renderer renderer in generated.GetComponentsInChildren<Renderer>(true))
             foreach (Material material in renderer.sharedMaterials)
-                if (material != null && material != litMaterial && material != chainMaterial &&
+                if (material != null && material != litMaterial &&
                     material.name.StartsWith("Arena25D Runtime ") &&
                     (material.hideFlags & HideFlags.DontSave) != 0) Destroy(material);
         Destroy(generated); generated = null; preview = null;

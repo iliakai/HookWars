@@ -25,8 +25,7 @@ public class PlayerRespawn : MonoBehaviour
             GetComponent<PlayerMovement>(),
             GetComponent<PlayerHook>(),
             GetComponent<PlayerMelee>(),
-            GetComponentInChildren<PlayerAim>(),
-            GetComponentInChildren<MeleeSwingVisual>()
+            GetComponentInChildren<PlayerAim>()
         };
 
         previousStates = new bool[controls.Length];

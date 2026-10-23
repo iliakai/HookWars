@@ -55,5 +55,5 @@ public sealed class HookChain25D : MonoBehaviour
         throwIdentity=null;IssuedPhysicalLength=LogicalLength=0;ActiveLinks=0;
     }
     private void OnDisable()=>Clear();
-    private void LateUpdate(){if(owner==null||owner.ActiveHook==null||!owner.isActiveAndEnabled)Clear();}
+    private void LateUpdate(){if(owner==null){Destroy(gameObject);return;}if(owner.ActiveHook==null||!owner.isActiveAndEnabled)Clear();}
 }

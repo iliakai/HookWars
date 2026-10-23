@@ -5,6 +5,8 @@ using UnityEngine;
 [DefaultExecutionOrder(1150)]
 public sealed class BuildingPresentation25D : MonoBehaviour
 {
+    [SerializeField,Min(.1f)] private float collisionHeight=1;
+    public float CollisionHeight=>collisionHeight;
     private GameBuilding source;
     private BuildingVisualController visual;
     public void Bind(GameBuilding building)

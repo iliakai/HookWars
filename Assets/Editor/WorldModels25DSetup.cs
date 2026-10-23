@@ -73,6 +73,7 @@ public static class WorldModels25DSetup
             var model=(GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(path));
             PrefabUtility.UnpackPrefabInstance(model,PrefabUnpackMode.Completely,InteractionMode.AutomatedAction);
             model.transform.SetParent(root.transform,false);
+            model.transform.localRotation=Quaternion.Euler(0,180,0); // Authored front +Z faces the south-side game camera.
             var material=AssetDatabase.LoadAssetAtPath<Material>(Output+"/"+name+".mat");
             if(material==null) { material=new Material(Shader.Find("Universal Render Pipeline/Lit")); AssetDatabase.CreateAsset(material,Output+"/"+name+".mat"); }
             material.SetTexture("_BaseMap",AssetDatabase.LoadAssetAtPath<Texture2D>(Buildings+"/Textures/"+name+"_Albedo.png"));
@@ -108,7 +109,8 @@ public static class WorldModels25DSetup
                 var light=lamp.AddComponent<Light>(); light.type=LightType.Point; light.color=new Color(1,.25f,.03f); light.range=.45f; light.intensity=.5f;
                 light.enabled=false; visual.workingLights=new[]{light};
             }
-            root.AddComponent<BuildingPresentation25D>();
+            var observer=root.AddComponent<BuildingPresentation25D>();
+            var dimensions=new SerializedObject(observer);dimensions.FindProperty("collisionHeight").floatValue=bounds.size.y*scale+.015f;dimensions.ApplyModifiedPropertiesWithoutUndo();
             PrefabUtility.SaveAsPrefabAsset(root,Output+"/"+name+".prefab");
             Debug.Log($"HOOKWARS_BUILDING_IMPORT: {name} base={bounds.size:F4}, scale={scale:F6}, clips={string.Join(",",clips.Select(c=>c.name+":"+c.length))}");
         }

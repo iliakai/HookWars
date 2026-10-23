@@ -9,7 +9,6 @@ public class CarcassCarrier : MonoBehaviour
     [SerializeField, Min(0.01f)] private float capacityPerUpgrade = 2f;
     [SerializeField, Min(0.1f)] private float pickupRadius = 1.25f;
     [SerializeField] private LayerMask carcassLayers;
-    [SerializeField] private SpriteRenderer cargoMarker;
 
     private readonly List<Carcass> cargo = new List<Carcass>();
     private readonly List<Carcass> deathCargo = new List<Carcass>();
@@ -18,6 +17,7 @@ public class CarcassCarrier : MonoBehaviour
     public float CapacityKg => capacityKg;
     public float CapacityPerUpgrade => capacityPerUpgrade;
     public int Count => cargo.Count;
+    public IReadOnlyList<Carcass> StoredCargo=>cargo;
     public float CurrentMassKg
     {
         get
@@ -35,7 +35,6 @@ public class CarcassCarrier : MonoBehaviour
         victim = GetComponent<HookVictim>();
         health.Died += OnDied;
         health.Revived += OnRevived;
-        RefreshMarker();
     }
 
     private void Update()
@@ -57,7 +56,6 @@ public class CarcassCarrier : MonoBehaviour
             CurrentMassKg + carcass.MassKg > capacityKg) return false;
         if (!carcass.TryStore(this)) return false;
         cargo.Add(carcass);
-        RefreshMarker();
         return true;
     }
 
@@ -93,7 +91,6 @@ public class CarcassCarrier : MonoBehaviour
             cargo.RemoveAt(i);
             Destroy(carcass.gameObject);
         }
-        RefreshMarker();
         return delivered;
     }
 
@@ -122,12 +119,6 @@ public class CarcassCarrier : MonoBehaviour
         foreach (Carcass carcass in cargo)
             if (carcass != null) carcass.Drop(ground);
         cargo.Clear();
-        RefreshMarker();
-    }
-
-    private void RefreshMarker()
-    {
-        if (cargoMarker != null) cargoMarker.enabled = cargo.Count > 0;
     }
 
     private void OnDestroy()

@@ -8,7 +8,6 @@ public class PlayerMelee : MonoBehaviour
     [Header("References")]
     [SerializeField] private PlayerAim playerAim;
     [SerializeField] private LayerMask targetLayers;
-    [SerializeField] private MeleeSwingVisual swingVisual;
 
     [Header("Attack Stats")]
     [SerializeField, Min(0f)] private float damage = 20f;
@@ -77,11 +76,6 @@ public class PlayerMelee : MonoBehaviour
     private void ApplyAttack(Vector2 direction)
     {
         if (!isActiveAndEnabled || GetComponent<Health>()?.IsDead == true || GetComponent<HookVictim>()?.IsCaught == true) return;
-
-        if (swingVisual != null)
-        {
-            swingVisual.PlaySwing(direction, attackAngle);
-        }
 
         // Учитываем последнее перемещение целей через Transform.
         Physics2D.SyncTransforms();

@@ -36,6 +36,6 @@ public sealed class ChainPhysicsWorld25D : MonoBehaviour
     private void OnDestroy()
     {
         if(Instance==this)Instance=null;chains.Clear();
-        if(scene.IsValid()&&scene.isLoaded)SceneManager.UnloadSceneAsync(scene);
+        if(Application.isPlaying&&scene.IsValid()&&scene.isLoaded)SceneManager.UnloadSceneAsync(scene);
     }
 }
