@@ -33,8 +33,12 @@ public class PlayerMelee : MonoBehaviour
 
         if (Mouse.current.rightButton.wasPressedThisFrame)
         {
-            TryAttack();
+            TryAttackAtScreenPoint(Mouse.current.position.ReadValue());
         }
+    }
+    public void TryAttackAtScreenPoint(Vector2 screen)
+    {
+        if (!GamePointer.OverInterface(screen)) TryAttack();
     }
 
     private void TryAttack()
@@ -53,16 +57,29 @@ public class PlayerMelee : MonoBehaviour
         }
 
         // Пока крюк в действии, руки заняты.
-        if (playerHook != null && playerHook.ActiveHook != null)
+        if (playerHook != null && (playerHook.ActiveHook != null || playerHook.IsPreparingThrow))
         {
             return;
         }
 
+        if (GetComponent<Health>()?.IsDead == true) return;
+        HeroActionTiming25D timing = GetComponent<HeroActionTiming25D>();
+        if (timing != null && timing.enabled)
+        {
+            if (timing.BeginAxe(attackCooldown, () => ApplyAttack(timing.ResolveFacing(playerAim.AimDirection))))
+                nextAttackTime = Time.time + attackCooldown;
+            return;
+        }
         nextAttackTime = Time.time + attackCooldown;
+        ApplyAttack(playerAim.AimDirection);
+    }
+    private void ApplyAttack(Vector2 direction)
+    {
+        if (!isActiveAndEnabled || GetComponent<Health>()?.IsDead == true || GetComponent<HookVictim>()?.IsCaught == true) return;
 
         if (swingVisual != null)
         {
-            swingVisual.PlaySwing(playerAim.AimDirection, attackAngle);
+            swingVisual.PlaySwing(direction, attackAngle);
         }
 
         // Учитываем последнее перемещение целей через Transform.
@@ -101,7 +118,7 @@ public class PlayerMelee : MonoBehaviour
             }
 
             float angle = Vector2.Angle(
-                playerAim.AimDirection,
+                direction,
                 toTarget
             );
 
@@ -131,4 +148,5 @@ public class PlayerMelee : MonoBehaviour
             Debug.Log("Топор: попадание.", this);
         }
     }
+    private void OnDisable() => GetComponent<HeroActionTiming25D>()?.CancelAxe();
 }

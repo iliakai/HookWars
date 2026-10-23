@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class HookVictim : MonoBehaviour
 {
+    public event System.Action Captured;
     public HookAbility Captor { get; private set; }
     public bool IsCaught => Captor != null;
 
@@ -13,6 +14,7 @@ public class HookVictim : MonoBehaviour
         }
 
         Captor = captor;
+        Captured?.Invoke();
         return true;
     }
 

@@ -48,7 +48,7 @@ public static class HookWarsValidationBridge
                 Application.runInBackground = true;
                 EditorApplication.QueuePlayerLoopUpdate();
             }
-            string key = active == "arena25d" ? "HookWars.25D.Pending" : "HookWars.CarryingChecks.Pending";
+            string key = active == "arena25d" ? "HookWars.25D.Pending" : active == "butcher" ? Butcher25DChecks.Key : "HookWars.CarryingChecks.Pending";
             if (SessionState.GetBool(key, false) || EditorApplication.isPlayingOrWillChangePlaymode) return;
             Application.runInBackground = SessionState.GetBool(Active + ".Background", false);
             Write(active, SessionState.GetBool(key + ".Passed", false) ? "passed" : "failed", "See log.txt");
@@ -71,12 +71,21 @@ public static class HookWarsValidationBridge
             }
             File.Delete(path);
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
-            if (request.operation != "arena25d" && request.operation != "regressions")
+            if (request.operation == "butcher-inspect")
+            {
+                Butcher25DSetup.Inspect(); Write(request.operation, "passed", "See butcher-import.txt"); return;
+            }
+            if (request.operation == "butcher-setup")
+            {
+                Butcher25DSetup.Configure(); Write(request.operation, "passed", "Arena25D adapted butcher saved"); return;
+            }
+            if (request.operation != "arena25d" && request.operation != "regressions" && request.operation != "butcher")
                 throw new InvalidOperationException("Unsupported validation operation");
             SessionState.SetString(Active, request.operation);
             SessionState.SetBool(Active + ".Background", Application.runInBackground);
             Write(request.operation, "running", "Running in existing Editor");
             if (request.operation == "arena25d") Arena25DChecks.Run();
+            else if (request.operation == "butcher") Butcher25DChecks.Run();
             else EconomyChecks.Run5();
         }
         catch (Exception error)

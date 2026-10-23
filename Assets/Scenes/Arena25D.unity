@@ -1139,6 +1139,7 @@ GameObject:
   - component: {fileID: 641424507}
   - component: {fileID: 641424506}
   - component: {fileID: 641424509}
+  - component: {fileID: 641424510}
   m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
@@ -1480,6 +1481,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6123bff6a88d09a44a66b8f9ca30837d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OwnerEconomy
+--- !u!114 &641424510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 641424493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c01924579c0c20f449b91fa1e33ced59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroActionTiming25D
 --- !u!1 &806248677
 GameObject:
   m_ObjectHideFlags: 0
@@ -1549,6 +1562,7 @@ GameObject:
   - component: {fileID: 923269600}
   - component: {fileID: 923269603}
   - component: {fileID: 923269602}
+  - component: {fileID: 923269604}
   m_Layer: 8
   m_Name: Enemy
   m_TagString: Untagged
@@ -1849,6 +1863,18 @@ MonoBehaviour:
   level: 1
   upgradePoints: 0
   experienceToNextLevel: 0
+--- !u!114 &923269604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 923269590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c01924579c0c20f449b91fa1e33ced59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroActionTiming25D
 --- !u!1 &971682049
 GameObject:
   m_ObjectHideFlags: 0
@@ -3086,7 +3112,15 @@ MonoBehaviour:
   pipeline: {fileID: 11400000, guid: 683606ffeb604d3c82427dab1b7f8b70, type: 2}
   litMaterial: {fileID: 2100000, guid: c8ccbc87102546de80166e7bb48bc895, type: 2}
   chainMaterial: {fileID: 2100000, guid: 9ada2c65ede648aeaca8742baa4aeae8, type: 2}
-  models: []
+  models:
+  - kind: 0
+    prefab: {fileID: 7938025703419840844, guid: 378f9ec8f6807ca4d888899dbf886d24, type: 3}
+  - kind: 1
+    prefab: {fileID: 7938025703419840844, guid: 378f9ec8f6807ca4d888899dbf886d24, type: 3}
+  - kind: 5
+    prefab: {fileID: 4893692490440210853, guid: 8787c0f28465fc34d98208e184fcbf62, type: 3}
+  - kind: 10
+    prefab: {fileID: 1601749327022092688, guid: bf2125ccf2633174da387983d7ba3616, type: 3}
   spriteStates: []
 --- !u!1 &2100000020
 GameObject:

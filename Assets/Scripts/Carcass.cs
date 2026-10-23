@@ -11,6 +11,7 @@ public class Carcass : MonoBehaviour
     private CarcassCarrier carrier;
 
     public float MassKg => massKg;
+    public bool IsHeroCarcass { get; private set; }
     public bool IsStored => carrier != null;
     public bool IsReserved => GetComponent<HookVictim>().IsCaught ||
         (sourceVictim != null && sourceHealth != null && sourceHealth.IsDead && sourceVictim.IsCaught);
@@ -21,6 +22,7 @@ public class Carcass : MonoBehaviour
         if (mass <= 0f || float.IsNaN(mass) || float.IsInfinity(mass))
             throw new System.ArgumentOutOfRangeException(nameof(mass));
         massKg = mass;
+        IsHeroCarcass = source != null && source.GetComponent<Health>() != null;
         FollowHero(source);
     }
 

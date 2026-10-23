@@ -116,13 +116,19 @@ public static class Arena25DChecks
         Check(display.transform.Cast<Transform>().Count(t => t.name == "Generated 25D visuals" && t.gameObject.activeSelf) == 1, "Rebuilding presentation does not duplicate active visual roots");
         Check(GamePointer.OverInterface(new Vector2(30, Screen.height - 30)), "UI blocks world actions");
         var hook = player.GetComponent<PlayerHook>(); Set(hook, "nextThrowTime", 0f); hook.TryThrow(Vector2.right);
+        player.GetComponent<HeroActionTiming25D>()?.Advance(Time.time + HeroActionTiming25D.HookRelease + 0.001f);
         Check(hook.ActiveHook != null, "Hook spawned");
         var bends = (List<Vector3>)typeof(HookAbility).GetField("bends", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(hook);
         bends.Add(saved + Vector3.right); hook.ActiveHook.position = saved + new Vector3(1, 2);
         Call(display, "LateUpdate");
         LineRenderer chain = display.GetComponentsInChildren<LineRenderer>().First(l => l.name == player.name + " chain 25D");
         Check(chain.positionCount == 3 && chain.positionCount == hook.ChainPointCount, "Chain includes logical bend");
-        for (int i = 0; i < chain.positionCount; i++) Check(Vector3.Distance(chain.GetPosition(i), ArenaSpace25D.ToWorld(hook.GetChainPoint(i), 0.65f)) < 0.001f, "Chain point agrees with logic");
+        var butcher = display.GetComponentsInChildren<ButcherVisual25D>().FirstOrDefault(b => b.name == "Model" && b.transform.parent.name == player.name + " 25D");
+        for (int i = 0; i < chain.positionCount; i++)
+        {
+            Vector3 expected = i == 0 && butcher != null ? butcher.Socket.position : ArenaSpace25D.ToWorld(hook.GetChainPoint(i), 0.65f);
+            Check(Vector3.Distance(chain.GetPosition(i), expected) < 0.001f, "Chain point agrees with logic/socket");
+        }
         Type state = typeof(HookAbility).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance).FieldType;
         Set(hook, "state", Enum.Parse(state, "Returning")); Call(display, "LateUpdate");
         Check(!hook.IsFlyingOut && chain.positionCount == 3, "Return keeps bent route visible");

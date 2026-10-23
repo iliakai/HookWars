@@ -34,6 +34,7 @@ public class ArenaPresentation25D : MonoBehaviour
     private MaterialPropertyBlock previewProperties;
     private Dictionary<Component, GameObject> views = new Dictionary<Component, GameObject>();
     private Dictionary<HookAbility, LineRenderer> chains = new Dictionary<HookAbility, LineRenderer>();
+    private Dictionary<HookAbility, GameObject> projectiles = new Dictionary<HookAbility, GameObject>();
     private Dictionary<SpriteRenderer, bool> hidden = new Dictionary<SpriteRenderer, bool>();
     private List<Component> removed = new List<Component>();
     private List<SpriteRenderer> removedSprites = new List<SpriteRenderer>();
@@ -49,6 +50,7 @@ public class ArenaPresentation25D : MonoBehaviour
         previewProperties ??= new MaterialPropertyBlock();
         views ??= new Dictionary<Component, GameObject>();
         chains ??= new Dictionary<HookAbility, LineRenderer>();
+        projectiles ??= new Dictionary<HookAbility, GameObject>();
         hidden ??= new Dictionary<SpriteRenderer, bool>();
         removed ??= new List<Component>(); removedSprites ??= new List<SpriteRenderer>();
         materials ??= new List<Material>(); terrain ??= new Dictionary<SpriteRenderer, GameObject>();
@@ -58,7 +60,7 @@ public class ArenaPresentation25D : MonoBehaviour
             foreach (SpriteVisibility state in spriteStates)
                 if (state.renderer != null) state.renderer.forceRenderingOff = state.forcedOff;
             spriteStates.Clear(); hidden.Clear();
-            DestroyGenerated(); views.Clear(); chains.Clear(); terrain.Clear(); palette.Clear();
+            DestroyGenerated(); views.Clear(); chains.Clear(); projectiles.Clear(); terrain.Clear(); palette.Clear();
             Start();
         }
         if (generated != null) generated.SetActive(true);
@@ -125,7 +127,7 @@ public class ArenaPresentation25D : MonoBehaviour
             if (prefab != null)
             {
                 model = Instantiate(prefab, view.transform, false); model.name = "Model";
-                model.transform.localPosition = Vector3.up * 0.03f;
+                model.transform.localPosition = Vector3.zero;
                 model.transform.localRotation = Quaternion.identity;
             }
             else
@@ -135,6 +137,11 @@ public class ArenaPresentation25D : MonoBehaviour
                 model.transform.localPosition = Vector3.up * (halfHeight + 0.03f);
             }
             views.Add(source, view);
+            if (source is Health hero)
+            {
+                ButcherVisual25D butcher = model.GetComponent<ButcherVisual25D>();
+                if (butcher != null) butcher.Bind(hero);
+            }
         }
         view.SetActive(source.gameObject.activeInHierarchy);
         view.transform.position = ArenaSpace25D.ToWorld(source.transform.position);
@@ -145,7 +152,7 @@ public class ArenaPresentation25D : MonoBehaviour
         VisualKind kind;
         if (source is Health) kind = source.GetComponent<PlayerMovement>() != null ? VisualKind.Player : VisualKind.Enemy;
         else if (source is Animal animal) kind = animal.MassKg >= 10 ? VisualKind.Cow : animal.MassKg >= 6 ? VisualKind.Pig : VisualKind.Sheep;
-        else if (source is Carcass) kind = VisualKind.Carcass;
+        else if (source is Carcass carcass) { if (!carcass.IsHeroCarcass) return null; kind = VisualKind.Carcass; }
         else if (source is BoneWall) kind = VisualKind.Wall;
         else if (source is AnimalFarm) kind = VisualKind.Farm;
         else if (source is MeatShop) kind = VisualKind.Shop;
@@ -184,10 +191,14 @@ public class ArenaPresentation25D : MonoBehaviour
                 GameObject cargo = Primitive("Cargo", PrimitiveType.Cube, view.transform, Vector3.one * 0.45f, new Color(1, 0.5f, 0.08f));
                 cargo.transform.localPosition = new Vector3(0, 1.3f, -0.45f);
                 GameObject hp = Primitive("Health", PrimitiveType.Cube, view.transform, new Vector3(0.9f, 0.09f, 0.12f), Color.green);
-                hp.transform.localPosition = Vector3.up * 2.1f;
+                hp.transform.localPosition = Vector3.up * (view.GetComponentInChildren<ButcherVisual25D>() != null ? 1.65f : 2.1f);
+                GameObject team = Primitive("Team", PrimitiveType.Cylinder, view.transform, new Vector3(1.1f, 0.005f, 1.1f), color);
+                team.transform.localPosition = Vector3.up * 0.007f;
             }
             PlayerAim aim = hero.GetComponentInChildren<PlayerAim>();
             Vector2 direction = aim != null ? aim.AimDirection : (Vector2)(FindPlayerPosition() - hero.transform.position);
+            HeroActionTiming25D timing = hero.GetComponent<HeroActionTiming25D>();
+            if (timing != null) direction = timing.ResolveFacing(direction);
             view.transform.rotation = ArenaSpace25D.Facing(direction);
             CarcassCarrier carrier = hero.GetComponent<CarcassCarrier>();
             view.transform.Find("Cargo").gameObject.SetActive(carrier != null && carrier.Count > 0);
@@ -213,23 +224,7 @@ public class ArenaPresentation25D : MonoBehaviour
         foreach (HookAbility hook in FindObjectsByType<HookAbility>())
         {
             if (hook.gameObject.scene != gameObject.scene) continue;
-            if (!chains.TryGetValue(hook, out LineRenderer chain))
-            {
-                GameObject line = new GameObject(hook.name + " chain 25D"); line.transform.SetParent(generated.transform, false);
-                chain = line.AddComponent<LineRenderer>(); chain.sharedMaterial = chainMaterial;
-                chain.startWidth = chain.endWidth = 0.08f; chain.useWorldSpace = true;
-                chain.shadowCastingMode = ShadowCastingMode.Off; chains.Add(hook, chain);
-            }
-            chain.positionCount = hook.ChainPointCount;
-            for (int i = 0; i < hook.ChainPointCount; i++) chain.SetPosition(i, ArenaSpace25D.ToWorld(hook.GetChainPoint(i), 0.65f));
-            if (hook.ActiveHook != null)
-            {
-                GameObject view = View(hook.ActiveHook, PrimitiveType.Cube, new Vector3(0.3f, 0.25f, 0.65f), Color.yellow);
-                view.transform.position = ArenaSpace25D.ToWorld(hook.ActiveHook.position, 0.5f);
-                // Logical HookVisual uses a 270 degree art offset. Its local +Y is forward.
-                Vector2 forward = hook.ActiveHook.up;
-                view.transform.rotation = ArenaSpace25D.Facing(forward);
-            }
+            UpdateHookPresentation(hook, null);
         }
         PlayerBuilding builder = FindAnyObjectByType<PlayerBuilding>();
         SpriteRenderer marker = builder != null ? builder.Preview : null;
@@ -259,6 +254,42 @@ public class ArenaPresentation25D : MonoBehaviour
         foreach (SpriteRenderer sprite in removedSprites) hidden.Remove(sprite);
         spriteStates.RemoveAll(state => state.renderer == null);
     }
+    public void UpdateHookPresentation(HookAbility hook, ButcherVisual25D butcher)
+    {
+        if (generated == null || hook == null) return;
+        if (!chains.TryGetValue(hook, out LineRenderer chain))
+        {
+            GameObject line = new GameObject(hook.name + " chain 25D"); line.transform.SetParent(generated.transform, false);
+            chain = line.AddComponent<LineRenderer>(); chain.sharedMaterial = chainMaterial;
+            chain.startWidth = chain.endWidth = 0.08f; chain.useWorldSpace = true;
+            chain.shadowCastingMode = ShadowCastingMode.Off; chains.Add(hook, chain);
+        }
+        if (butcher == null && hook.GetComponent<Health>() is Health owner && views.TryGetValue(owner, out GameObject heroView))
+            butcher = heroView.GetComponentInChildren<ButcherVisual25D>(true);
+        Vector3 tip = hook.ActiveHook != null ? ArenaSpace25D.ToWorld(hook.ActiveHook.position, 0.65f) : Vector3.zero;
+        if (hook.ActiveHook != null && butcher != null)
+        {
+            // Cosmetic endpoint transition only. Physics2D and logical chain length
+            // still begin at the unchanged hero origin and use the unchanged tip.
+            float proximity = 1f - Mathf.Clamp01(Vector2.Distance(hook.ActiveHook.position, hook.transform.position) / 1.2f);
+            tip += (butcher.Socket.position - ArenaSpace25D.ToWorld(hook.transform.position, 0.65f)) * proximity;
+        }
+        chain.positionCount = hook.ChainPointCount;
+        for (int i = 0; i < hook.ChainPointCount; i++)
+            chain.SetPosition(i, i == 0 && butcher != null ? butcher.Socket.position :
+                i == hook.ChainPointCount - 1 && butcher != null ? tip : ArenaSpace25D.ToWorld(hook.GetChainPoint(i), 0.65f));
+        if (hook.ActiveHook != null)
+        {
+            GameObject view = View(hook.ActiveHook, PrimitiveType.Cube, new Vector3(0.3f, 0.25f, 0.65f), Color.yellow);
+            if (projectiles.TryGetValue(hook, out GameObject previousView) && previousView != null && previousView != view) previousView.SetActive(false);
+            projectiles[hook] = view;
+            view.transform.position = butcher != null ? tip : ArenaSpace25D.ToWorld(hook.ActiveHook.position, 0.5f);
+            Vector2 forward = hook.ActiveHook.up;
+            view.transform.rotation = ArenaSpace25D.Facing(forward);
+        }
+        else if (projectiles.TryGetValue(hook, out GameObject retiredView) && retiredView != null) retiredView.SetActive(false);
+    }
+    public Transform VisualFor(Component source) => source != null && views.TryGetValue(source, out GameObject view) && view != null ? view.transform : null;
     private Vector3 FindPlayerPosition()
     {
         PlayerMovement player = FindAnyObjectByType<PlayerMovement>();

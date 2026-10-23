@@ -21,7 +21,14 @@ public class PlayerHook : HookAbility
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            TryThrow(playerAim.AimDirection);
+            TryThrowAtScreenPoint(Mouse.current.position.ReadValue());
         }
+    }
+    public void TryThrowAtScreenPoint(Vector2 screen)
+    {
+        if (GamePointer.OverInterface(screen) || playerAim == null) return;
+        PlayerBuilding builder = GetComponent<PlayerBuilding>();
+        if (builder != null && builder.BlocksMouseInput) return;
+        TryThrow(playerAim.AimDirection);
     }
 }

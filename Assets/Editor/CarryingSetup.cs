@@ -64,11 +64,11 @@ public static class CarryingSetup
                 marker.transform.SetParent(hero.transform, false);
                 marker.transform.localPosition = new Vector3(0f, -0.65f, 0f);
             }
-            float spriteDimension = Mathf.Max(source.sprite.bounds.size.x, source.sprite.bounds.size.y);
-            marker.transform.localScale = Vector3.one * (0.4f / spriteDimension);
             SpriteRenderer cargoRenderer = GetOrAdd<SpriteRenderer>(marker);
-            cargoRenderer.sprite = source.sprite;
-            cargoRenderer.sharedMaterial = source.sharedMaterial;
+            if (cargoRenderer.sprite == null) cargoRenderer.sprite = source.sprite;
+            if (cargoRenderer.sharedMaterial == null) cargoRenderer.sharedMaterial = source.sharedMaterial;
+            float spriteDimension = Mathf.Max(cargoRenderer.sprite.bounds.size.x, cargoRenderer.sprite.bounds.size.y);
+            marker.transform.localScale = Vector3.one * (0.4f / spriteDimension);
             cargoRenderer.color = new Color(0.8f, 0.35f, 0.2f);
             cargoRenderer.sortingOrder = 30;
             cargoRenderer.enabled = false;

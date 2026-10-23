@@ -42,7 +42,7 @@ public class EnemyMelee : MonoBehaviour
             ownHealth.IsDead ||
             playerHealth.IsDead ||
             playerHook.IsPullingTarget(transform) ||
-            (ownHook != null && ownHook.ActiveHook != null);
+            (ownHook != null && (ownHook.ActiveHook != null || ownHook.IsPreparingThrow));
 
         if (blocked)
         {
@@ -65,7 +65,21 @@ public class EnemyMelee : MonoBehaviour
             return;
         }
 
+        HeroActionTiming25D timing = GetComponent<HeroActionTiming25D>();
+        if (timing != null && timing.enabled)
+        {
+            if (timing.BeginAxe(attackCooldown, ApplyAttack)) nextAttackTime = Time.time + attackCooldown;
+            return;
+        }
         nextAttackTime = Time.time + attackCooldown;
+        ApplyAttack();
+    }
+    private void ApplyAttack()
+    {
+        if (!isActiveAndEnabled || ownHealth.IsDead || playerHealth == null || playerHealth.IsDead ||
+            GetComponent<HookVictim>()?.IsCaught == true || !playerHealth.gameObject.activeInHierarchy) return;
+        Vector2 toPlayer = (Vector2)(playerHealth.transform.position - transform.position);
+        if (toPlayer.sqrMagnitude > attackRange * attackRange) return;
 
         if (swingVisual != null)
         {
@@ -74,4 +88,5 @@ public class EnemyMelee : MonoBehaviour
 
         playerHealth.TakeDamage(damage);
     }
+    private void OnDisable() => GetComponent<HeroActionTiming25D>()?.CancelAxe();
 }

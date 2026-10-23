@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 [DefaultExecutionOrder(100)]
@@ -57,6 +57,7 @@ public class HookAbility: MonoBehaviour
 
     private Transform activeHook;
     public Transform ActiveHook => activeHook;
+    public bool IsPreparingThrow => GetComponent<HeroActionTiming25D>()?.HookPending ?? false;
 
     public bool IsFlyingOut => state == HookState.Flying;
 
@@ -142,7 +143,7 @@ public class HookAbility: MonoBehaviour
     {
         RememberInitialWidth();
 
-        if (state != HookState.Ready)
+        if (state != HookState.Ready || IsPreparingThrow)
         {
             return false;
         }
@@ -200,7 +201,7 @@ public class HookAbility: MonoBehaviour
         {
             return;
         }
-        if (state != HookState.Ready || Time.time < nextThrowTime)
+        if (state != HookState.Ready || IsPreparingThrow || Time.time < nextThrowTime)
         {
             return;
         }
@@ -217,7 +218,21 @@ public class HookAbility: MonoBehaviour
         }
 
         direction.Normalize();
+        HeroActionTiming25D timing = GetComponent<HeroActionTiming25D>();
+        if (timing != null && timing.enabled)
+        {
+            Vector2 accepted = direction;
+            if (timing.BeginHook(accepted, () => ReleaseThrow(accepted)))
+                nextThrowTime = Time.time + cooldown;
+            return;
+        }
+        nextThrowTime = Time.time + cooldown;
+        ReleaseThrow(direction);
+    }
 
+    private void ReleaseThrow(Vector2 direction)
+    {
+        if (!isActiveAndEnabled || GetComponent<Health>()?.IsDead == true || GetComponent<HookVictim>()?.IsCaught == true) return;
         throwDirection = new Vector3(
             direction.x,
             direction.y,
@@ -268,7 +283,6 @@ public class HookAbility: MonoBehaviour
         wallContacts.Clear();
         flightRemaining = range;
         lastObstacle = null;
-        nextThrowTime = Time.time + cooldown;
         state = HookState.Flying;
     }
 
@@ -682,6 +696,7 @@ public class HookAbility: MonoBehaviour
 
     public void CancelHook()
     {
+        GetComponent<HeroActionTiming25D>()?.CancelHook();
         Carcass carcass = GetPulledCarcass();
         CarcassCarrier droppedCargo = GetPulledDeathCargo();
         // При прерывании захвата возвращаем цель в исходную
