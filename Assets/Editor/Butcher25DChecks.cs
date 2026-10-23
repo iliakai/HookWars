@@ -403,7 +403,7 @@ public static class Butcher25DChecks
     }
     public static void Capture(ButcherVisual25D driver, string name)
         => CaptureAt(driver.transform.position + Vector3.up * 0.75f, name);
-    private static void CaptureAt(Vector3 focus, string name)
+    public static void CaptureAt(Vector3 focus, string name)
     {
         Camera camera = Camera.main; Vector3 position = camera.transform.position; Quaternion rotation = camera.transform.rotation;
         float size = camera.orthographicSize, aspect = camera.aspect; RenderTexture old = RenderTexture.active;

@@ -3121,6 +3121,14 @@ MonoBehaviour:
     prefab: {fileID: 4893692490440210853, guid: 8787c0f28465fc34d98208e184fcbf62, type: 3}
   - kind: 10
     prefab: {fileID: 1601749327022092688, guid: bf2125ccf2633174da387983d7ba3616, type: 3}
+  - kind: 6
+    prefab: {fileID: 8666745994015362392, guid: ed12900474cc4d94a8c8a11cdadfbd7d, type: 3}
+  - kind: 7
+    prefab: {fileID: 6255700534936053398, guid: e37bc4fbcf1c4564a921edf87d078b6e, type: 3}
+  - kind: 8
+    prefab: {fileID: 9168304350659820887, guid: 5cd14d96f9e6a294ba1018f35fbff9e2, type: 3}
+  - kind: 9
+    prefab: {fileID: 5758412434036493117, guid: 693073fd634356243a95657b404ba535, type: 3}
   spriteStates: []
 --- !u!1 &2100000020
 GameObject:

@@ -142,6 +142,7 @@ public class ArenaPresentation25D : MonoBehaviour
                 ButcherVisual25D butcher = model.GetComponent<ButcherVisual25D>();
                 if (butcher != null) butcher.Bind(hero);
             }
+            if (source is GameBuilding building) model.GetComponent<BuildingPresentation25D>()?.Bind(building);
         }
         view.SetActive(source.gameObject.activeInHierarchy);
         view.transform.position = ArenaSpace25D.ToWorld(source.transform.position);
