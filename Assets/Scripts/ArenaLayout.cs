@@ -34,6 +34,7 @@ public class ArenaLayout : MonoBehaviour
 
     // Без компонента остаются прежние границы, чтобы старые сцены работали.
     public static float Depth => Instance != null ? Instance.appliedDepth : 8f;
+    public static float MountainWidth => Instance != null ? Instance.appliedMountainWidth : 1f;
     public static float OuterEdge => RiverHalfWidth + Depth;
 
     public static Rect BankBounds(bool right, float inset = HeroRadius)

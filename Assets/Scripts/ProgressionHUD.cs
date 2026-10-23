@@ -2,12 +2,13 @@ using UnityEngine;
 
 public class ProgressionHUD : MonoBehaviour
 {
+    public static Rect ScreenRect => new Rect(12, 164, 310, 200);
     [SerializeField] private PlayerProgression progression;
     private void OnGUI()
     {
         if (progression == null) return;
         OwnerEconomy economy = progression.GetComponent<OwnerEconomy>();
-        GUI.Box(new Rect(12, 164, 310, 200), GUIContent.none);
+        GUI.Box(ScreenRect, GUIContent.none);
         GUI.Label(new Rect(24, 174, 290, 26), $"Золото: {progression.Gold:0.##} (+{progression.GoldPerSecond:0.##}/с)");
         GUI.Label(new Rect(24, 204, 290, 26), $"Уровень {progression.Level}; опыт {progression.Experience:0.##}/{progression.ExperienceToNextLevel}");
         GUI.Label(new Rect(24, 234, 290, 26), $"Очки улучшений: {progression.UpgradePoints}");

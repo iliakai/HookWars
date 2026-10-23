@@ -24,12 +24,7 @@ public class PlayerAim : MonoBehaviour
 
         Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
 
-        // Расстояние от нашей камеры до плоскости персонажа.
-        float depth = transform.position.z - worldCamera.transform.position.z;
-
-        Vector3 mouseWorldPosition = worldCamera.ScreenToWorldPoint(
-            new Vector3(mouseScreenPosition.x, mouseScreenPosition.y, depth)
-        );
+        if (!GamePointer.TryLogicalPoint(worldCamera, mouseScreenPosition, out Vector3 mouseWorldPosition)) return;
 
         Vector2 direction =
             (Vector2)mouseWorldPosition - (Vector2)transform.position;

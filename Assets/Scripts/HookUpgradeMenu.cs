@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class HookUpgradeMenu : MonoBehaviour
 {
+    public static Rect ScreenRect => new Rect(Screen.width - 322f, 12, 310, 394);
     [Header("References")]
     [SerializeField] private PlayerProgression progression;
     [SerializeField] private HookAbility hook;
@@ -122,7 +123,7 @@ public class HookUpgradeMenu : MonoBehaviour
         float left = Screen.width - 322f;
 
         GUI.Box(
-            new Rect(left, 12, 310, 394),
+            ScreenRect,
             GUIContent.none
         );
 

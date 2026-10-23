@@ -18,11 +18,17 @@ public class BuildingUpgradeMenu : MonoBehaviour
         Vector2 mouse = Mouse.current.position.ReadValue();
         if (Contains(new Vector2(mouse.x, Screen.height - mouse.y))) return;
         if (!Mouse.current.leftButton.wasPressedThisFrame || GetComponent<PlayerBuilding>().BlocksMouseInput) return;
-        Vector3 point = worldCamera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -worldCamera.transform.position.z));
+        SelectAtScreenPoint(mouse);
+    }
+    public bool SelectAtScreenPoint(Vector2 mouse)
+    {
+        if (!CanAct || GamePointer.OverInterface(mouse) || GetComponent<PlayerBuilding>().IsBuilding) return false;
+        if (!GamePointer.TryLogicalPoint(worldCamera, mouse, out Vector3 point)) return false;
         Collider2D hit = Physics2D.OverlapPoint(point, LayerMask.GetMask("Buildings"));
         GameBuilding candidate = hit != null ? hit.GetComponent<GameBuilding>() : null;
         selected = candidate != null && candidate.Owner == GetComponent<PlayerProgression>() ? candidate : null;
         SelectedThisFrame = selected != null;
+        return SelectedThisFrame;
     }
     private void OnGUI()
     {

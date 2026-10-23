@@ -15,13 +15,14 @@ public class PlayerBuilding : MonoBehaviour
     private GameBuilding selectedPrefab;
     private bool menuOpen, homeRightBank;
     private string status = "B — строительство";
+    public SpriteRenderer Preview => preview;
     public bool IsBuilding => selectedPrefab != null;
     private Rect MenuRect => new Rect(12, Screen.height - 206, 370, 194);
     public bool BlocksMouseInput
     {
         get
         {
-            if (IsBuilding) return true;
+            if (IsBuilding || GamePointer.OverInterface()) return true;
             if (Mouse.current == null) return false;
             Vector2 mouse = Mouse.current.position.ReadValue();
             Vector2 gui = new Vector2(mouse.x, Screen.height - mouse.y);
@@ -45,13 +46,15 @@ public class PlayerBuilding : MonoBehaviour
         if (keyboard.escapeKey.wasPressedThisFrame) { CloseBuildMode(); menuOpen = false; }
         if (!IsBuilding || Mouse.current == null || worldCamera == null) return;
         Vector2 mouse = Mouse.current.position.ReadValue();
-        Vector3 point = worldCamera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -worldCamera.transform.position.z));
+        if (!GamePointer.TryLogicalPoint(worldCamera, mouse, out Vector3 point)) return;
         Vector3 cell = new Vector3(Mathf.Floor(point.x) + 0.5f, Mathf.Floor(point.y) + 0.5f);
         preview.transform.position = cell;
         bool valid = CanPlace(cell);
         preview.color = valid ? new Color(0.2f, 1, 0.3f, 0.6f) : new Color(1, 0.2f, 0.2f, 0.6f);
         status = valid ? "E — построить, Esc — отменить" : "Место занято, вне берега или не хватает ресурсов";
-        if (keyboard.eKey.wasPressedThisFrame) TryBuildAt(cell);
+        if (keyboard.eKey.wasPressedThisFrame && !GamePointer.OverInterface() &&
+            !(menuOpen && MenuRect.Contains(new Vector2(mouse.x, Screen.height - mouse.y))) &&
+            !(GetComponent<BuildingUpgradeMenu>()?.Contains(new Vector2(mouse.x, Screen.height - mouse.y)) ?? false)) TryBuildAt(cell);
     }
     public bool CanPlace(Vector3 cell)
     {

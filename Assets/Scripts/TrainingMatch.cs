@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class TrainingMatch : MonoBehaviour
 {
+    public static Rect ScreenRect => new Rect(12, 12, 280, 140);
     [Header("References")]
     [SerializeField] private Health enemyHealth;
     [SerializeField] private Health playerHealth;
@@ -94,7 +95,7 @@ public class TrainingMatch : MonoBehaviour
             scoreStyle.normal.textColor = Color.white;
         }
 
-        GUI.Box(new Rect(12, 12, 280, 140), GUIContent.none);
+        GUI.Box(ScreenRect, GUIContent.none);
 
         GUI.Label(
             new Rect(24, 20, 255, 32),

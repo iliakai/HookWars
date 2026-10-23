@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 [DisallowMultipleComponent]
 public class CarryingHUD : MonoBehaviour
 {
+    public static Rect ScreenRect => new Rect(12, 374, 310, 92);
     private CarcassCarrier carrier;
     private PlayerProgression progression;
     private void Awake()
@@ -21,7 +22,7 @@ public class CarryingHUD : MonoBehaviour
 
     private void OnGUI()
     {
-        GUI.Box(new Rect(12, 374, 310, 92), GUIContent.none);
+        GUI.Box(ScreenRect, GUIContent.none);
         GUI.Label(new Rect(24, 382, 290, 26),
             $"Груз: {carrier.CurrentMassKg:0.##} / {carrier.CapacityKg:0.##} кг");
         GUI.Label(new Rect(24, 408, 290, 26),
