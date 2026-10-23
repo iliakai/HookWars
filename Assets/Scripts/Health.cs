@@ -5,6 +5,25 @@ public class Health : MonoBehaviour
 {
     [SerializeField, Min(1f)] private float maxHealth = 100f;
     [SerializeField] private float currentHealth;
+    [SerializeField,Min(0)] private float regenerationKgPerSecond=.1f;
+    public float CurrentKg=>currentHealth;
+    public float MaximumKg=>maxHealth;
+    public float RegenerationKgPerSecond=>regenerationKgPerSecond;
+    public void ApplyLevelGrowth()
+    {
+        // Level growth preserves the current fraction; dead heroes stay dead.
+        float factor=1.1f;maxHealth=Mathf.Min(1e12f,maxHealth*factor);
+        if(!IsDead)currentHealth=Mathf.Min(maxHealth,currentHealth*factor);
+    }
+    public bool TryUpgradeRegeneration(PlayerProgression owner)
+    {
+        if(owner==null||owner.gameObject!=gameObject||IsDead||!owner.TrySpendUpgradePoint())return false;
+        regenerationKgPerSecond+=.1f;return true;
+    }
+    private void Update()
+    {
+        if(!IsDead&&GetComponent<PlayerProgression>()!=null)currentHealth=Mathf.Min(maxHealth,currentHealth+regenerationKgPerSecond*Time.deltaTime);
+    }
 
     public bool IsDead => currentHealth <= 0f;
     public float HealthFraction =>

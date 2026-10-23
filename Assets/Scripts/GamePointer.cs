@@ -28,6 +28,7 @@ public static class GamePointer
     public static bool OverInterface(Vector2 screen)
     {
         if(MatchPause.BlocksGameplay)return true;
+        if(HookUpgradeMenu.BlocksWorldInput)return true;
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return true;
         Vector2 gui = new Vector2(screen.x, Screen.height - screen.y);
         return TrainingMatch.ScreenRect.Contains(gui) || ProgressionHUD.ScreenRect.Contains(gui) ||

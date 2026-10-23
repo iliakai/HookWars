@@ -4,6 +4,13 @@ using UnityEngine.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
+    [SerializeField,Min(.01f)] private float speedPerUpgrade=.25f;
+    public float MoveSpeed=>moveSpeed;
+    public bool TryUpgradeSpeed(PlayerProgression owner)
+    {
+        if(owner==null||owner.gameObject!=gameObject||!owner.TrySpendUpgradePoint())return false;
+        moveSpeed+=speedPerUpgrade;return true;
+    }
 
     private HookVictim victim;
 

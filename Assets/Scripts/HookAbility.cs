@@ -23,16 +23,14 @@ public class HookAbility: MonoBehaviour
     [SerializeField, Min(1f)] private float stopDistance = 1.1f;
 
     [Header("Ricochet")]
-    [SerializeField, Min(0)] private int maxBounces = 0;
     [SerializeField, Range(0f, 100f)] private float bounceDistancePercent = 50f;
 
     private readonly List<Vector3> bends = new List<Vector3>();
-    private int bouncesLeft;
     private float flightRemaining;
     private Collider2D lastObstacle;
     private readonly HashSet<Collider2D> wallContacts = new HashSet<Collider2D>();
     private const float Skin = 0.002f;
-    public int MaxBounces => maxBounces;
+    public int MaxBounces => int.MaxValue;
     public float BounceDistancePercent => bounceDistancePercent;
     public int ChainPointCount => activeHook == null ? 0 : bends.Count + 2;
     public Vector3 GetChainPoint(int index)
@@ -182,12 +180,8 @@ public class HookAbility: MonoBehaviour
                 return true;
 
             case UpgradeStat.Bounces:
-                maxBounces++;
-                return true;
             case UpgradeStat.BounceDistance:
-                if (bounceDistancePercent >= 100f) return false;
-                bounceDistancePercent = Mathf.Min(100f, bounceDistancePercent + 10f);
-                return true;
+                return false; // Unlimited ricochets are innate, never a paid skill.
             default:
                 return false;
         }
@@ -253,7 +247,6 @@ public class HookAbility: MonoBehaviour
         activeHook.up=throwDirection;
 
         bends.Clear();
-        bouncesLeft = maxBounces;
         wallContacts.Clear();
         flightRemaining = range;
         lastObstacle = null;
@@ -355,12 +348,11 @@ public class HookAbility: MonoBehaviour
                 lastObstacle = best.collider;
                 return;
             }
-            if (bouncesLeft <= 0 || bounceDistancePercent <= 0f || best.distance <= 0.00001f)
+            if (bounceDistancePercent <= 0f || best.distance <= 0.00001f)
             {
                 state = HookState.Returning;
                 return;
             }
-            bouncesLeft--;
             Vector2 reflected = Vector2.Reflect((Vector2)throwDirection, best.normal).normalized;
             throwDirection = new Vector3(reflected.x, reflected.y, 0f);
             activeHook.position += (Vector3)(best.normal * Skin);

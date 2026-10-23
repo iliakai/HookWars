@@ -22,6 +22,8 @@ public sealed class ButcherVisual25D : MonoBehaviour
     private bool positioned, wasAxe, wasHook;
     private int direction = -1, life = -1;
     private ArenaPresentation25D presentation;
+    private Transform axeSizeRoot;
+    private Vector3 initialAxeScale;
     public Transform Socket => hookSocket;
     public Health Owner => hero;
     public Transform BodyRoll => bodyRoll;
@@ -35,6 +37,18 @@ public sealed class ButcherVisual25D : MonoBehaviour
         hero = owner; victim = owner.GetComponent<HookVictim>(); hook = owner.GetComponent<HookAbility>();
         timing = owner.GetComponent<HeroActionTiming25D>();
         presentation = GetComponentInParent<ArenaPresentation25D>();
+        // An unanimated skin bone scales the two actual axe meshes together
+        // around AxePivot; the animated pivot and logical hit range stay separate.
+        var pivot=transform.Find("RigVisual/ButcherRig/Root/AxePivot");
+        if(pivot!=null)
+        {
+            axeSizeRoot=pivot.Find("AxeVisualScale");
+            if(axeSizeRoot==null){axeSizeRoot=new GameObject("AxeVisualScale").transform;axeSizeRoot.SetParent(pivot,false);}
+            initialAxeScale=Vector3.one;
+            foreach(var skin in GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                if(skin.name.StartsWith("05_Axe")||skin.name.StartsWith("06_Axe"))
+                {var bones=skin.bones;for(int i=0;i<bones.Length;i++)if(bones[i]==pivot)bones[i]=axeSizeRoot;skin.bones=bones;}
+        }
         animator.applyRootMotion = false; animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         animator.enabled = false; // One controlled evaluation, after XY -> XZ presentation.
         ResetPose();
@@ -66,7 +80,8 @@ public sealed class ButcherVisual25D : MonoBehaviour
         previousPosition = position; positioned = true;
         if (firstPosition) { previousFacing = transform.rotation; ballWorld = skinOrientation.rotation; }
         float speed = deltaTime > 0 ? travel.magnitude / deltaTime : 0;
-        bool ordinary = victim != null && !victim.IsCaught && travel.magnitude < 2f && speed <= maximumVoluntarySpeed;
+        float allowedSpeed=Mathf.Max(maximumVoluntarySpeed,(hero.GetComponent<PlayerMovement>()?.MoveSpeed??0)*1.5f);
+        bool ordinary = victim != null && !victim.IsCaught && travel.magnitude < 2f && speed <= allowedSpeed;
         RollRate = ordinary && speed > 0.01f ? speed / (2f * Mathf.PI * Mathf.Max(0.01f, effectiveRadius)) : 0;
         if (Quaternion.Angle(previousFacing, transform.rotation) > 0.0001f) skinOrientation.rotation = ballWorld;
         previousFacing = transform.rotation;
@@ -94,6 +109,7 @@ public sealed class ButcherVisual25D : MonoBehaviour
         if (axe || cast) animator.Update(0);
         wasAxe = axe; wasHook = cast; ballWorld = skinOrientation.rotation;
         if (restingHook != null) restingHook.enabled = hook == null || hook.ActiveHook == null;
+        if(axeSizeRoot!=null)axeSizeRoot.localScale=initialAxeScale*(hero.GetComponent<PlayerMelee>()?.VisualSize??1);
         if (presentation != null) presentation.UpdateHookPresentation(hook, this);
     }
     private void OnDisable() { positioned = false; if (restingHook != null) restingHook.enabled = true; }

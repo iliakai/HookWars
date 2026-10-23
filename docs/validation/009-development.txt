@@ -1,0 +1,2 @@
+PASS: 23 real Unity Play Mode assertions
+All ten skills, one point per success, no points/no upgrade, real axe skin growth, kg/level/regen/death/revive, modal UI and Esc.

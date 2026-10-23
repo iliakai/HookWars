@@ -75,6 +75,7 @@ public class PlayerProgression : MonoBehaviour
             experience -= experienceToNextLevel;
             level++;
             upgradePoints++;
+            GetComponent<Health>()?.ApplyLevelGrowth();
 
             experienceToNextLevel = Mathf.CeilToInt(
                 experienceToNextLevel * experienceGrowth

@@ -19,6 +19,7 @@ public sealed class MatchPause : MonoBehaviour
         var upgrades=FindAnyObjectByType<BuildingUpgradeMenu>();
         bool closed=builder!=null&&builder.CloseInterface();
         closed=(upgrades!=null&&upgrades.CloseInterface())||closed;
+        closed=(FindAnyObjectByType<HookUpgradeMenu>()?.CloseInterface()??false)||closed;
         if(!closed)SetPaused(true);
     }
     public void SetPaused(bool value){paused=value;Time.timeScale=value?0:1;}

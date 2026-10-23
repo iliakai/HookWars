@@ -5,7 +5,6 @@ using UnityEngine;
 public class HeroCarcassSpawner : MonoBehaviour
 {
     [SerializeField] private Carcass carcassPrefab;
-    [SerializeField, Min(0.01f)] private float heroMassKg = 6f;
     private Health health;
     public Carcass CurrentCarcass { get; private set; }
 
@@ -25,7 +24,7 @@ public class HeroCarcassSpawner : MonoBehaviour
         }
         CurrentCarcass = Instantiate(carcassPrefab,
             Carcass.SafeGroundPosition(transform.position), Quaternion.identity);
-        CurrentCarcass.Initialize(heroMassKg, GetComponent<HookVictim>());
+        CurrentCarcass.Initialize(target.MaximumKg, GetComponent<HookVictim>());
     }
 
     private void OnRevived(Health target)

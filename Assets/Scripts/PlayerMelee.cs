@@ -14,6 +14,16 @@ public class PlayerMelee : MonoBehaviour
     [SerializeField, Min(0.1f)] private float attackRange = 1.6f;
     [SerializeField, Min(0.1f)] private float attackCooldown = 0.7f;
     [SerializeField, Range(1f, 360f)] private float attackAngle = 100f;
+    [SerializeField,Min(.01f)] private float damagePerUpgrade=5,rangePerUpgrade=.2f;
+    public float Damage=>damage;
+    public float AttackRange=>attackRange;
+    public float VisualSize=>attackRange/1.6f;
+    public bool TryUpgrade(bool size,PlayerProgression owner)
+    {
+        if(owner==null||owner.gameObject!=gameObject||GetComponent<Health>().IsDead||GetComponent<HookVictim>().IsCaught||
+            GetComponent<HeroActionTiming25D>()?.AxeAnimating==true||!owner.TrySpendUpgradePoint())return false;
+        if(size)attackRange+=rangePerUpgrade;else damage+=damagePerUpgrade;return true;
+    }
 
     private PlayerHook playerHook;
     private float nextAttackTime;
