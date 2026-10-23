@@ -139,12 +139,11 @@ public static class EconomyChecks
         {
             BoneWall wall = Object.Instantiate(prefab, new Vector3(-4, -2), Quaternion.identity, root.transform);
             wall.Initialize(mode == 4 ? enemy : owner);
-            Set(hook, "maxBounces", mode == 0 || mode == 2 ? 0 : 1);
             Set(hook, "damage", mode == 2 || mode == 3 ? 1000f : 40f);
             Set(hook, "nextThrowTime", 0f); hook.TryThrow(Vector2.right);
             Invoke(hook, "FlyHook");
             if (mode == 0)
-                Check(wall.CurrentHealth == 60 && !hook.IsFlyingOut, "Surviving enemy wall takes damage then returns hook without bounces");
+                Check(wall.CurrentHealth == 60 && hook.IsFlyingOut, "Surviving enemy wall reflects without a purchased bounce budget");
             if (mode == 1)
             {
                 Check(wall.CurrentHealth == 60 && hook.IsFlyingOut && hook.ChainPointCount == 3,
@@ -156,8 +155,7 @@ public static class EconomyChecks
             {
                 Check(wall.IsDestroyed && !wall.GetComponent<Collider2D>().enabled && hook.IsFlyingOut && hook.ChainPointCount == 2,
                     "Destroyed wall releases cell and does not reflect: " + mode);
-                int remainingBounces = (int)typeof(HookAbility).GetField("bouncesLeft", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(hook);
-                Check(remainingBounces == (mode == 2 ? 0 : 1), "Destroyed wall does not consume bounce budget");
+                Check(hook.MaxBounces==int.MaxValue, "Destroyed wall never changes unlimited ricochet availability");
                 Invoke(hook, "FlyHook");
                 Check(hook.ActiveHook.position.x > -4, "Hook continues through destroyed wall");
             }
@@ -223,9 +221,9 @@ public static class EconomyChecks
             GameObject building = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             int kind=path==EconomySetup.FactoryPath?0:path==EconomySetup.ShopPath?1:path==EconomySetup.FarmPath?2:3;
             var visual=AssetDatabase.LoadAssetAtPath<GameObject>(WorldModels25DSetup.Output+"/"+WorldModels25DSetup.Names[kind]+".prefab");
-            Check(building.transform.localScale == Vector3.one && building.GetComponent<BoxCollider2D>().size == Vector2.one &&
+            Check(building.transform.localScale == Vector3.one && building.GetComponent<BoxCollider2D>().size == (Vector2)building.GetComponent<GameBuilding>().Footprint &&
                 visual!=null && visual.GetComponentsInChildren<Renderer>(true).Length>0,
-                "One-metre logical cell has a ready 3D visual asset: " + building.name);
+                "Logical footprint has a ready 3D visual asset: " + building.name);
         }
     }
     private static void CheckAnimals(GameObject root)

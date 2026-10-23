@@ -77,6 +77,7 @@ public static class Arena25DChecks
     }
     private static void Scenarios()
     {
+        Object.FindAnyObjectByType<MatchMap25D>()?.MapRoot.gameObject.SetActive(false);
         Camera camera = Camera.main; var rig = camera.GetComponent<ArenaCamera25D>();
         var display = Object.FindAnyObjectByType<ArenaPresentation25D>();
         Check(rig != null && display != null, "25D presentation active");
@@ -141,6 +142,7 @@ public static class Arena25DChecks
         Check(visualRoot.Find(building.name + " 25D").position == ArenaSpace25D.ToWorld(cell), "Spawned building aligns with logical cell");
         Physics2D.SyncTransforms();
         Vector2 click = camera.WorldToScreenPoint(ArenaSpace25D.ToWorld(cell));
+        builder.CloseInterface(); // Repeated placement now explicitly ends with Esc.
         Check(GamePointer.TryLogicalPoint(camera, click, out Vector3 ground) &&
             Physics2D.OverlapPoint(ground, LayerMask.GetMask("Buildings"))?.GetComponent<GameBuilding>() == building, "Ground ray hits logical building cell");
         if (!GamePointer.OverInterface(click))

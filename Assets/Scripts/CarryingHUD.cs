@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CarcassCarrier), typeof(PlayerProgression))]
 [DisallowMultipleComponent]
@@ -7,16 +6,9 @@ public class CarryingHUD : MonoBehaviour
 {
     public static Rect ScreenRect => new Rect(12, 374, 310, 118);
     private CarcassCarrier carrier;
-    private PlayerProgression progression;
     private void Awake()
     {
         carrier = GetComponent<CarcassCarrier>();
-        progression = GetComponent<PlayerProgression>();
-    }
-
-    private void Update()
-    {
-        if(MatchPause.BlocksGameplay)return;
     }
 
     private void OnGUI()

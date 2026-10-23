@@ -117,6 +117,7 @@ public class PlayerBuilding : MonoBehaviour
     private void CloseBuildMode()
     {
         selectedPrefab = null;
+        status="B — строительство";
         if (preview != null) Destroy(preview.gameObject);
         preview = null;
     }

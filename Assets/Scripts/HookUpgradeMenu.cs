@@ -47,6 +47,9 @@ public class HookUpgradeMenu : MonoBehaviour
         }
         return applied;
     }
+    public bool CanBuy(Skill skill)=>progression.UpgradePoints>0&&
+        ((int)skill>4||(hook.ActiveHook==null&&!hook.IsPreparingThrow&&(skill!=Skill.HookCooldown||hook.Cooldown>HookAbility.MinimumCooldown)))&&
+        ((skill!=Skill.AxeDamage&&skill!=Skill.AxeSize)||progression.GetComponent<HeroActionTiming25D>()?.AxeAnimating!=true);
     public string Value(Skill skill)
     {
         var axe=progression.GetComponent<PlayerMelee>();var hp=progression.GetComponent<Health>();
@@ -77,7 +80,7 @@ public class HookUpgradeMenu : MonoBehaviour
         {
             float x=80+(i%2)*410,y=74+(i/2)*103;
             GUI.Box(new Rect(x,y,390,94),GUIContent.none);GUI.Label(new Rect(x+14,y+15,306,64),Value((Skill)i));
-            GUI.enabled=progression.UpgradePoints>0&&(i!=4||hook.Cooldown>HookAbility.MinimumCooldown);
+            GUI.enabled=CanBuy((Skill)i);
             if(GUI.Button(new Rect(x+322,y+24,52,45),"+"))TryBuy((Skill)i);GUI.enabled=true;
         }
         GUI.Label(new Rect(80,605,650,34),"Каждый «+» стоит 1 очко уровня. Количество отскоков не ограничено.");

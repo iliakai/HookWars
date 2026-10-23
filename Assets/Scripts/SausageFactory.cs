@@ -66,7 +66,7 @@ public class SausageFactory : GameBuilding
     }
     private void Update()
     {
-        if (owner == null) return;
+        if (owner == null||MatchPause.BlocksGameplay||Time.deltaTime<=0) return;
         CarcassCarrier carrier = owner.GetComponent<CarcassCarrier>();
         if (carrier != null && InDeliveryRange(owner.transform.position))
             carrier.DeliverTo(this);

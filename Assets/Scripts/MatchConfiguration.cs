@@ -8,7 +8,7 @@ public static class MatchConfiguration
     public const string SavedDepth="HookWars.BankDepth";
     private static int? nextDepth;
     private static int? rememberedDepth;
-    private static string PreferenceFile=>Path.Combine(Application.persistentDataPath,"bank-depth.txt");
+    private static string PreferenceFile=>string.IsNullOrWhiteSpace(Application.persistentDataPath)?null:Path.Combine(Application.persistentDataPath,"bank-depth.txt");
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetRuntime(){nextDepth=null;rememberedDepth=null;Time.timeScale=1;}
     public static bool Valid(int value)=>value>=MinimumDepth&&value<=MaximumDepth;
@@ -26,7 +26,9 @@ public static class MatchConfiguration
     {
         if(!Valid(depth))throw new ArgumentOutOfRangeException(nameof(depth));
         rememberedDepth=depth;
-        try{Directory.CreateDirectory(Application.persistentDataPath);File.WriteAllText(PreferenceFile,depth.ToString(System.Globalization.CultureInfo.InvariantCulture));}
+        string path=PreferenceFile;
+        if(path==null){Debug.LogWarning("Persistent data directory is unavailable; bank depth is remembered for this process only.");return;}
+        try{Directory.CreateDirectory(Application.persistentDataPath);File.WriteAllText(path,depth.ToString(System.Globalization.CultureInfo.InvariantCulture));}
         catch(Exception error) when(error is IOException||error is UnauthorizedAccessException)
         {Debug.LogWarning("Cannot persist bank depth; current choice remains valid for this session: "+error.Message);}
     }

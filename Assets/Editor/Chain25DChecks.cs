@@ -54,6 +54,9 @@ public static class Chain25DChecks
             if(ChainPhysicsWorld25D.Instance!=null)localCosts.Add(ChainPhysicsWorld25D.Instance.LastSimulationMilliseconds);
             if(phase==1)
             {
+                // The length stress fixture bypasses gameplay hits intentionally;
+                // remove random terrain so its straight route remains feasible.
+                Object.FindAnyObjectByType<MatchMap25D>()?.MapRoot.gameObject.SetActive(false);
                 foreach(var ai in Object.FindObjectsByType<EnemyHookAI>())ai.enabled=false;
                 foreach(var ai in Object.FindObjectsByType<EnemyChase>())ai.enabled=false;
                 foreach(var ai in Object.FindObjectsByType<EnemyMelee>())ai.enabled=false;
@@ -128,7 +131,7 @@ public static class Chain25DChecks
                 Check(chains.Sum(c=>c.PooledLinks)==SessionState.GetInt(Key+".Pool",0),"Repeated short throws reuse the existing pool");
                 Check(Object.FindObjectsByType<Rigidbody>(FindObjectsInactive.Include).Length==SessionState.GetInt(Key+".Bodies",0)&&Object.FindObjectsByType<ConfigurableJoint>(FindObjectsInactive.Include).Length==SessionState.GetInt(Key+".Joints",0),"Native Rigidbody and joint counts do not grow across the throw series");
                 if(++series<5){Throw(0);Throw(1);due=Time.time+2;return;}
-                EconomyChecks.Set(hooks[0],"range",10f);EconomyChecks.Set(hooks[0],"speed",4f);EconomyChecks.Set(hooks[0],"maxBounces",1);
+                EconomyChecks.Set(hooks[0],"range",10f);EconomyChecks.Set(hooks[0],"speed",4f);
                 EconomyChecks.Set(hooks[0],"obstacleLayers",(LayerMask)LayerMask.GetMask("Buildings"));
                 obstacle=Object.Instantiate(AssetDatabase.LoadAssetAtPath<BoneWall>(EconomySetup.WallPath),hooks[0].transform.position+Vector3.right*2,Quaternion.identity);
                 obstacle.Initialize(hooks[1].GetComponent<PlayerProgression>());

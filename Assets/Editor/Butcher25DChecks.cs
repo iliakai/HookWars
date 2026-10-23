@@ -143,8 +143,8 @@ public static class Butcher25DChecks
                 {
                     killedOwn = sceneEnemy.GetComponent<HeroCarcassSpawner>().CurrentCarcass;
                     var carrier = scenePlayer.GetComponent<CarcassCarrier>();
-                    Check(killedOwn != null && killedOwn.IsHeroCarcass && killedOwn.IsStored && carrier.CurrentMassKg == 6, "Animated lethal hook delivers own butcher carcass first");
-                    Check(firstCargo.IsAvailable && secondCargo.IsAvailable && firstCargo.MassKg + secondCargo.MassKg + carrier.CurrentMassKg == 18, "Animated lethal hook delivers all cargo and preserves overflow mass");
+                    Check(killedOwn != null && killedOwn.IsHeroCarcass && killedOwn.IsAvailable&&Mathf.Abs(killedOwn.MassKg-sceneEnemy.MaximumKg)<.001f, "Animated lethal hook lands the intact overweight hero corpse");
+                    Check(firstCargo.IsStored && secondCargo.IsAvailable && firstCargo.MassKg + secondCargo.MassKg + killedOwn.MassKg == 112&&carrier.CurrentMassKg==6, "Animated lethal hook preserves all 112kg and stores only the cargo that fits");
                     var display = Object.FindAnyObjectByType<ArenaPresentation25D>();
                     Check(display.VisualFor(firstCargo) != null && display.VisualFor(firstCargo).GetComponentsInChildren<Animator>(true).Length == 0, "Dropped hero corpse has static 3D graphics without combat animator");
                     firstLanded = firstCargo.transform.position; secondLanded = secondCargo.transform.position;
@@ -224,6 +224,8 @@ public static class Butcher25DChecks
     }
     private static void StructureAndRolling()
     {
+        // Controlled combat fixtures; random map generation has its own checks.
+        Object.FindAnyObjectByType<MatchMap25D>()?.MapRoot.gameObject.SetActive(false);
         foreach (EnemyChase ai in Object.FindObjectsByType<EnemyChase>()) ai.enabled = false;
         foreach (EnemyHookAI ai in Object.FindObjectsByType<EnemyHookAI>()) ai.enabled = false;
         foreach (EnemyMelee ai in Object.FindObjectsByType<EnemyMelee>()) ai.enabled = false;

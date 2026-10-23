@@ -26,6 +26,14 @@ public static class GameplayRevisionChecks
     static float helperDeadline;
     static float nextDiagnostic;
     static GameplayRevisionChecks(){if(SessionState.GetBool(Key,false))Subscribe();}
+    [MenuItem("HookWars/25D/Revision/Check construction Play Mode")]
+    public static void CheckConstruction()=>Run("construction");
+    [MenuItem("HookWars/25D/Revision/Check development Play Mode")]
+    public static void CheckDevelopment()=>Run("development");
+    [MenuItem("HookWars/25D/Revision/Check map 4 and 20 Play Mode")]
+    public static void CheckMap()=>Run("map");
+    [MenuItem("HookWars/25D/Revision/Check helper hunting Play Mode")]
+    public static void CheckHelpers()=>Run("helpers");
     public static void Run(string mode)
     {
         if(mode=="map"||mode=="helpers")
@@ -93,6 +101,13 @@ public static class GameplayRevisionChecks
                 var menu=builder.GetComponent<BuildingUpgradeMenu>();
                 Check(menu.SelectAtScreenPoint(Camera.main.WorldToScreenPoint(ArenaSpace25D.ToWorld(helperFactories[0].transform.position))),"Factory selection opens its ordering and capacity panel");
                 Check(helperFactories[0].UpgradeCount==5,"All three factory upgrades plus worker order/capacity are exposed");
+                var pausedItem=Object.Instantiate(AssetDatabase.LoadAssetAtPath<Carcass>(CarryingSetup.PrefabPath),workers[0].transform.position,Quaternion.identity);
+                pausedItem.Initialize(6);pausedItem.SetAnimalSpecies(Animal.Species.Pig);MatchPause.Instance.SetPaused(true);
+                Check(!workers[0].GetComponent<CarcassCarrier>().TryCollect(pausedItem),"Paused helper cannot collect a newly available carcass");
+                double pausedRaw=helperFactories[0].RawKg;
+                typeof(SausageFactory).GetMethod("Update",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(helperFactories[0],null);
+                Check(helperFactories[0].RawKg==pausedRaw,"Paused workshop never processes or accepts extra cargo");
+                MatchPause.Instance.SetPaused(false);Object.Destroy(pausedItem.gameObject);
                 ScreenCapture.CaptureScreenshot("Temp/RevisionPreview/helpers.png");Butcher25DChecks.CaptureAt(ArenaSpace25D.ToWorld(helperFactories[0].transform.position,.6f),"revision_helpers",4);
                 Directory.CreateDirectory("docs/validation");File.WriteAllText("docs/validation/009-helpers.txt",$"PASS: {count} real Play Mode assertions\nThree autonomous helpers, both banks, independent owner relocation, real animated axe kills, complete carcasses, real travel/pathfinding, delivery/processing/owner XP, existing/future capacity, payments, 3D scale and factory menu.\n");
                 SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_REVISION_PASS: "+count+" helper assertions");phase=3;due=Time.time+.25f;return;
@@ -170,6 +185,7 @@ public static class GameplayRevisionChecks
     }
     static void ConstructionStart()
     {
+        Object.FindAnyObjectByType<MatchMap25D>()?.MapRoot.gameObject.SetActive(false);
         var owner=builder.GetComponent<PlayerProgression>();owner.AddGold(1000);
         var shop=AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.ShopPath);builder.SelectBuilding(shop);builder.RotatePlacement();
         var startGold=owner.Gold;

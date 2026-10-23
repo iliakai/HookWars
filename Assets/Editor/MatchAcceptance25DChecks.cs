@@ -58,9 +58,11 @@ public static class MatchAcceptance25DChecks
                 var hero=Object.FindAnyObjectByType<PlayerMovement>();hero.enabled=false;owner=hero.GetComponent<PlayerProgression>();
                 Check(owner.Level==1&&owner.Experience==0&&owner.Gold<3,"Fresh unmodified match before explicit test funding");
                 owner.AddGold(1000);builder=hero.GetComponent<PlayerBuilding>();carrier=hero.GetComponent<CarcassCarrier>();carrier.enabled=false;
-                factory=(SausageFactory)Build(EconomySetup.FactoryPath,new Vector3(-8.5f,.5f));
-                shop=(MeatShop)Build(EconomySetup.ShopPath,new Vector3(-8.5f,-1.5f));
-                Build(EconomySetup.FarmPath,new Vector3(-11.5f,-1.5f));
+                factory=owner.GetComponent<OwnerEconomy>().Factory;
+                Check(factory!=null&&factory.Footprint==Vector2Int.one*2,"Use the actual automatically generated four-cell workshop");
+                float front=factory.transform.position.x>0?-1:1;
+                shop=(MeatShop)Build(EconomySetup.ShopPath,PlayerBuilding.Snap(factory.transform.position+new Vector3(front*2.5f,.5f),Vector2Int.one));
+                Build(EconomySetup.FarmPath,PlayerBuilding.Snap(factory.transform.position+new Vector3(front*4.5f,.5f),Vector2Int.one));builder.CloseInterface();
                 var aim=hero.GetComponentInChildren<PlayerAim>();aim.enabled=false;EconomyChecks.Set(aim,"<AimDirection>k__BackingField",Vector2.up);
                 cow=Object.Instantiate(AssetDatabase.LoadAssetAtPath<Animal>("Assets/Prefabs/cow.prefab"),hero.transform.position+Vector3.up*.85f,Quaternion.identity);cow.enabled=false;
                 Physics2D.SyncTransforms();
@@ -84,7 +86,7 @@ public static class MatchAcceptance25DChecks
             if(phase==4)
             {
                 Check(carrier.Count==1&&carrier.CurrentMassKg==10,"Automatic pickup preserves the complete cow mass");
-                Capture("02_carried_corpse");owner.transform.position=factory.transform.position+Vector3.right*1.1f;
+                Capture("02_carried_corpse");owner.transform.position=factory.transform.position+Vector3.right*(factory.transform.position.x>0?-1.6f:1.6f);
                 Physics2D.SyncTransforms();due=Time.time+.5f;phase=5;return;
             }
             if(phase==5)
@@ -100,7 +102,12 @@ public static class MatchAcceptance25DChecks
                 Check(factory.RawKg<1e-6&&stock.Bones==5,"Real-time 10kg processing yields exactly 5 bones");
                 Check(stock.ProductKg<.1&&shop.LastSaleTime>0,"Existing shop economy sold the produced meat");
                 Check(!presentation.VisualFor(factory).GetComponentsInChildren<ParticleSystem>().Any(p=>p.isPlaying),"Empty factory closes its smoke after processing");
-                var wall=Build(EconomySetup.WallPath,new Vector3(-8.5f,2.5f));Check(stock.Bones==0,"Wall spends the five genuinely produced bones");
+                Vector3 wallCell=Vector3.zero;builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.WallPath));
+                bool free=false;var bank=ArenaLayout.BankBounds(factory.transform.position.x>0,.5f);
+                for(float x=bank.xMin;x<=bank.xMax&&!free;x++)for(float y=bank.yMin;y<=bank.yMax&&!free;y++)
+                    if(builder.CanPlace(new Vector3(x,y))){wallCell=new Vector3(x,y);free=true;}
+                Check(free,"A free wall cell exists on the actual generated map");
+                var wall=Build(EconomySetup.WallPath,wallCell);builder.CloseInterface();Check(stock.Bones==0,"Wall spends the five genuinely produced bones");
                 due=Time.time+.6f;phase=7;return;
             }
             if(phase==7)

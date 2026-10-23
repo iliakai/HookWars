@@ -15,6 +15,7 @@ public static class World25DChecks
     private static float due;
     private static GameBuilding[] buildings;
     private static PlayerProgression owner;
+    private static GameObject destroyedWallView;
     static World25DChecks() { if(SessionState.GetBool(Key,false)) Subscribe(); }
     [MenuItem("HookWars/25D/World/Check buildings Play Mode")]
     public static void Run()
@@ -41,7 +42,7 @@ public static class World25DChecks
             if(!EditorApplication.isPlaying)return;
             if(phase==1)
             {
-                owner=Object.FindAnyObjectByType<PlayerMovement>().GetComponent<PlayerProgression>();
+                owner=new GameObject("Building visual test owner").AddComponent<OwnerEconomy>().GetComponent<PlayerProgression>();
                 buildings=new GameBuilding[4];
                 for(int i=0;i<4;i++)
                 {
@@ -60,7 +61,7 @@ public static class World25DChecks
                     var view=presentation.VisualFor(building); var visual=view.GetComponentInChildren<BuildingVisualController>();
                     Check(visual!=null,"Ready model and controller for "+building.Kind);
                     var foundation=view.GetComponentsInChildren<Renderer>(true).Single(r=>r.name.Contains("_Static"));
-                    Check(foundation.bounds.size.x<=.961f && foundation.bounds.size.z<=.961f,"Full foundation fits 1m cell "+building.Kind);
+                    Check(foundation.bounds.size.x<=.961f*building.Footprint.x && foundation.bounds.size.z<=.961f*building.Footprint.y,"Full foundation fits its declared footprint "+building.Kind);
                     Check(view.GetComponentsInChildren<Collider>(true).Length==0,"No demo 3D collider "+building.Kind);
                     Check(view.GetComponentsInChildren<Renderer>(true).Where(r=>r.name.Contains("PreviewFX")).All(r=>!r.gameObject.activeInHierarchy),"PreviewFX disabled "+building.Kind);
                     Check(visual.IsActive==(building is AnimalFarm||building is BoneWall),"Empty economy selects correct initial mode "+building.Kind);
@@ -92,12 +93,12 @@ public static class World25DChecks
                     Check(!visual.IsActive && visual.effects.All(p=>!p.isPlaying),"Disabled economic building closes and clears effects");
                 }
                 foreach(var building in buildings.Skip(2)) Butcher25DChecks.CaptureAt(presentation.VisualFor(building).position+Vector3.up*.3f,"building_"+building.Kind);
-                var wallView=presentation.VisualFor(buildings[3]); Object.Destroy(buildings[3].gameObject);
+                destroyedWallView=presentation.VisualFor(buildings[3]).gameObject; Object.Destroy(buildings[3].gameObject);
                 due=Time.time+.15f; phase=5; return;
             }
             if(phase==5)
             {
-                Check(Object.FindObjectsByType<BuildingVisualController>().Length==3,"Destroyed wall removes model and effects");
+                Check(buildings[3]==null&&destroyedWallView==null,"Destroyed wall removes its own model and effects independently of starting factories");
                 SessionState.SetBool(Key+".Passed",true); Debug.Log("HOOKWARS_WORLD_PASS: "+count+" building assertions in Unity Play Mode"); Stop();
             }
         }

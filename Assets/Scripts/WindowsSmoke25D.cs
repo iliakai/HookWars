@@ -31,7 +31,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
     IEnumerator Start()
     {
         Application.runInBackground=true;previousDepth=MatchConfiguration.LastDepth;
-        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance\n");
+        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance\nPersistent data directory: "+Application.persistentDataPath+"\n");
         foreach(int depth in new[]{4,16,20})
         {
             yield return new WaitForSecondsRealtime(.6f);

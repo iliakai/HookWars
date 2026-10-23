@@ -50,7 +50,7 @@ public class CarcassCarrier : MonoBehaviour
         }
     }
 
-    private bool CanCollect() => health != null && !health.IsDead && !victim.IsCaught;
+    private bool CanCollect() => !MatchPause.BlocksGameplay&&health != null && !health.IsDead && !victim.IsCaught;
 
     public bool TryCollect(Carcass carcass)
     {

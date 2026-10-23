@@ -73,10 +73,12 @@ public static class HookWarsValidationBridge
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
             if(request.operation=="revision-setup")
             {GameplayRevisionSetup.Configure();Write(request.operation,"passed","Starting factories and permanent rocks configured");return;}
+            if(request.operation=="revision-verify")
+            {Legacy25DCleanup.Verify("docs/validation/009-assets.txt");Write(request.operation,"passed","No broken GUIDs or missing scripts");return;}
             if(request.operation=="windows-build")
             {
                 Write(request.operation,"running","Building in the existing GUI Editor");
-                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/008-windows-build.txt");return;
+                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/009-windows-build.txt");return;
             }
             if (request.operation == "body-measure")
             {

@@ -105,7 +105,7 @@ public static class Launch25DChecks
                 Check(snapshot,"Configuration and zeroed session exist after Awake before first Update at depth "+depths[cycle]);
                 Check(Object.FindObjectsByType<ArenaLayout>().Length==1&&Object.FindObjectsByType<MatchPause>().Length==1&&Object.FindObjectsByType<ArenaPresentation25D>().Length==1,"One layout/session/presentation per battle");
                 Check(owner.GoldPerSecond==2&&owner.ExperiencePerSecond==0,"New match keeps +2 gold/s and no passive XP");
-                Check(Object.FindObjectsByType<GameBuilding>().Length==0&&Object.FindObjectsByType<Carcass>().Length==0,"New match has no old buildings or corpses");
+                Check(Object.FindObjectsByType<GameBuilding>().Length==2&&Object.FindObjectsByType<SausageFactory>().Length==2&&Object.FindObjectsByType<Carcass>().Length==0&&Object.FindObjectsByType<ButcherHelper>().Length==0,"New match has exactly two fresh factories and no old buildings, helpers or corpses");
                 Check((int)Read(Object.FindAnyObjectByType<TrainingMatch>(),"kills")==0&&(int)Read(Object.FindAnyObjectByType<TrainingMatch>(),"deaths")==0,"Score starts from zero");
                 Check(Mathf.Abs(ArenaLayout.BankBounds(false).width-(depths[cycle]-1))<.001f,"Logical bank uses selected depth");
                 var enemy=Object.FindAnyObjectByType<EnemyChase>();
@@ -114,7 +114,10 @@ public static class Launch25DChecks
                 hook.TryUpgrade(HookAbility.UpgradeStat.Range);
                 var farm=AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.FarmPath);builder.SelectBuilding(farm);
                 var cell=new Vector3(-ArenaLayout.OuterEdge+.5f,8.5f);
+                // Random permanent terrain legitimately reserves some edge cells.
+                for(int row=0;row<20&&!builder.CanPlace(cell);row++)cell.y=9.5f-row;
                 Check(builder.TryBuildAt(cell)!=null,"Build on extreme one-metre cell at selected depth");
+                Check(owner.GetComponent<OwnerEconomy>().Factory.TryOrderHelper(),"Dirty match includes a live ordered helper before leaving");
                 builder.SelectBuilding(farm);MatchPause.Instance.HandleEscape();
                 Check(!builder.IsBuilding&&!MatchPause.Instance.IsPaused,"First Escape closes construction before pausing");
                 incomeTime=Time.time;incomeGold=owner.Gold;

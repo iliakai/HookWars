@@ -146,7 +146,7 @@ public static class Legacy25DCleanup
         }
         Debug.Log("HOOKWARS_CLEANUP_AUDIT_PASS: candidates="+candidates.Count+", retained="+reasons.Count+", deleted="+(delete?candidates.Count-reasons.Count:0));
     }
-    public static void Verify()
+    public static void Verify(string reportPath="docs/validation/008-cleanup-verification.txt")
     {
         string previous=UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
         int checkedObjects=0;
@@ -166,7 +166,7 @@ public static class Legacy25DCleanup
             var scene=EditorSceneManager.OpenScene(path);
             foreach(var root in scene.GetRootGameObjects())CheckRoot(root,true);
         }
-        foreach(string path in AssetDatabase.FindAssets("t:Prefab",new[]{"Assets/Prefabs","Assets/HookWarsButcher/Integration","Assets/HookWarsAnimals/Integration","Assets/HookWarsBuildings/Integration"}).Select(AssetDatabase.GUIDToAssetPath))
+        foreach(string path in AssetDatabase.FindAssets("t:Prefab",new[]{"Assets/Prefabs","Assets/HookWarsButcher/Integration","Assets/HookWarsAnimals/Integration","Assets/HookWarsBuildings/Integration","Assets/HookWarsRocks/Integration"}).Select(AssetDatabase.GUIDToAssetPath))
             CheckRoot(AssetDatabase.LoadAssetAtPath<GameObject>(path),path.StartsWith("Assets/Prefabs/"));
         var missing=new List<string>();
         foreach(string path in AssetDatabase.GetAllAssetPaths().Where(p=>p.StartsWith("Assets/")&&(p.EndsWith(".unity")||p.EndsWith(".prefab")||p.EndsWith(".mat"))))
@@ -177,7 +177,7 @@ public static class Legacy25DCleanup
         if(EditorBuildSettings.globalScenes.Length!=2||EditorBuildSettings.globalScenes[0].path!=Launch25DSetup.MenuPath||EditorBuildSettings.globalScenes[1].path!=Arena25DSetup.ScenePath)
             throw new InvalidOperationException("Unexpected build scenes");
         EditorSceneManager.OpenScene(File.Exists(previous)?previous:Launch25DSetup.MenuPath);
-        File.WriteAllText("docs/validation/008-cleanup-verification.txt","Checked hierarchy objects="+checkedObjects+"\nMissing scripts=0\nWorld sprites/line renderers/GIF animators=0\nUnresolved scene/prefab/material GUIDs=0\nBuild scenes: MainMenu, Arena25D\n");
+        File.WriteAllText(reportPath,"Checked hierarchy objects="+checkedObjects+"\nMissing scripts=0\nWorld sprites/line renderers/GIF animators=0\nUnresolved scene/prefab/material GUIDs=0\nBuild scenes: MainMenu, Arena25D\n");
         Debug.Log("HOOKWARS_CLEANUP_VERIFY_PASS: "+checkedObjects+" hierarchy objects, no missing scripts or GUIDs");
     }
 }

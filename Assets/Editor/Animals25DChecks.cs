@@ -33,6 +33,7 @@ public static class Animals25DChecks
             if(!EditorApplication.isPlaying)return;
             if(phase==1)
             {
+                Object.FindAnyObjectByType<MatchMap25D>()?.MapRoot.gameObject.SetActive(false);
                 animals=new Animal[3];initial=new Vector3[3];corpses=new Carcass[3];
                 for(int i=0;i<3;i++)
                 {

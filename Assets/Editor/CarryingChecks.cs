@@ -210,7 +210,7 @@ public static class CarryingChecks
         Carcass own = hero.GetComponent<HeroCarcassSpawner>().CurrentCarcass;
         created.Add(own.gameObject);
         Check(carrier.Count == 0 && carrier.CurrentMassKg == 0, "Death drops all cargo");
-        Check(own != first && own != second && own.MassKg == 6, "Own carcass is a separate 6 kg object");
+        Check(own != first && own != second && Mathf.Abs(own.MassKg-110)<.001f, "Level-two death leaves a separate 110kg carcass");
         Check(first.IsAvailable && second.IsAvailable && OnBank(first.transform.position) && OnBank(second.transform.position),
             "Dropped cargo keeps both identities and is accessible on land");
         health.TakeDamage(1000);
@@ -259,6 +259,7 @@ public static class CarryingChecks
         rival.transform.position = new Vector3(-2, 0);
         Set(hook, "targetLayers", (LayerMask)(1 << rival.layer));
         Set(hook, "damage", 1000f);
+        Set(carrier,"capacityKg",106f); // Explicit large-cargo fixture: 6kg + 100kg hero.
         Throw(hook);
         Invoke(hook, "FlyHook");
         Carcass lethal = rival.GetComponent<HeroCarcassSpawner>().CurrentCarcass;
@@ -267,7 +268,7 @@ public static class CarryingChecks
             "Lethal outgoing hit still pulls dead hero");
         Check(lethal != null && !carrier.TryCollect(lethal) && lethal.IsReserved, "Dead hero carcass is reserved throughout pull");
         Finish(hook);
-        Check(lethal.IsStored && carrier.CurrentMassKg == 12, "Lethal hook lands and stores separate carcass");
+        Check(lethal.IsStored && carrier.CurrentMassKg == 106, "Lethal hook stores the entire 100kg hero in an explicitly sufficient cargo fixture");
         rival.GetComponent<Health>().Revive();
         Check(lethal.IsStored, "Source hero revival cannot delete stored carcass");
 
@@ -280,7 +281,7 @@ public static class CarryingChecks
         if (overflow != null) created.Add(overflow.gameObject);
         Check(overflow != null && hook.IsPullingTarget(rival.transform), "Lethal return hit continues pulling");
         Finish(hook);
-        Check(overflow.IsAvailable && overflow.MassKg == 6 && OnBank(overflow.transform.position) && carrier.CurrentMassKg == 12,
+        Check(overflow.IsAvailable && overflow.MassKg == 100 && OnBank(overflow.transform.position) && carrier.CurrentMassKg == 106,
             "Full cargo leaves whole lethal carcass on land, mass unchanged");
         // Its source can revive even when the independent carcass is hooked over water.
         overflow.GetComponent<HookVictim>().TryCapture(hook);
@@ -306,7 +307,7 @@ public static class CarryingChecks
         if (finalOwn != null) created.Add(finalOwn.gameObject);
         Check(direct.IsAvailable && lethal.IsAvailable && carrier.Count == 0 && OnBank(lethal.transform.position),
             "Second death drops both carried carcasses exactly once");
-        Check(direct.MassKg + lethal.MassKg + finalOwn.MassKg == 18, "Drop plus own death conserves expected mass");
+        Check(Mathf.Abs(direct.MassKg + lethal.MassKg + finalOwn.MassKg-216)<.001f, "Drop plus own death conserves 6+100+110kg");
 
         // Live capture is still a hero, never cargo, and cancellation restores its bank.
         direct.gameObject.SetActive(false);
@@ -339,7 +340,7 @@ public static class CarryingChecks
             CarcassCarrier receiver = killer.GetComponent<CarcassCarrier>();
             CarcassCarrier source = victim.GetComponent<CarcassCarrier>();
             Set(source, "capacityKg", 12f);
-            Set(receiver, "capacityKg", scenario == 0 ? 18f : 10f);
+            Set(receiver, "capacityKg", scenario == 0 ? 112f : 10f);
             Carcass first = Item(prefab, victim.transform.position);
             Carcass second = Item(prefab, victim.transform.position);
             Check(source.TryCollect(first) && source.TryCollect(second), "Victim carries two whole carcasses: " + scenario);
@@ -380,11 +381,11 @@ public static class CarryingChecks
             {
                 Finish(hook);
                 if (scenario == 0)
-                    Check(own.IsStored && first.IsStored && second.IsStored && receiver.CurrentMassKg == 18,
-                        "Lethal hook collects own carcass plus entire cargo when 18 kg fits");
+                    Check(own.IsStored && first.IsStored && second.IsStored && receiver.CurrentMassKg == 112,
+                        "Lethal hook collects 100kg hero plus both 6kg carcasses when capacity is sufficient");
                 else
-                    Check(own.IsStored && first.IsAvailable && second.IsAvailable &&
-                        OnBank(first.transform.position) && first.transform.position.x < 0 &&
+                    Check(own.IsAvailable && first.IsStored && second.IsAvailable &&
+                        OnBank(own.transform.position) && own.transform.position.x < 0 &&
                         OnBank(second.transform.position) && second.transform.position.x < 0 &&
                         receiver.CurrentMassKg == 6,
                         "Overflow cargo lands next to killer instead of remaining on victim bank: " + scenario);
@@ -393,8 +394,8 @@ public static class CarryingChecks
             Vector3 secondPosition = second.transform.position;
             victim.GetComponent<Health>().Revive();
             Check(first.transform.position == firstPosition && second.transform.position == secondPosition &&
-                first.MassKg + second.MassKg + own.MassKg == 18,
-                "Revival preserves positions and all 18 kg from loaded victim: " + scenario);
+                first.MassKg + second.MassKg + own.MassKg == 112,
+                "Revival preserves positions and all 112kg from loaded victim: " + scenario);
             killer.SetActive(false);
             victim.SetActive(false);
             first.gameObject.SetActive(false);
@@ -451,12 +452,10 @@ public static class CarryingChecks
         wall.transform.position = new Vector3(-2, 0);
         wall.AddComponent<BoxCollider2D>().size = Vector2.one;
 
-        Set(hook, "maxBounces", 0);
         Throw(hook);
         Invoke(hook, "FlyHook");
-        Check(!hook.IsFlyingOut && hook.ChainPointCount == 2, "Obstacle without bounce budget returns hook");
+        Check(hook.IsFlyingOut && hook.ChainPointCount == 3, "Obstacle reflects by default without buying bounces");
         hook.CancelHook();
-        Set(hook, "maxBounces", 1);
         Throw(hook);
         Invoke(hook, "FlyHook");
         Check(hook.IsFlyingOut && hook.ChainPointCount == 3, "Obstacle with bounce budget creates a chain bend");
@@ -473,8 +472,15 @@ public static class CarryingChecks
         Invoke(hook, "ReturnHook");
         Check(hook.ActiveHook == null, "Return traverses saved bends and clears hook");
 
+        // A long-range fixture must survive many successive contacts with no
+        // purchased counter. Its complete route still stays within Range.
+        var rear=new GameObject("Unlimited ricochet rear obstacle");created.Add(rear);
+        rear.layer=LayerMask.NameToLayer("Mountains");rear.transform.position=new Vector3(-6,0);rear.AddComponent<BoxCollider2D>().size=Vector2.one;
+        float originalRange=hook.Range;Set(hook,"range",1000f);Throw(hook);
+        for(int contact=0;contact<20;contact++)Invoke(hook,"FlyHook");
+        Check(hook.IsFlyingOut&&hook.ChainPointCount==22,"Twenty successive ricochets work without an upgrade or finite counter");
+        hook.CancelHook();rear.SetActive(false);Set(hook,"range",originalRange);
         wall.SetActive(false);
-        Set(hook, "maxBounces", 0);
         Throw(hook);
         var visualPrefab=AssetDatabase.LoadAssetAtPath<GameObject>(Butcher25DSetup.HookPrefab);
         float size=visualPrefab.GetComponentInChildren<MeshFilter>().sharedMesh.bounds.size.z;

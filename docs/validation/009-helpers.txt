@@ -1,2 +1,2 @@
-PASS: 16 real Play Mode assertions
+PASS: 18 real Play Mode assertions
 Three autonomous helpers, both banks, independent owner relocation, real animated axe kills, complete carcasses, real travel/pathfinding, delivery/processing/owner XP, existing/future capacity, payments, 3D scale and factory menu.
