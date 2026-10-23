@@ -102,7 +102,7 @@ public class PlayerBuilding : MonoBehaviour
     public void SelectBuilding(GameBuilding prefab)
     {
         CloseBuildMode();
-        if (!CanAct || prefab == null) return;
+        if (!CanAct || prefab == null || prefab.Kind==BuildingKind.Factory) return;
         selectedPrefab = prefab;
         QuarterTurns=0;
         GameObject marker = new GameObject("BuildingPreview");

@@ -523,6 +523,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 923269593}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &595882808
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 595882810}
+  - component: {fileID: 595882809}
+  m_Layer: 0
+  m_Name: Match map generator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &595882809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 595882808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27418daf081c41046999127958300d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MatchMap25D
+  factoryPrefab: {fileID: 6430136431561755328, guid: 3e2d9cd8c6dcf9048bd8cce8e7a08044, type: 3}
+  rockPrefab: {fileID: 4540405582322878325, guid: 421dd4570e9ac2c49a678d1cceb2e9d5, type: 3}
+--- !u!4 &595882810
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 595882808}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &641424493
 GameObject:
   m_ObjectHideFlags: 0
@@ -587,6 +633,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 5
+  speedPerUpgrade: 0.25
 --- !u!114 &641424497
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -616,7 +663,6 @@ MonoBehaviour:
   damage: 40
   pullSpeed: 14
   stopDistance: 1.1
-  maxBounces: 0
   bounceDistancePercent: 50
   playerAim: {fileID: 1372860863}
 --- !u!114 &641424498
@@ -639,6 +685,8 @@ MonoBehaviour:
   attackRange: 1.6
   attackCooldown: 0.7
   attackAngle: 100
+  damagePerUpgrade: 5
+  rangePerUpgrade: 0.2
 --- !u!114 &641424499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -653,6 +701,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 100
   currentHealth: 0
+  regenerationKgPerSecond: 0.1
 --- !u!114 &641424500
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -749,7 +798,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBuilding
   worldCamera: {fileID: 519420031}
   buildingPrefabs:
-  - {fileID: 6430136431561755328, guid: 3e2d9cd8c6dcf9048bd8cce8e7a08044, type: 3}
   - {fileID: 2455497073292196938, guid: 9d21675be166cf64e84bee2875416f65, type: 3}
   - {fileID: 4178985464801724631, guid: 8a4453e7e0a5c6e4c865e2f3f8556696, type: 3}
   - {fileID: 2447244935848256603, guid: 9349f6c5e1bedda40b1b408b3319e40f, type: 3}
@@ -791,7 +839,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeroCarcassSpawner
   carcassPrefab: {fileID: 535136966263187727, guid: e6579373cd4466745a77a33273954b02, type: 3}
-  heroMassKg: 6
 --- !u!114 &641424508
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1008,6 +1055,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 100
   currentHealth: 0
+  regenerationKgPerSecond: 0.1
 --- !u!114 &923269595
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1101,7 +1149,6 @@ MonoBehaviour:
   damage: 40
   pullSpeed: 14
   stopDistance: 1.1
-  maxBounces: 0
   bounceDistancePercent: 50
 --- !u!114 &923269600
 MonoBehaviour:
@@ -1116,7 +1163,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeroCarcassSpawner
   carcassPrefab: {fileID: 535136966263187727, guid: e6579373cd4466745a77a33273954b02, type: 3}
-  heroMassKg: 6
 --- !u!114 &923269601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1776,6 +1822,8 @@ MonoBehaviour:
     prefab: {fileID: 991151511180061861, guid: b069d80df1b49e64088ef267b67498c9, type: 3}
   - kind: 13
     prefab: {fileID: 3757561872863193987, guid: 41d7f5577f5a1ef4c8ade74092a5dc97, type: 3}
+  - kind: 14
+    prefab: {fileID: 8161290722125603731, guid: e18be5661c588934a8b9739d2ce56d1f, type: 3}
 --- !u!114 &2100000013
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1963,3 +2011,4 @@ SceneRoots:
   - {fileID: 2100000011}
   - {fileID: 2100000021}
   - {fileID: 735907299}
+  - {fileID: 595882810}

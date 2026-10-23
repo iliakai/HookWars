@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object=UnityEngine.Object;
 
 [InitializeOnLoad]
@@ -18,10 +19,17 @@ public static class GameplayRevisionChecks
     static float regenStarted,regenKg;
     static SkinnedMeshRenderer axeSkin;
     static float axeExtent;
+    static int mapCycle,savedDepth;
     static GameplayRevisionChecks(){if(SessionState.GetBool(Key,false))Subscribe();}
     public static void Run(string mode)
     {
+        if(mode=="map")
+        {
+            GameplayRevisionSetup.Configure();string signature=MapSignature();GameplayRevisionSetup.Configure();
+            if(signature!=MapSignature())throw new InvalidOperationException("Repeated map setup changed asset bytes");
+        }
         ValidationPlayScope.CurrentScene();EditorSceneManager.OpenScene(Arena25DSetup.ScenePath);
+        savedDepth=MatchConfiguration.LastDepth;
         SessionState.SetString(Key+".Mode",mode);SessionState.SetBool(Key,true);SessionState.SetBool(Key+".Passed",false);Subscribe();
     }
     static void Subscribe(){phase=count=0;ready=EditorApplication.timeSinceStartup+3;deadline=ready+120;EditorApplication.update-=Tick;EditorApplication.update+=Tick;}
@@ -41,12 +49,46 @@ public static class GameplayRevisionChecks
                 foreach(var ai in Object.FindObjectsByType<EnemyChase>())ai.enabled=false;
                 foreach(var ai in Object.FindObjectsByType<EnemyMelee>())ai.enabled=false;
                 builder=Object.FindAnyObjectByType<PlayerBuilding>();
+                if(SessionState.GetString(Key+".Mode","")=="map")
+                {mapCycle=0;MatchConfiguration.Prepare(4);SceneManager.LoadScene(MainMenuController.BattleScene);phase=20;due=Time.time+.3f;return;}
                 if(SessionState.GetString(Key+".Mode","")=="development")
                 {DevelopmentStart();phase=10;due=Time.time+.7f;return;}
                 else if(SessionState.GetString(Key+".Mode","")=="construction")ConstructionStart();
                 else throw new InvalidOperationException("Unsupported revision mode");
                 due=Time.time+.25f;phase=2;return;
             }
+            if(phase==20)
+            {
+                foreach(var ai in Object.FindObjectsByType<EnemyHookAI>())ai.enabled=false;
+                foreach(var ai in Object.FindObjectsByType<EnemyChase>())ai.enabled=false;
+                foreach(var ai in Object.FindObjectsByType<EnemyMelee>())ai.enabled=false;
+                int depth=mapCycle==0?4:20;Check(ArenaLayout.Depth==depth,"Map consumes configured depth before generation: "+depth);
+                var map=Object.FindAnyObjectByType<MatchMap25D>();var factories=Object.FindObjectsByType<SausageFactory>();
+                Check(factories.Length==2&&map.Factories.Count==2,"Exactly one automatic factory for each owner");
+                int roots=map.MapRoot.childCount;map.Generate();Check(map.MapRoot.childCount==roots,"Repeated Generate does not duplicate map objects");
+                foreach(var f in factories)
+                {
+                    Check(f.Footprint==new Vector2Int(2,2)&&f.GetComponent<BoxCollider2D>().size==Vector2.one*2,"Factory occupies exactly four cells");
+                    Check(f.Owner.GetComponent<OwnerEconomy>().Factory==f&&(f.transform.position.x>0)==(f.Owner.transform.position.x>0),"Factory ownership matches its own bank");
+                    Check(Mathf.Abs(f.transform.position.x)>=2+ArenaLayout.Depth*.6f&&ArenaLayout.IsInsideBank(f.transform.position,f.transform.position.x>0,1),"Factory fits the rear of the selected bank");
+                    var view=Object.FindAnyObjectByType<ArenaPresentation25D>().VisualFor(f);Check(view!=null&&view.transform.localScale==Vector3.one*2,"Factory model scale matches its new footprint");
+                }
+                var rocks=Object.FindObjectsByType<PermanentRock>();Check(rocks.Any(r=>r.transform.position.x<0)&&rocks.Any(r=>r.transform.position.x>0),"Permanent rocks generated on both banks");
+                foreach(var r in rocks)
+                {
+                    Check(r.GetComponent<Health>()==null&&r.GetComponent<GameBuilding>()==null&&!WorldCollision.FreeCircle(r.transform.position,.1f),"Rock is indestructible terrain and blocks occupancy");
+                    Check(Object.FindAnyObjectByType<ArenaPresentation25D>().VisualFor(r)?.GetComponentsInChildren<MeshRenderer>().Length>=22,"Imported 22-stone model automatically displayed");
+                }
+                builder=Object.FindAnyObjectByType<PlayerBuilding>();builder.GetComponent<PlayerProgression>().AddGold(1000);
+                builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.FactoryPath));Check(!builder.IsBuilding,"Starting factory cannot be selected for manual construction");
+                builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.ShopPath));
+                var ownRock=rocks.First(r=>(r.transform.position.x>0)==(builder.transform.position.x>0));Check(!builder.CanPlace(ownRock.transform.position),"Rock's cell cannot be built over");builder.CloseInterface();
+                Directory.CreateDirectory("Temp/RevisionPreview");ScreenCapture.CaptureScreenshot("Temp/RevisionPreview/map_"+depth+".png");
+                if(mapCycle++==0){phase=21;due=Time.time+.2f;return;}
+                Directory.CreateDirectory("docs/validation");File.WriteAllText("docs/validation/009-map.txt",$"PASS: {count} real Play Mode assertions at 4m and 20m\nByte-stable setup, two rear 2x2 factories, both-bank permanent imported rocks, visual scale, occupancy and no manual factory.\n");
+                SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_REVISION_PASS: "+count+" map assertions");phase=3;due=Time.time+.2f;return;
+            }
+            if(phase==21){MatchConfiguration.Prepare(20);SceneManager.LoadScene(MainMenuController.BattleScene);phase=20;due=Time.time+.3f;return;}
             if(phase==10)
             {
                 var hp=builder.GetComponent<Health>();
@@ -100,7 +142,8 @@ public static class GameplayRevisionChecks
         for(int i=0;i<3;i++)builder.RotatePlacement();Check(builder.QuarterTurns==0,"Four rotations restore original orientation");
         Check(!builder.CanPlace(new Vector3(-8.25f,-4.5f)),"Off-grid placement remains rejected");
     }
-    static void Stop(){phase=99;EditorApplication.isPlaying=false;}
+    static string MapSignature()=>File.ReadAllText(Arena25DSetup.ScenePath)+File.ReadAllText(EconomySetup.FactoryPath)+File.ReadAllText(GameplayRevisionSetup.RockLogic)+string.Join("",Directory.GetFiles(GameplayRevisionSetup.Output).Where(p=>p.EndsWith(".prefab")||p.EndsWith(".mat")).OrderBy(p=>p).Select(File.ReadAllText));
+    static void Stop(){if(SessionState.GetString(Key+".Mode","")=="map")MatchConfiguration.RememberDepth(savedDepth);phase=99;EditorApplication.isPlaying=false;}
     static void DevelopmentStart()
     {
         var owner=builder.GetComponent<PlayerProgression>();var hp=builder.GetComponent<Health>();var menu=Object.FindAnyObjectByType<HookUpgradeMenu>();

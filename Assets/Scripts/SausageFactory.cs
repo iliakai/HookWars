@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class SausageFactory : GameBuilding
 {
+    public override Vector2Int Footprint=>new Vector2Int(2,2);
+    public bool InDeliveryRange(Vector3 position)=>Vector2.Distance(position,transform.position)<=deliveryRadius+.5f;
     [SerializeField, Min(0.1f)] private float capacityKg = 12f;
     [SerializeField, Min(0.1f)] private float secondsPerKg = 2f;
     [SerializeField, Min(0)] private float productPerKg = 1f;
@@ -44,10 +46,10 @@ public class SausageFactory : GameBuilding
     {
         if (owner == null) return;
         CarcassCarrier carrier = owner.GetComponent<CarcassCarrier>();
-        if (carrier != null && Vector2.Distance(owner.transform.position, transform.position) <= deliveryRadius)
+        if (carrier != null && InDeliveryRange(owner.transform.position))
             carrier.DeliverTo(this);
         Advance(Time.deltaTime);
-        if (carrier != null && Vector2.Distance(owner.transform.position, transform.position) <= deliveryRadius)
+        if (carrier != null && InDeliveryRange(owner.transform.position))
             carrier.DeliverTo(this);
     }
     internal bool TryAcceptMass(double mass)

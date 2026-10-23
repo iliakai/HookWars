@@ -14,14 +14,14 @@ public static class EconomySetup
         foreach(string path in new[]{FactoryPath,ShopPath,FarmPath,WallPath})
         {
             var building=AssetDatabase.LoadAssetAtPath<GameBuilding>(path);
-            if(building==null||building.GetComponent<BoxCollider2D>()?.size!=Vector2.one||building.transform.localScale!=Vector3.one)
-                throw new InvalidOperationException("Invalid one-metre building asset: "+path);
+            if(building==null||building.GetComponent<BoxCollider2D>()?.size!=(Vector2)building.Footprint||building.transform.localScale!=Vector3.one)
+                throw new InvalidOperationException("Invalid building footprint: "+path);
         }
         foreach(var builder in Object.FindObjectsByType<PlayerBuilding>())
         {
             var data=new SerializedObject(builder);var prefabs=data.FindProperty("buildingPrefabs");
-            if(prefabs.arraySize!=4)throw new InvalidOperationException("Four building choices required");
-            for(int i=0;i<4;i++)if(prefabs.GetArrayElementAtIndex(i).objectReferenceValue==null)throw new InvalidOperationException("Missing building choice");
+            if(prefabs.arraySize!=3)throw new InvalidOperationException("Shop/farm/wall choices required");
+            for(int i=0;i<3;i++)if(prefabs.GetArrayElementAtIndex(i).objectReferenceValue==null||((GameBuilding)prefabs.GetArrayElementAtIndex(i).objectReferenceValue).Kind==BuildingKind.Factory)throw new InvalidOperationException("Invalid building choice");
         }
     }
     public static void Stage4()=>Stage5();

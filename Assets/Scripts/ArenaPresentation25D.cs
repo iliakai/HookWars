@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 [DefaultExecutionOrder(1000)]
 public class ArenaPresentation25D : MonoBehaviour
 {
-    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass }
+    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass, Rock }
     [System.Serializable]
     public struct ModelOverride
     {
@@ -137,6 +137,7 @@ public class ArenaPresentation25D : MonoBehaviour
             var species=carcass.AnimalSpecies ?? (carcass.MassKg>=10?Animal.Species.Cow:carcass.MassKg>=6?Animal.Species.Pig:Animal.Species.Sheep);
             kind=carcass.IsHeroCarcass?VisualKind.Carcass:species==Animal.Species.Cow?VisualKind.CowCarcass:species==Animal.Species.Pig?VisualKind.PigCarcass:VisualKind.SheepCarcass;
         }
+        else if (source is PermanentRock) kind=VisualKind.Rock;
         else if (source is BoneWall) kind = VisualKind.Wall;
         else if (source is AnimalFarm) kind = VisualKind.Farm;
         else if (source is MeatShop) kind = VisualKind.Shop;
@@ -210,6 +211,11 @@ public class ArenaPresentation25D : MonoBehaviour
             var buildingView=View(building);
             buildingView.transform.rotation=Quaternion.Euler(0,-building.transform.eulerAngles.z,0);
             buildingView.transform.localScale=new Vector3(building.Footprint.x,Mathf.Max(building.Footprint.x,building.Footprint.y),building.Footprint.y);
+        }
+        foreach(var rock in FindObjectsByType<PermanentRock>())
+        {
+            if(rock.gameObject.scene!=gameObject.scene)continue;
+            View(rock).transform.rotation=Quaternion.Euler(0,-rock.transform.eulerAngles.z,0);
         }
         foreach (HookAbility hook in FindObjectsByType<HookAbility>())
         {

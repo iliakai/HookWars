@@ -41,4 +41,16 @@ public static class WorldCollision
             if (!hit.isTrigger) return false;
         return true;
     }
+    public static bool FreeBox(Vector2 center,Vector2 size)
+    {
+        Physics2D.SyncTransforms();
+        foreach(var hit in Physics2D.OverlapBoxAll(center,size-Vector2.one*.0002f,0))
+        {
+            if(hit.isTrigger)continue;Bounds b=hit.bounds;
+            float x=Mathf.Min(center.x+size.x*.5f,b.max.x)-Mathf.Max(center.x-size.x*.5f,b.min.x);
+            float y=Mathf.Min(center.y+size.y*.5f,b.max.y)-Mathf.Max(center.y-size.y*.5f,b.min.y);
+            if(x>.00001f&&y>.00001f)return false;
+        }
+        return true;
+    }
 }

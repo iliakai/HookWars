@@ -71,6 +71,8 @@ public static class HookWarsValidationBridge
             }
             File.Delete(path);
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
+            if(request.operation=="revision-setup")
+            {GameplayRevisionSetup.Configure();Write(request.operation,"passed","Starting factories and permanent rocks configured");return;}
             if(request.operation=="windows-build")
             {
                 Write(request.operation,"running","Building in the existing GUI Editor");

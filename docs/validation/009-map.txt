@@ -1,0 +1,2 @@
+PASS: 56 real Play Mode assertions at 4m and 20m
+Byte-stable setup, two rear 2x2 factories, both-bank permanent imported rocks, visual scale, occupancy and no manual factory.
