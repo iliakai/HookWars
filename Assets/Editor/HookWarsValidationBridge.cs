@@ -71,6 +71,8 @@ public static class HookWarsValidationBridge
             }
             File.Delete(path);
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
+            if(request.operation=="grass-setup")
+            {Grass25DSetup.Configure();Write(request.operation,"passed","4m grass texture configured");return;}
             if(request.operation=="meat-setup")
             {Meat25DSetup.Configure();Write(request.operation,"passed","Hovering meat with authored spin configured");return;}
             if(request.operation=="meat-build")
@@ -84,7 +86,7 @@ public static class HookWarsValidationBridge
             if(request.operation=="windows-build")
             {
                 Write(request.operation,"running","Building in the existing GUI Editor");
-                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/012-windows-build.txt");return;
+                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/013-windows-build.txt");return;
             }
             if (request.operation == "body-measure")
             {

@@ -1788,6 +1788,8 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   pipeline: {fileID: 11400000, guid: 683606ffeb604d3c82427dab1b7f8b70, type: 2}
   litMaterial: {fileID: 2100000, guid: c8ccbc87102546de80166e7bb48bc895, type: 2}
+  bankMaterial: {fileID: 2100000, guid: f16d2ae063a836746be07a369a90071f, type: 2}
+  grassTileMeters: 4
   physicalChainMesh: {fileID: 4300000, guid: e344f1b4a92b7a34c8750231dd6bc26e, type: 2}
   physicalChainMaterial: {fileID: 2100000, guid: 8f664c5e901d12547b7ceb9b73e4771d, type: 2}
   chainLinkScale: 1

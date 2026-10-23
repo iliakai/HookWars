@@ -1,0 +1,7 @@
+﻿Grass visual verification, Unity 6000.6.6f1:
+Source PNG SHA256 matches imported PNG: 4F40D1D377EE4079488314231473D669D2C30EF3F1DE70C4DD408964B0244743.
+Repeated Grass25DSetup: byte-identical scene, material and texture importer metadata.
+Existing real-time Play Mode economy acceptance: 17 assertions passed.
+Real screenshot inspected: 013-grass.png. Both banks textured, river preserved, entities readable, construction and economy cycle intact.
+Grass tile size is 4m; UV scale follows actual bank dimensions.
+No separate automated tests added for this material change. Depth 4/20 visuals not separately captured in this stage.

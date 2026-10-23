@@ -16,6 +16,9 @@ public class ArenaPresentation25D : MonoBehaviour
     }
     [SerializeField] private RenderPipelineAsset pipeline;
     [SerializeField] private Material litMaterial;
+    [SerializeField] private Material bankMaterial;
+    [SerializeField, Min(.1f)] private float grassTileMeters = 4;
+    private MaterialPropertyBlock groundProperties;
     [SerializeField] private Mesh physicalChainMesh;
     [SerializeField] private Material physicalChainMaterial;
     [SerializeField, Min(.1f)] private float chainLinkScale=1;
@@ -75,11 +78,22 @@ public class ArenaPresentation25D : MonoBehaviour
                 new Vector3(bounds.size.x, height, bounds.size.y), color);
             // Bank and water top are both exactly Y=0; adjacent edges do not overlap.
             ground.transform.position = ArenaSpace25D.ToWorld(bounds.center, mountain ? height / 2 : -height / 2);
+            if (label.EndsWith("bank") && bankMaterial != null)
+                ground.GetComponent<Renderer>().sharedMaterial = bankMaterial;
+            ApplyGroundTiling(label, ground, bounds);
             terrain.Add(label, ground);
         }
         preview = new GameObject("Cell preview");preview.transform.SetParent(generated.transform,false);
         var cell=Primitive("Cell highlight",PrimitiveType.Cube,preview.transform,new Vector3(.98f,.004f,.98f),Color.green);cell.transform.localPosition=Vector3.up*.003f;
         preview.SetActive(false);
+    }
+    private void ApplyGroundTiling(string label, GameObject ground, Bounds bounds)
+    {
+        if (!label.EndsWith("bank") || bankMaterial == null) return;
+        groundProperties ??= new MaterialPropertyBlock();
+        float tile = Mathf.Max(.1f, grassTileMeters);
+        groundProperties.SetVector("_BaseMap_ST", new Vector4(bounds.size.x / tile, bounds.size.y / tile, 0, 0));
+        ground.GetComponent<Renderer>().SetPropertyBlock(groundProperties);
     }
     private GameObject Primitive(string label, PrimitiveType shape, Transform parent, Vector3 size, Color color)
     {
@@ -156,6 +170,7 @@ public class ArenaPresentation25D : MonoBehaviour
             float height = mountain ? 1.5f : 0.15f;
             pair.Value.transform.position = ArenaSpace25D.ToWorld(bounds.center, mountain ? height / 2 : -height / 2);
             pair.Value.transform.localScale = new Vector3(bounds.size.x, height, bounds.size.y);
+            ApplyGroundTiling(pair.Key, pair.Value, bounds);
         }
         // Discovery includes objects spawned by unchanged farms, death and building code.
         // Prototype scan deliberately prioritises compatibility; replace with a registry
