@@ -1,0 +1,83 @@
+{
+  "actions": [
+    {
+      "name": "ButcherRig|ButcherRig|Axe_Attack",
+      "frames": [
+        1.0,
+        25.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Hook_Cast",
+      "frames": [
+        1.0,
+        19.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Idle",
+      "frames": [
+        1.0,
+        31.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Roll_E",
+      "frames": [
+        1.0,
+        31.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Roll_N",
+      "frames": [
+        1.0,
+        31.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Roll_NE",
+      "frames": [
+        1.0,
+        31.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Roll_NW",
+      "frames": [
+        1.0,
+        31.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Roll_S",
+      "frames": [
+        1.0,
+        31.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Roll_SE",
+      "frames": [
+        1.0,
+        31.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Roll_SW",
+      "frames": [
+        1.0,
+        31.0
+      ]
+    },
+    {
+      "name": "ButcherRig|ButcherRig|Roll_W",
+      "frames": [
+        1.0,
+        31.0
+      ]
+    }
+  ],
+  "bone_count": 7,
+  "mesh_count": 6
+}
