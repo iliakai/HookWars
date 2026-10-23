@@ -1,0 +1,8 @@
+PASS: 15 actual Unity Play Mode assertions
+Passive income; one/two real shops; shared/empty/limited stock; spending; disabled shop; pause/resume; fresh owner.
+
+Regression rerun in existing Unity 6000.6.6f1 Editor Play Mode:
+HOOKWARS_ECONOMY_STAGE_5_PASS: 175 assertions.
+HOOKWARS_CARRYING_PASS: 99 assertions.
+Total: 289 Play Mode assertions. Actual HUD screenshot inspected: 011-income.png.
+Windows player was not rebuilt in this stage.

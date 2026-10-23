@@ -24,6 +24,9 @@ public class PlayerProgression : MonoBehaviour
     public int ExperienceToNextLevel => experienceToNextLevel;
 
     public float GoldPerSecond => goldPerSecond;
+    private double incomeGold, incomeSeconds, measuredGoldIncome;
+    // Actual gross receipts per game second, independent of purchases.
+    public double CurrentGoldIncomePerSecond => MatchPause.BlocksGameplay ? 0 : measuredGoldIncome;
     public float ExperiencePerSecond => experiencePerSecond;
 
     private void Awake()
@@ -33,6 +36,8 @@ public class PlayerProgression : MonoBehaviour
         level = 1;
         upgradePoints = 0;
         experienceToNextLevel = Mathf.Max(1, firstLevelExperience);
+        incomeGold = incomeSeconds = 0;
+        measuredGoldIncome = goldPerSecond;
     }
 
     private void Update()
@@ -40,12 +45,22 @@ public class PlayerProgression : MonoBehaviour
         AddGold(goldPerSecond * Time.deltaTime);
         AddExperience(experiencePerSecond * Time.deltaTime);
     }
+    private void LateUpdate()
+    {
+        if (MatchPause.BlocksGameplay || Time.deltaTime <= 0) return;
+        // All shops and passive income have credited their real Update receipts.
+        incomeSeconds += Time.deltaTime;
+        if (incomeSeconds < 1) return;
+        measuredGoldIncome = incomeGold / incomeSeconds;
+        incomeGold = incomeSeconds = 0;
+    }
 
     public void AddGold(double amount)
     {
         if (amount > 0f)
         {
             gold += amount;
+            incomeGold += amount;
         }
     }
 

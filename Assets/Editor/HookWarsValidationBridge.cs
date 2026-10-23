@@ -48,7 +48,7 @@ public static class HookWarsValidationBridge
                 Application.runInBackground = true;
                 EditorApplication.QueuePlayerLoopUpdate();
             }
-            string key = active=="meat"?Meat25DChecks.Key:active.StartsWith("revision-") ? GameplayRevisionChecks.Key : active == "acceptance" ? MatchAcceptance25DChecks.Key : active == "launch" ? Launch25DChecks.Key : active == "chain" ? Chain25DChecks.Key : active == "animals" ? Animals25DChecks.Key : active == "world" ? World25DChecks.Key : active == "arena25d" ? "HookWars.25D.Pending" : active == "butcher" ? Butcher25DChecks.Key : "HookWars.CarryingChecks.Pending";
+            string key = active=="income"?IncomeHUDChecks.Key:active=="meat"?Meat25DChecks.Key:active.StartsWith("revision-") ? GameplayRevisionChecks.Key : active == "acceptance" ? MatchAcceptance25DChecks.Key : active == "launch" ? Launch25DChecks.Key : active == "chain" ? Chain25DChecks.Key : active == "animals" ? Animals25DChecks.Key : active == "world" ? World25DChecks.Key : active == "arena25d" ? "HookWars.25D.Pending" : active == "butcher" ? Butcher25DChecks.Key : "HookWars.CarryingChecks.Pending";
             if (SessionState.GetBool(key, false) || EditorApplication.isPlayingOrWillChangePlaymode) return;
             Application.runInBackground = SessionState.GetBool(Active + ".Background", false);
             Write(active, SessionState.GetBool(key + ".Passed", false) ? "passed" : "failed", "See log.txt");
@@ -126,13 +126,14 @@ public static class HookWarsValidationBridge
             {
                 Butcher25DSetup.Configure(); Write(request.operation, "passed", "Arena25D adapted butcher saved"); return;
             }
-            if (request.operation!="meat"&&!request.operation.StartsWith("revision-") && request.operation != "acceptance" && request.operation != "launch" && request.operation != "chain" && request.operation != "animals" && request.operation != "world" && request.operation != "arena25d" && request.operation != "regressions" && request.operation != "butcher")
+            if (request.operation!="income"&&request.operation!="meat"&&!request.operation.StartsWith("revision-") && request.operation != "acceptance" && request.operation != "launch" && request.operation != "chain" && request.operation != "animals" && request.operation != "world" && request.operation != "arena25d" && request.operation != "regressions" && request.operation != "butcher")
                 throw new InvalidOperationException("Unsupported validation operation");
             SessionState.SetString(Active, request.operation);
             ValidationPlayScope.CurrentScene();
             SessionState.SetBool(Active + ".Background", Application.runInBackground);
             Write(request.operation, "running", "Running in existing Editor");
-            if(request.operation=="meat")Meat25DChecks.Run();
+            if(request.operation=="income")IncomeHUDChecks.Run();
+            else if(request.operation=="meat")Meat25DChecks.Run();
             else if (request.operation.StartsWith("revision-")) GameplayRevisionChecks.Run(request.operation.Substring(9));
             else if (request.operation == "acceptance") MatchAcceptance25DChecks.Run();
             else if (request.operation == "launch") Launch25DChecks.Run();
