@@ -12,6 +12,8 @@ public class Carcass : MonoBehaviour
 
     public float MassKg => massKg;
     public bool IsHeroCarcass { get; private set; }
+    public Animal.Species? AnimalSpecies { get; private set; }
+    public void SetAnimalSpecies(Animal.Species species) => AnimalSpecies = species;
     public bool IsStored => carrier != null;
     public bool IsReserved => GetComponent<HookVictim>().IsCaught ||
         (sourceVictim != null && sourceHealth != null && sourceHealth.IsDead && sourceVictim.IsCaught);

@@ -210,6 +210,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c4252237c91b714cb9b5df4018e2bd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Animal
+  species: 1
   massKg: 10
   moveSpeed: 1
   animationReferenceSpeed: 1

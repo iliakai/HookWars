@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 [DefaultExecutionOrder(1000)]
 public class ArenaPresentation25D : MonoBehaviour
 {
-    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook }
+    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass }
     [System.Serializable]
     public struct ModelOverride
     {
@@ -143,6 +143,7 @@ public class ArenaPresentation25D : MonoBehaviour
                 if (butcher != null) butcher.Bind(hero);
             }
             if (source is GameBuilding building) model.GetComponent<BuildingPresentation25D>()?.Bind(building);
+            if (source is Animal animal) model.GetComponent<AnimalPresentation25D>()?.Bind(animal);
         }
         view.SetActive(source.gameObject.activeInHierarchy);
         view.transform.position = ArenaSpace25D.ToWorld(source.transform.position);
@@ -152,8 +153,12 @@ public class ArenaPresentation25D : MonoBehaviour
     {
         VisualKind kind;
         if (source is Health) kind = source.GetComponent<PlayerMovement>() != null ? VisualKind.Player : VisualKind.Enemy;
-        else if (source is Animal animal) kind = animal.MassKg >= 10 ? VisualKind.Cow : animal.MassKg >= 6 ? VisualKind.Pig : VisualKind.Sheep;
-        else if (source is Carcass carcass) { if (!carcass.IsHeroCarcass) return null; kind = VisualKind.Carcass; }
+        else if (source is Animal animal) kind = animal.Kind == Animal.Species.Cow ? VisualKind.Cow : animal.Kind == Animal.Species.Pig ? VisualKind.Pig : VisualKind.Sheep;
+        else if (source is Carcass carcass)
+        {
+            var species=carcass.AnimalSpecies ?? (carcass.MassKg>=10?Animal.Species.Cow:carcass.MassKg>=6?Animal.Species.Pig:Animal.Species.Sheep);
+            kind=carcass.IsHeroCarcass?VisualKind.Carcass:species==Animal.Species.Cow?VisualKind.CowCarcass:species==Animal.Species.Pig?VisualKind.PigCarcass:VisualKind.SheepCarcass;
+        }
         else if (source is BoneWall) kind = VisualKind.Wall;
         else if (source is AnimalFarm) kind = VisualKind.Farm;
         else if (source is MeatShop) kind = VisualKind.Shop;

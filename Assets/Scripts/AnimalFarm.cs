@@ -13,7 +13,7 @@ public class AnimalFarm : GameBuilding
     public float SpawnInterval => spawnInterval;
     public override BuildingKind Kind => BuildingKind.Farm;
     public override string DisplayName => "Ферма";
-    public override string Info => $"Случайное животное каждые {spawnInterval:0.##} с\nЛюбой свободный берег; овца, корова, свинья";
+    public override string Info => $"Случайное животное каждые {spawnInterval:0.##} с\nНа берегу фермы; овца, корова, свинья";
     public override string UpgradeLabel(int index) => $"Интервал → {Mathf.Max(minimumInterval, spawnInterval * intervalMultiplier):0.##} с: {upgradeCost} зол.";
     private void Awake() => remaining = spawnInterval;
     private void Update() => Advance(Time.deltaTime);
@@ -23,17 +23,18 @@ public class AnimalFarm : GameBuilding
         remaining -= seconds;
         if (remaining > 0) return null;
         Animal result = TrySpawn();
-        remaining = result != null ? remaining + spawnInterval : retryDelay;
+        remaining = result != null ? spawnInterval : retryDelay;
         return result;
     }
     public Animal TrySpawn()
     {
         if (owner == null || animalPrefabs == null || animalPrefabs.Length == 0) return null;
         Animal prefab = animalPrefabs[Random.Range(0, animalPrefabs.Length)];
+        bool right = transform.position.x > 0;
+        Rect bounds = ArenaLayout.BankBounds(right, prefab.Radius);
+        if (bounds.width <= 0 || bounds.height <= 0) return null;
         for (int attempt = 0; attempt < spawnAttempts; attempt++)
         {
-            bool right = Random.value > 0.5f;
-            Rect bounds = ArenaLayout.BankBounds(right, prefab.Radius);
             Vector3 position = new Vector3(Random.Range(bounds.xMin, bounds.xMax), Random.Range(bounds.yMin, bounds.yMax));
             if (WorldCollision.FreeCircle(position, prefab.Radius)) return Instantiate(prefab, position, Quaternion.identity);
         }

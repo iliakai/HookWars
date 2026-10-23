@@ -3129,6 +3129,18 @@ MonoBehaviour:
     prefab: {fileID: 9168304350659820887, guid: 5cd14d96f9e6a294ba1018f35fbff9e2, type: 3}
   - kind: 9
     prefab: {fileID: 5758412434036493117, guid: 693073fd634356243a95657b404ba535, type: 3}
+  - kind: 2
+    prefab: {fileID: 6363119456868163134, guid: 548843d049a3778408e80256d93442cf, type: 3}
+  - kind: 11
+    prefab: {fileID: 7769237452761521143, guid: 5beae7f44cb57d34698d3681d59b9f12, type: 3}
+  - kind: 3
+    prefab: {fileID: 2584971621619480732, guid: 1d8e48c8d4aece449ad6c3577d433220, type: 3}
+  - kind: 12
+    prefab: {fileID: 7546453122429435226, guid: bf1642a891126ff408d8e1038cf7d019, type: 3}
+  - kind: 4
+    prefab: {fileID: 991151511180061861, guid: b069d80df1b49e64088ef267b67498c9, type: 3}
+  - kind: 13
+    prefab: {fileID: 3757561872863193987, guid: 41d7f5577f5a1ef4c8ade74092a5dc97, type: 3}
   spriteStates: []
 --- !u!1 &2100000020
 GameObject:

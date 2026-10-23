@@ -235,7 +235,7 @@ public static class EconomyChecks
         PlayerProgression owner = wallet.GetComponent<PlayerProgression>();
         AnimalFarm prefab = AssetDatabase.LoadAssetAtPath<AnimalFarm>(EconomySetup.FarmPath);
         AnimalFarm a = Object.Instantiate(prefab, new Vector3(-12, -8), Quaternion.identity, root.transform);
-        AnimalFarm b = Object.Instantiate(prefab, new Vector3(-14, -8), Quaternion.identity, root.transform);
+        AnimalFarm b = Object.Instantiate(prefab, new Vector3(14, -8), Quaternion.identity, root.transform);
         a.Initialize(owner); b.Initialize(owner);
         Check(a.Advance(14) == null && b.Advance(14) == null, "Independent farm timers wait for interval");
         Animal first = a.Advance(1), second = b.Advance(1);
@@ -303,14 +303,17 @@ public static class EconomyChecks
             bool left = false, right = false;
             for (int i = 0; i < 24; i++)
             {
-                Animal spawned = a.TrySpawn();
+                bool useRight = i % 2 != 0;
+                owner.transform.position = new Vector3(useRight ? -4 : 4, 0);
+                Animal spawned = (useRight ? b : a).TrySpawn();
                 Check(spawned != null && ArenaLayout.IsInsideBank(spawned.transform.position, spawned.transform.position.x > 0, spawned.Radius),
                     "Free dry spawn at bank depth " + depth);
                 left |= spawned.transform.position.x < 0; right |= spawned.transform.position.x > 0;
+                Check((spawned.transform.position.x > 0) == useRight, "Farm bank ignores transported owner at depth " + depth);
                 spawned.transform.SetParent(root.transform);
                 spawned.gameObject.SetActive(false);
             }
-            Check(left && right, "Farms use both banks at depth " + depth);
+            Check(left && right, "Independent left and right farms use their own banks at depth " + depth);
         }
         Set(ArenaLayout.Instance, "appliedDepth", 16); UnityEngine.Random.state = randomBefore;
         owner.AddGold(100000);
@@ -320,6 +323,13 @@ public static class EconomyChecks
         cover.AddComponent<BoxCollider2D>().size = new Vector2(100, 100);
         Check(a.TrySpawn() == null, "Full map returns after bounded spawn attempts");
         cover.SetActive(false);
+        var leftCover = new GameObject("Only left bank occupied"); leftCover.transform.SetParent(root.transform);
+        leftCover.transform.position = new Vector3(-12,0);
+        leftCover.AddComponent<BoxCollider2D>().size = new Vector2(20,20);
+        Check(a.TrySpawn() == null && b.TrySpawn() != null,"Blocked left farm never falls back to free right bank");
+        leftCover.SetActive(false);
+        Animal overdue = a.Advance(10000); if(overdue!=null) { overdue.transform.SetParent(root.transform); overdue.gameObject.SetActive(false); }
+        Check(overdue != null && a.Advance(.01) == null,"Long overdue farm starts a fresh interval without burst queue");
         GameObject fighter = new GameObject("Animal axe attacker"); fighter.transform.SetParent(root.transform);
         fighter.transform.position = new Vector3(-12, 2);
         GameObject aimRoot = new GameObject("Aim"); aimRoot.transform.SetParent(fighter.transform, false);
