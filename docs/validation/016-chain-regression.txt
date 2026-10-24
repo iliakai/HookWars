@@ -1,0 +1,11 @@
+Peak dynamic links=348; link colliders=348; total rigidbodies including pooled/kinematic=361
+Dedicated local PhysX base substeps=16 (adaptive up to 64): actual active steps=5475, mean=1,0471ms, peak=75,1714ms
+Physics.Simulate: samples=8750, mean ns=488055,188571429, peak ns=60334400
+Physics.FetchResults: samples=0, mean ns=0, peak ns=0
+PhysicsCore2D.PhysicsWorld.PostSimulate: samples=1249, mean ns=464,691753402722, peak ns=1900
+PhysicsCore2D.PhysicsWorld.PreSimulate: samples=1249, mean ns=1242,11369095276, peak ns=16800
+PhysicsCore2D.PhysicsWorld.Simulate.StepWorlds: samples=1157, mean ns=107,951598962835, peak ns=400
+PhysicsCore2D.PhysicsWorld.SimulateBatch: samples=8154, mean ns=695,486877606083, peak ns=112500
+PhysicsCore2D.PhysicsWorld.Simulate: samples=0, mean ns=0, peak ns=0
+Physics2D.Simulate: samples=1249, mean ns=6984,46757405925, peak ns=31000
+maximum measured constraint excess across all throws=0,1640618m

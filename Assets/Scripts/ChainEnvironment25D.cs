@@ -5,6 +5,9 @@ using UnityEngine;
 [DefaultExecutionOrder(900)]
 public sealed class ChainEnvironment25D : MonoBehaviour
 {
+    public static ChainEnvironment25D Instance {get;private set;}
+    public IEnumerable<BoxCollider> Obstacles=>proxies.Values;
+    private void Awake()=>Instance=this;
     private readonly Dictionary<Collider2D,BoxCollider> proxies=new Dictionary<Collider2D,BoxCollider>();
     private readonly List<Collider2D> removed=new List<Collider2D>();
     private BoxCollider ground;
@@ -47,5 +50,5 @@ public sealed class ChainEnvironment25D : MonoBehaviour
     }
     private void OnDisable(){if(root!=null)root.SetActive(false);}
     private void OnEnable(){if(root!=null)root.SetActive(true);}
-    private void OnDestroy(){if(root!=null)Destroy(root);}
+    private void OnDestroy(){if(Instance==this)Instance=null;if(root!=null)Destroy(root);}
 }

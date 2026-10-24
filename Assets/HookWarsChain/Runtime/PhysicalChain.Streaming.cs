@@ -17,6 +17,10 @@ namespace HookWars.Chain
         private readonly List<Rigidbody> streamBodies=new List<Rigidbody>();
         private readonly List<ConfigurableJoint> streamJoints=new List<ConfigurableJoint>();
         private readonly List<ConfigurableJoint> payoutJoints=new List<ConfigurableJoint>();
+        private readonly Dictionary<Collider,HashSet<Collider>> endpointIgnores=new Dictionary<Collider,HashSet<Collider>>();
+        private readonly List<Collider> endpointObstacles=new List<Collider>();
+        private readonly List<Collider> releaseContacts=new List<Collider>();
+        public int EndpointCollisionExclusions { get {int count=0;foreach(var pairs in endpointIgnores.Values)count+=pairs.Count;return count;} }
         private Vector3 requestedStart,requestedEnd;
         private Vector3 previousStart,previousEnd;
         private float issuedLength;
@@ -62,7 +66,11 @@ namespace HookWars.Chain
         private void ConfigureDistance(ConfigurableJoint joint)
         {
             joint.autoConfigureConnectedAnchor=false;joint.anchor=joint.connectedAnchor=Vector3.zero;
-            joint.xMotion=joint.yMotion=joint.zMotion=ConfigurableJointMotion.Locked;
+            // Small native joint compliance absorbs changes of the animated hand
+            // and payout topology instead of creating an unlimited correction impulse.
+            joint.xMotion=joint.yMotion=joint.zMotion=ConfigurableJointMotion.Limited;
+            joint.linearLimit=new SoftJointLimit{limit=.0015f};
+            joint.linearLimitSpring=new SoftJointLimitSpring{spring=2500,damper=18};
             joint.angularXMotion=joint.angularYMotion=joint.angularZMotion=ConfigurableJointMotion.Free;
             joint.enableCollision=false;joint.enablePreprocessing=false;
             joint.projectionMode=JointProjectionMode.None;
@@ -78,7 +86,7 @@ namespace HookWars.Chain
                 meshObject.AddComponent<MeshFilter>().sharedMesh=linkMesh;meshObject.AddComponent<MeshRenderer>().sharedMaterial=material;
                 var rb=go.AddComponent<Rigidbody>();rb.mass=massPerLink;rb.solverIterations=solverIterations;rb.solverVelocityIterations=8;
                 rb.interpolation=RigidbodyInterpolation.None;rb.collisionDetectionMode=CollisionDetectionMode.ContinuousSpeculative;
-                rb.maxAngularVelocity=25;rb.maxDepenetrationVelocity=2;rb.linearDamping=.15f;rb.angularDamping=.2f;
+                rb.maxAngularVelocity=25;rb.maxLinearVelocity=35;rb.maxDepenetrationVelocity=2;rb.linearDamping=.15f;rb.angularDamping=.2f;
                 var collider=go.AddComponent<CapsuleCollider>();collider.direction=2;collider.height=.24f*linkScale;collider.radius=.07f*linkScale*visualThickness;collider.contactOffset=.001f;
                 collider.sharedMaterial=streamContact;
                 // A single envelope replaces the original 16-capsule wire collider.
@@ -90,7 +98,8 @@ namespace HookWars.Chain
                 streamPool.Add(rb);streamJoints.Add(joint);
             }
             Rigidbody body=streamPool[index];body.gameObject.SetActive(true);body.position=position;body.rotation=orientation;
-            body.linearVelocity=velocity;body.angularVelocity=Vector3.zero;body.WakeUp();return body;
+            body.linearVelocity=velocity;body.angularVelocity=Vector3.zero;body.WakeUp();
+            ApplyEndpointContacts(body);return body;
         }
         public void PrepareStreamingStep()
         {
@@ -99,6 +108,39 @@ namespace HookWars.Chain
             EnsureStream();
             previousStart=streamStart.position;previousEnd=streamEnd.position;
             previousIssuedLength=currentIssuedLength;
+            endpointObstacles.Clear();
+            var environment=ChainEnvironment25D.Instance;
+            if(environment!=null)foreach(var obstacle in environment.Obstacles)
+                if(obstacle!=null&&obstacle.enabled&&
+                    (Vector3.Distance(obstacle.ClosestPoint(requestedStart),requestedStart)<.15f||Vector3.Distance(obstacle.ClosestPoint(requestedEnd),requestedEnd)<.15f))
+                    endpointObstacles.Add(obstacle);
+            foreach(var body in streamBodies)ApplyEndpointContacts(body);
+        }
+        private void ApplyEndpointContacts(Rigidbody body)
+        {
+            var collider=body.GetComponent<Collider>();
+            if(!endpointIgnores.TryGetValue(collider,out var ignored)){ignored=new HashSet<Collider>();endpointIgnores.Add(collider,ignored);}
+            float zone=Mathf.Max(1f,ChainGeometry.Pitch*linkScale*5);
+            bool atMount=Vector3.Distance(body.position,requestedStart)<zone||Vector3.Distance(body.position,requestedEnd)<zone;
+            // A locked mount inside/against a rock plus depenetration of the same
+            // pinned link is an impossible constraint. Exclude only these local
+            // pairs. Distant links, the ground and other obstacles still collide.
+            if(atMount)foreach(var obstacle in endpointObstacles)
+            {
+                if(!Physics.GetIgnoreCollision(collider,obstacle))Physics.IgnoreCollision(collider,obstacle,true);
+                ignored.Add(obstacle);
+            }
+            releaseContacts.Clear();
+            foreach(var obstacle in ignored)
+            {
+                if(obstacle==null){releaseContacts.Add(obstacle);continue;}
+                bool mountNeeds=atMount&&endpointObstacles.Contains(obstacle);
+                // Do not re-enable contact while a retired exclusion is still
+                // interpenetrating: joints first carry the link clear naturally.
+                if(!mountNeeds&&(!obstacle.enabled||!collider.bounds.Intersects(obstacle.bounds)))
+                {Physics.IgnoreCollision(collider,obstacle,false);releaseContacts.Add(obstacle);}
+            }
+            foreach(var obstacle in releaseContacts)ignored.Remove(obstacle);
         }
         private void UpdateStreaming(float metres,Vector3 start,Vector3 end)
         {
@@ -124,12 +166,12 @@ namespace HookWars.Chain
                 joint.connectedAnchor=i==0?Vector3.zero:Vector3.back*pitch*.5f;
                 streamBodies.Add(rb);
             }
-            // Locked coincident anchors make each physical link an actual rod;
+            // Near-coincident spring anchors keep each link a physical rod;
             // the hand attachment slides through the final, partially issued link.
             if(topologyChanged)
             {
                 handJoint=payoutJoints[streamBodies.Count-1];handJoint.connectedBody=streamStart;
-                handJoint.xMotion=handJoint.yMotion=handJoint.zMotion=ConfigurableJointMotion.Locked;
+                handJoint.xMotion=handJoint.yMotion=handJoint.zMotion=ConfigurableJointMotion.Limited;
             }
             float remainder=metres-(streamBodies.Count-.5f)*pitch;
             handJoint.anchor=Vector3.back*remainder;handJoint.connectedAnchor=Vector3.zero;
@@ -145,7 +187,7 @@ namespace HookWars.Chain
                     float distance=Vector3.Distance(body.position+body.rotation*joint.anchor,joint.connectedBody.position+joint.connectedBody.rotation*joint.connectedAnchor);
                     MaximumAnchorError=Mathf.Max(MaximumAnchorError,distance);
                 }
-            if(handJoint!=null&&handJoint.connectedBody!=null&&handJoint.xMotion==ConfigurableJointMotion.Locked)
+            if(handJoint!=null&&handJoint.connectedBody!=null&&handJoint.xMotion!=ConfigurableJointMotion.Free)
             {
                 var body=handJoint.GetComponent<Rigidbody>();
                 MaximumAnchorError=Mathf.Max(MaximumAnchorError,Vector3.Distance(body.position+body.rotation*handJoint.anchor,handJoint.connectedBody.position));
@@ -163,6 +205,9 @@ namespace HookWars.Chain
         }
         public void StopStreaming()
         {
+            foreach(var pair in endpointIgnores)if(pair.Key!=null)foreach(var obstacle in pair.Value)
+                if(obstacle!=null)Physics.IgnoreCollision(pair.Key,obstacle,false);
+            endpointIgnores.Clear();endpointObstacles.Clear();
             streaming=false;issuedLength=previousIssuedLength=currentIssuedLength=0;LinkCount=0;ActualLength=0;
             foreach(var body in streamPool)if(body!=null)body.gameObject.SetActive(false);
             streamBodies.Clear();

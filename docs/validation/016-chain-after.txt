@@ -1,0 +1,4 @@
+Actual Unity PhysX Play Mode; baseline=False
+Two simultaneous 20m hooks, three casts each. Native .629m rocks and adversarial 1.5m hand-contact proxy.
+Peak bodies=245; peak colliders=245; maximum speed=41,574m/s; maximum joint error=0,314m; maximum distance to nearest owner=8,008m
+Hand/proxy contact observations=7188; physics mean=1,168ms, peak=28,525ms
