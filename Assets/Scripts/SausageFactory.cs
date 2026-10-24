@@ -8,15 +8,15 @@ public class SausageFactory : GameBuilding
     public bool InDeliveryRange(Vector3 position)=>Vector2.Distance(position,transform.position)<=deliveryRadius+.5f;
     [SerializeField, Min(0.1f)] private float capacityKg = 12f;
     [SerializeField, Min(0.1f)] private float secondsPerKg = 2f;
-    [SerializeField, Min(0.1f)] private float productCapacityKg = 12f;
+    [SerializeField, Min(0.1f)] private float productCapacityKg = 18f;
     [SerializeField, Min(0)] private float productPerKg = 0.5f;
     [SerializeField, Min(0)] private float bonesPerKg = 0.5f;
     [SerializeField, Min(0)] private float experiencePerKg = 2f;
     [SerializeField, Min(0.1f)] private float deliveryRadius = 1.5f;
     [SerializeField, Min(1)] private int speedCost = 50, capacityCost = 50, experienceCost = 50;
-    [SerializeField, Range(0.1f, 0.99f)] private float speedMultiplier = 0.8f;
+    [SerializeField, Range(0.1f, 0.99f)] private float speedMultiplier = 0.7f;
     [SerializeField, Min(0.01f)] private float minimumSecondsPerKg = 0.1f;
-    [SerializeField, Min(0.1f)] private float capacityIncrease = 12f;
+    [SerializeField, Min(0.1f)] private float capacityIncrease = 18f;
     [SerializeField, Min(0)] private float experienceIncrease = 1f;
     [Header("Helper economy (temporary balance)")]
     [SerializeField] private ButcherHelper helperPrefab;

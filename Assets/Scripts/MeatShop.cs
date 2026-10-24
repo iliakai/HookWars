@@ -3,9 +3,9 @@ using UnityEngine;
 
 public class MeatShop : GameBuilding
 {
-    [SerializeField, Min(0.001f)] private float saleKgPerSecond = 0.05f;
-    [SerializeField, Min(0)] private float goldPerKg = 10f;
-    [SerializeField, Min(0)] private float saleSpeedIncrease = 0.05f;
+    [SerializeField, Min(0.001f)] private float saleKgPerSecond = 0.1f;
+    [SerializeField, Min(0)] private float goldPerKg = 20f;
+    [SerializeField, Min(0)] private float saleSpeedIncrease = 0.1f;
     [SerializeField, Min(1)] private int level = 1;
     [SerializeField, Min(1)] private int upgradeCost = 50;
     public float SaleKgPerSecond => saleKgPerSecond;

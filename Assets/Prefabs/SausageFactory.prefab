@@ -97,7 +97,7 @@ MonoBehaviour:
   upgradeCostGrowth: 1.5
   capacityKg: 12
   secondsPerKg: 2
-  productCapacityKg: 12
+  productCapacityKg: 18
   productPerKg: 0.5
   bonesPerKg: 0.5
   experiencePerKg: 2
@@ -105,9 +105,9 @@ MonoBehaviour:
   speedCost: 50
   capacityCost: 50
   experienceCost: 50
-  speedMultiplier: 0.8
+  speedMultiplier: 0.7
   minimumSecondsPerKg: 0.1
-  capacityIncrease: 12
+  capacityIncrease: 18
   experienceIncrease: 1
   helperPrefab: {fileID: 7522472835275687091, guid: 3776f4407d207a94ea243c2e98fac681, type: 3}
   helperPrice: 100

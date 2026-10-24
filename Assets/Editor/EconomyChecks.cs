@@ -99,7 +99,7 @@ public static class EconomyChecks
             Check(builder.TryBuildAt(new Vector3(-12.5f, 8.5f)) == null && owner.Gold == beforeGold,
                 "Repeated factory construction does not spend money");
             Check(factory.TryUpgrade(0) && factory.TryUpgrade(1) && factory.TryUpgrade(2) &&
-                Near(factory.CapacityKg, 24) && Near(factory.SecondsPerKg, 1.6) && factory.ExperiencePerKg == 3,
+                Near(factory.CapacityKg, 30) && Near(factory.ProductCapacityKg, 36) && Near(factory.SecondsPerKg, 1.4) && factory.ExperiencePerKg == 3,
                 "Three independent upgrades");
             Carcass future = Object.Instantiate(AssetDatabase.LoadAssetAtPath<Carcass>(CarryingSetup.PrefabPath));
             Check(carrier.TryCollect(future) && carrier.DeliverTo(factory) == 6 && owner.Level == 3 && Near(owner.Experience, 9),
@@ -351,9 +351,9 @@ public static class EconomyChecks
         MeatShop shopA = Object.Instantiate(prefab, root.transform), shopB = Object.Instantiate(prefab, root.transform);
         shopA.Initialize(a); shopB.Initialize(a);
         stockA.AddOutput(1, 0);
-        Check(Near(shopA.Advance(10) + shopB.Advance(10), 1) && Near(a.Gold, 10) && stockA.ProductKg == 0,
+        Check(Near(shopA.Advance(10) + shopB.Advance(10), 1) && Near(a.Gold, 20) && stockA.ProductKg == 0,
             "Two shops cannot sell one stock twice");
-        Check(shopA.Advance(100) == 0 && a.Gold == 10 && a.Experience == 0, "Empty stock grants no income or experience");
+        Check(shopA.Advance(100) == 0 && a.Gold == 20 && a.Experience == 0, "Empty stock grants no income or experience");
         MeatShop comparison = Object.Instantiate(prefab, root.transform); comparison.Initialize(b);
         stockA.AddOutput(2.5, 0); stockB.AddOutput(2.5, 0);
         double gold = a.Gold;
@@ -361,9 +361,9 @@ public static class EconomyChecks
         comparison.Advance(5);
         Check(Near(a.Gold - gold, b.Gold) && Near(stockA.ProductKg, stockB.ProductKg), "Sales preserve fractional results across time steps");
         a.AddGold(100);
-        Check(shopA.TryUpgrade(0) && Near(shopA.SaleKgPerSecond, 0.1) && shopA.GoldPerKg == 10 && shopA.Level == 2,
-            "Local level upgrade doubles throughput and keeps price at 10");
-        Check(shopB.Level == 1 && comparison.Level == 1 && Near(shopB.SaleKgPerSecond, .05) && comparison.GoldPerKg == 10, "Other shop levels and owners remain independent");
+        Check(shopA.TryUpgrade(0) && Near(shopA.SaleKgPerSecond, 0.2) && shopA.GoldPerKg == 20 && shopA.Level == 2,
+            "Local level upgrade doubles throughput and keeps price at 20");
+        Check(shopB.Level == 1 && comparison.Level == 1 && Near(shopB.SaleKgPerSecond, .1) && comparison.GoldPerKg == 20, "Other shop levels and owners remain independent");
 
     }
     public static void Check(bool value, string message)

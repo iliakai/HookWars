@@ -110,7 +110,7 @@ public static class MatchAcceptance25DChecks
             {
                 var stock=owner.GetComponent<OwnerEconomy>();
                 Check(factory.RawKg<1e-6&&stock.Bones==5,"Real-time 10kg processing yields exactly 5 bones");
-                Check(stock.ProductKg>3.8&&stock.ProductKg<4.1&&shop.LastSaleTime>0,"Shop sold about 1kg at 10 gold/kg and retained about 4kg ready stock");
+                Check(stock.ProductKg>2.6&&stock.ProductKg<3.2&&shop.LastSaleTime>0,"Shop sold about 2kg at 20 gold/kg and retained about 3kg ready stock");
                 Check(!presentation.VisualFor(factory).GetComponentsInChildren<ParticleSystem>().Any(p=>p.isPlaying),"Empty factory closes its smoke after processing");
                 Vector3 wallCell=Vector3.zero;builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.WallPath));
                 bool free=false;var bank=ArenaLayout.BankBounds(factory.transform.position.x>0,.5f);
