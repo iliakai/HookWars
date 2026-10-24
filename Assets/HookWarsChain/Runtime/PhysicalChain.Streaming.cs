@@ -37,6 +37,7 @@ namespace HookWars.Chain
         public float MaximumAnchorError {get;private set;}
         public int environmentLayer=25;
         public float visualThickness=1;
+        public float maximumLinkVelocity=35;
         public void SetStreamingEndpoints(Vector3 start,Vector3 end,float metres)
         {
             if(!IsFinite(metres)||metres<0)throw new ArgumentOutOfRangeException(nameof(metres));
@@ -91,7 +92,7 @@ namespace HookWars.Chain
                 meshObject.AddComponent<MeshFilter>().sharedMesh=linkMesh;meshObject.AddComponent<MeshRenderer>().sharedMaterial=material;
                 var rb=go.AddComponent<Rigidbody>();rb.mass=massPerLink;rb.solverIterations=solverIterations;rb.solverVelocityIterations=8;
                 rb.interpolation=RigidbodyInterpolation.None;rb.collisionDetectionMode=CollisionDetectionMode.ContinuousSpeculative;
-                rb.maxAngularVelocity=25;rb.maxLinearVelocity=35;rb.maxDepenetrationVelocity=2;rb.linearDamping=.15f;rb.angularDamping=.2f;
+                rb.maxAngularVelocity=25;rb.maxLinearVelocity=maximumLinkVelocity;rb.maxDepenetrationVelocity=2;rb.linearDamping=.15f;rb.angularDamping=.2f;
                 var collider=go.AddComponent<CapsuleCollider>();collider.direction=2;collider.height=.24f*linkScale;collider.radius=.07f*linkScale*visualThickness;collider.contactOffset=.001f;
                 collider.sharedMaterial=streamContact;
                 // A single envelope replaces the original 16-capsule wire collider.
@@ -103,6 +104,7 @@ namespace HookWars.Chain
                 streamPool.Add(rb);streamJoints.Add(joint);
             }
             Rigidbody body=streamPool[index];body.gameObject.SetActive(true);body.position=position;body.rotation=orientation;
+            body.maxLinearVelocity=maximumLinkVelocity;
             body.linearVelocity=velocity;body.angularVelocity=Vector3.zero;body.WakeUp();
             ApplyEndpointContacts(body);return body;
         }

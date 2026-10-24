@@ -136,7 +136,7 @@ public class PlayerBuilding : MonoBehaviour
             {
                 GameBuilding prefab = buildingPrefabs[i];
                 if (prefab != null && GUI.Button(new Rect(box.x + 10, box.y + 26 + i * 31, 350, 28),
-                    $"{prefab.DisplayName}: {prefab.BuildCost} {(prefab.Kind == BuildingKind.Wall ? "костей" : "золота")}")) SelectBuilding(prefab);
+                    $"{prefab.DisplayName}: {prefab.BuildCost} {(prefab.Kind == BuildingKind.Wall ? "кг костей" : "золота")}")) SelectBuilding(prefab);
             }
         GUI.Label(new Rect(box.x + 10, box.y + 158, 350, 30), status);
         if(IsBuilding&&GUI.Button(new Rect(box.x+10,box.y+124,350,28),"Отменить выбор [Q]"))CloseBuildMode();

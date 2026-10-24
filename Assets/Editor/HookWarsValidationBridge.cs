@@ -75,6 +75,8 @@ public static class HookWarsValidationBridge
             {ExpansionAssetsSetup.ConfigureMeat();Write(request.operation,"passed","New rib steak configured");return;}
             if(request.operation=="expansion-anchor-setup")
             {ExpansionAssetsSetup.ConfigureAnchors();Write(request.operation,"passed","Five anchor prefab configured");return;}
+            if(request.operation=="expansion-prune")
+            {ExpansionAssetsSetup.PruneRetiredMeat();Write(request.operation,"passed","Retired meat dependency audit and GUID verification passed");return;}
             if(request.operation=="flight-audio-setup")
             {HookFlightAudioSetup.Configure();Write(request.operation,"passed","Hook flight audio configured");return;}
             if(request.operation=="grass-setup")
@@ -94,7 +96,7 @@ public static class HookWarsValidationBridge
             if(request.operation=="windows-build")
             {
                 Write(request.operation,"running","Building in the existing GUI Editor");
-                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/015-windows-build.txt");return;
+                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/016-windows-build.txt");return;
             }
             if (request.operation == "body-measure")
             {

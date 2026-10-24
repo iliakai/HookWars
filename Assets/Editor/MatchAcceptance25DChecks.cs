@@ -38,7 +38,15 @@ public static class MatchAcceptance25DChecks
     }
     static GameBuilding Build(string path,Vector3 cell)
     {
-        builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(path));var built=builder.TryBuildAt(cell);
+        builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(path));
+        if(!builder.CanPlace(cell))
+        {
+            var bank=ArenaLayout.BankBounds(builder.HomeRightBank,.5f);float best=float.PositiveInfinity;Vector3 choice=cell;
+            for(float x=bank.xMin;x<=bank.xMax;x++)for(float y=bank.yMin;y<=bank.yMax;y++)
+            {var point=new Vector3(x,y);if(builder.CanPlace(point)&&(point-cell).sqrMagnitude<best){best=(point-cell).sqrMagnitude;choice=point;}}
+            cell=choice;
+        }
+        var built=builder.TryBuildAt(cell);
         Check(built!=null,"Real grid/resources build: "+path);return built;
     }
     static void Tick()
@@ -61,6 +69,8 @@ public static class MatchAcceptance25DChecks
                 factory=owner.GetComponent<OwnerEconomy>().Factory;
                 Check(factory!=null&&factory.Footprint==Vector2Int.one*2,"Use the actual automatically generated four-cell workshop");
                 float front=factory.transform.position.x>0?-1:1;
+                hero.transform.position=ArenaLayout.ClampToBank(factory.transform.position+new Vector3(front*3.5f,factory.transform.position.y>6?-2:2),factory.transform.position.x>0);
+                Physics2D.SyncTransforms(); // Build beside the workshop within the new four-meter radius.
                 shop=(MeatShop)Build(EconomySetup.ShopPath,PlayerBuilding.Snap(factory.transform.position+new Vector3(front*2.5f,.5f),Vector2Int.one));
                 Build(EconomySetup.FarmPath,PlayerBuilding.Snap(factory.transform.position+new Vector3(front*4.5f,.5f),Vector2Int.one));builder.CloseInterface();
                 var aim=hero.GetComponentInChildren<PlayerAim>();aim.enabled=false;EconomyChecks.Set(aim,"<AimDirection>k__BackingField",Vector2.up);

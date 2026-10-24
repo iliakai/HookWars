@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -188,10 +189,11 @@ public static class CarryingChecks
         Carcass first = Item(prefab, new Vector3(-3.5f, 0));
         Carcass second = Item(prefab, new Vector3(-3.5f, 0));
         Invoke(carrier, "Update"); // Actual overlap-based proximity pickup.
-        Check(carrier.Count == 1 && carrier.CurrentMassKg == 6 && carrier.CapacityKg == 10,
-            "Walking pickup: one 6 kg carcass fits in 10 kg");
+        Check(carrier.Count == 2 && carrier.CurrentMassKg == 10 && carrier.CapacityKg == 10,
+            "Walking pickup fills 10kg with one whole carcass and one portion");
         Carcass ground = first.IsStored ? second : first;
-        Check(ground.IsAvailable && !carrier.TryCollect(ground), "Whole second carcass remains on ground");
+        Check(ground.IsAvailable && ground.MassKg == 2 && !carrier.TryCollect(ground), "Two kg remainder stays on ground while carrier is full");
+        Carcass portion = carrier.StoredCargo.Single(c => c != first && c != second); created.Add(portion.gameObject);
         Carcass stored = first.IsStored ? first : second;
         Check(!other.TryCollect(stored), "A stored carcass cannot be taken twice");
 
@@ -201,7 +203,7 @@ public static class CarryingChecks
         Check(carrier.TryUpgradeCapacity(progression) && carrier.CapacityKg == 12 && progression.UpgradePoints == 0,
             "Upgrade 10 to 12 spends exactly one point");
         Check(!carrier.TryUpgradeCapacity(progression) && carrier.CapacityKg == 12, "No free repeated upgrade");
-        Check(carrier.TryCollect(ground) && carrier.CurrentMassKg == 12 && carrier.Count == 2, "Two whole carcasses fit in 12 kg");
+        Check(carrier.TryCollect(ground) && carrier.CurrentMassKg == 12 && carrier.Count == 3, "Expanded capacity takes the final two kg without losing pieces");
         Check(!other.TryUpgradeCapacity(progression), "Cannot spend another hero's point");
 
         hero.transform.position = Vector3.zero; // Die midway across the river.
@@ -210,8 +212,8 @@ public static class CarryingChecks
         Carcass own = hero.GetComponent<HeroCarcassSpawner>().CurrentCarcass;
         created.Add(own.gameObject);
         Check(carrier.Count == 0 && carrier.CurrentMassKg == 0, "Death drops all cargo");
-        Check(own != first && own != second && Mathf.Abs(own.MassKg-110)<.001f, "Level-two death leaves a separate 110kg carcass");
-        Check(first.IsAvailable && second.IsAvailable && OnBank(first.transform.position) && OnBank(second.transform.position),
+        Check(own != first && own != second && Mathf.Abs(own.MassKg-100)<.001f, "Level-two death keeps 100kg because level growth is removed");
+        Check(first.IsAvailable && second.IsAvailable && portion.IsAvailable && OnBank(first.transform.position) && OnBank(second.transform.position),
             "Dropped cargo keeps both identities and is accessible on land");
         health.TakeDamage(1000);
         Check(hero.GetComponent<HeroCarcassSpawner>().CurrentCarcass == own, "Repeated damage creates no duplicate death carcass");
@@ -232,6 +234,7 @@ public static class CarryingChecks
 
         // Isolate remaining physics targets for deterministic direct and return casts.
         first.gameObject.SetActive(false);
+        portion.gameObject.SetActive(false);
         second.gameObject.SetActive(false);
         own.gameObject.SetActive(false);
         rival.transform.position = new Vector3(6, 6);
@@ -307,7 +310,7 @@ public static class CarryingChecks
         if (finalOwn != null) created.Add(finalOwn.gameObject);
         Check(direct.IsAvailable && lethal.IsAvailable && carrier.Count == 0 && OnBank(lethal.transform.position),
             "Second death drops both carried carcasses exactly once");
-        Check(Mathf.Abs(direct.MassKg + lethal.MassKg + finalOwn.MassKg-216)<.001f, "Drop plus own death conserves 6+100+110kg");
+        Check(Mathf.Abs(direct.MassKg + lethal.MassKg + finalOwn.MassKg-206)<.001f, "Drop plus own death conserves 6+100+100kg without level growth");
 
         // Live capture is still a hero, never cargo, and cancellation restores its bank.
         direct.gameObject.SetActive(false);
@@ -384,17 +387,17 @@ public static class CarryingChecks
                     Check(own.IsStored && first.IsStored && second.IsStored && receiver.CurrentMassKg == 112,
                         "Lethal hook collects 100kg hero plus both 6kg carcasses when capacity is sufficient");
                 else
-                    Check(own.IsAvailable && first.IsStored && second.IsAvailable &&
+                    Check(own.IsAvailable && own.MassKg == 90 && first.IsAvailable && second.IsAvailable &&
                         OnBank(own.transform.position) && own.transform.position.x < 0 &&
                         OnBank(second.transform.position) && second.transform.position.x < 0 &&
-                        receiver.CurrentMassKg == 6,
-                        "Overflow cargo lands next to killer instead of remaining on victim bank: " + scenario);
+                        receiver.CurrentMassKg == 10,
+                        "Partial own meat fills receiver; all remainders land next to killer: " + scenario);
             }
             Vector3 firstPosition = first.transform.position;
             Vector3 secondPosition = second.transform.position;
             victim.GetComponent<Health>().Revive();
             Check(first.transform.position == firstPosition && second.transform.position == secondPosition &&
-                first.MassKg + second.MassKg + own.MassKg == 112,
+                first.MassKg + second.MassKg + own.MassKg + (own.IsStored ? 0 : receiver.CurrentMassKg) == 112,
                 "Revival preserves positions and all 112kg from loaded victim: " + scenario);
             killer.SetActive(false);
             victim.SetActive(false);

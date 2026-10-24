@@ -44,6 +44,11 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             var hero=FindAnyObjectByType<PlayerMovement>();var progress=hero.GetComponent<PlayerProgression>();
             Check(ArenaLayout.Depth==depth,"Configured depth "+depth);
             Check(progress.Gold<2&&progress.Experience==0&&progress.Level==1&&hero.GetComponent<OwnerEconomy>().Bones==0&&hero.GetComponent<OwnerEconomy>().ProductKg==0,"Fresh resources and level");
+            Check(hero.GetComponent<Health>().MaximumKg==100&&hero.GetComponent<Health>().RegenerationPercentPerSecond==0,"Fresh session resets kill growth and percent regeneration");
+            Check(FindObjectsByType<HookAnchor>().Length==5,"Five hook eyes generated at selected bank depth");
+            var visibility=FindAnyObjectByType<FogOfWar25D>();
+            visibility.RefreshObservers();
+            Check(!visibility.IsRevealed(FindAnyObjectByType<EnemyChase>().transform.position)&&visibility.GetComponent<Renderer>().sharedMaterial.shader.isSupported,"Enemy bank is hidden and fog shader works in Windows player");
             foreach(var ai in FindObjectsByType<EnemyHookAI>())ai.enabled=false;
             foreach(var ai in FindObjectsByType<EnemyMelee>())ai.enabled=false;
             foreach(var ai in FindObjectsByType<EnemyChase>())ai.enabled=false;
@@ -71,10 +76,35 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             yield return new WaitForSecondsRealtime(.7f);
             Check(FindObjectsByType<ButcherVisual25D>().Length==2&&FindObjectsByType<SpriteRenderer>().Length==0,"Both 3D heroes and zero world sprites");
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"battle_"+depth+".png"));yield return new WaitForEndOfFrame();
-            var hook=hero.GetComponent<HookAbility>();hook.TryThrow(Vector2.up);Check(hero.GetComponent<HeroActionTiming25D>().HookPending,"Accepted animated hook cast");
-            yield return new WaitForSeconds(.65f);
+            var hook=hero.GetComponent<HookAbility>();
+            Vector2 direction=Vector2.zero;
+            for(int i=0;i<16;i++)
+            {
+                float angle=i*Mathf.PI/8;var candidate=new Vector2(Mathf.Sin(angle),Mathf.Cos(angle));
+                Vector3 end=hero.transform.position+(Vector3)(candidate*4);
+                if(Mathf.Abs(end.y)<ArenaLayout.FieldHeight*.5f-.5f&&Mathf.Abs(end.x)<ArenaLayout.OuterEdge-.5f&&WorldCollision.CanMove(hero.transform,end,hook.Width*.5f))
+                {direction=candidate;break;}
+            }
+            Check(direction!=Vector2.zero,"Generated map contains a clear four-meter hook test lane");
+            hook.TryThrow(direction);Check(hero.GetComponent<HeroActionTiming25D>().HookPending,"Accepted animated hook cast");
+            bool issued=false;float until=Time.time+1.2f;
+            while(Time.time<until&&!issued)
+            {
+                yield return new WaitForEndOfFrame();
+                issued=FindObjectsByType<HookChain25D>().Any(c=>c.ActiveLinks>0);
+            }
             Check(hero.GetComponent<HookFlightAudio>()?.PlaybackCount==1,"Flight audio triggered once on actual hook release");
-            Check(FindObjectsByType<HookChain25D>().Any(c=>c.ActiveLinks>0),"Native PhysX chain issued in Windows player");
+            Check(issued,"Native PhysX chain issued in Windows player");
+            if(depth==16)
+            {
+                var victim=FindAnyObjectByType<EnemyChase>().GetComponent<Health>();var eater=hero.GetComponent<Health>();
+                victim.TakeDamage(100000,eater);
+                var meat=victim.GetComponent<HeroCarcassSpawner>().CurrentCarcass;
+                Check(eater.MaximumKg==120&&meat.MassKg==80,"Native hero kill divides weight 20/80");
+                var carrier=hero.GetComponent<CarcassCarrier>();
+                Check(carrier.TryCollect(meat)&&carrier.CurrentMassKg==10&&meat.MassKg==70,"Native partial pickup takes ten kg and leaves seventy");
+                victim.TakeDamage(100000,eater);Check(eater.MaximumKg==120,"Repeated dead-target damage cannot award weight twice");
+            }
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"chain_"+depth+".png"));yield return new WaitForEndOfFrame();
             var pause=MatchPause.Instance;pause.HandleEscape();Check(pause.IsPaused&&Time.timeScale==0,"Pause freezes game");
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"pause_"+depth+".png"));yield return new WaitForEndOfFrame();

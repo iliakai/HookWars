@@ -46,7 +46,9 @@ public static class WorldCollision
             Vector2 away=(Vector2)animal.transform.position-(Vector2)destination;
             float overlap=radius+animal.Radius+.01f-away.magnitude;if(overlap<=0)continue;
             Vector2 push=away.sqrMagnitude>.0001f?away.normalized:travel.normalized;
-            float strength=Mathf.Clamp(hero.CurrentKg/Mathf.Max(1,animal.MassKg),.25f,1);
+            // Even an injured hero clears enough space to keep walking. Mass
+            // contributes a small extra shove instead of reintroducing a blockage.
+            float strength=1+.15f*Mathf.Clamp01(hero.CurrentKg/(Mathf.Max(1,animal.MassKg)+hero.CurrentKg));
             Vector3 target=animal.transform.position+(Vector3)(push*overlap*strength);
             if(animal.TryPush(target))continue;
             Vector2 side=new Vector2(-push.y,push.x);

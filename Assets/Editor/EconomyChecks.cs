@@ -195,6 +195,7 @@ public static class EconomyChecks
             mountain.layer = LayerMask.NameToLayer("Mountains"); mountain.transform.position = new Vector3(-edge - 0.5f, 0);
             mountain.AddComponent<BoxCollider2D>().size = new Vector2(1, 20);
             Vector3 cell = new Vector3(-edge + 0.5f, -6.5f);
+            hero.transform.position = cell + Vector3.up * 2; // New four-meter placement rule.
             builder.SelectBuilding(prefab);
             if (!builder.CanPlace(cell))
                 foreach (Collider2D hit in Physics2D.OverlapBoxAll(cell, Vector2.one * 0.9998f, 0))

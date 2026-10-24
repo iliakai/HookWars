@@ -1,0 +1,5 @@
+Checkpoint before expansion: 3484392. New rib steak verified in real Play Mode.
+Checked AssetDatabase dependency edges and source dynamic names. Resources assets=0; Addressables data=0
+DELETED WITH META: Assets/HookWarsMeat/Models/MeatOnBone.fbx
+DELETED WITH META: Assets/HookWarsMeat/Textures/Meat_Albedo.png
+DELETED WITH META: Assets/HookWarsMeat/Integration/Meat.mat

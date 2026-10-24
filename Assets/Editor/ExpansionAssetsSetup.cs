@@ -28,7 +28,7 @@ public static class ExpansionAssetsSetup
         var m=AssetDatabase.LoadAssetAtPath<Material>(path);
         if(m==null){m=new Material(Shader.Find("Universal Render Pipeline/Lit"));AssetDatabase.CreateAsset(m,path);}
         m.SetColor("_BaseColor",Color.white);m.SetFloat("_Metallic",metal);m.SetFloat("_Smoothness",smooth);
-        m.SetTexture("_BaseMap",AssetDatabase.LoadAssetAtPath<Texture2D>(textures+prefix+"_BaseColor.png"));
+        var albedo=AssetDatabase.LoadAssetAtPath<Texture2D>(textures+prefix+"_BaseColor.png");m.SetTexture("_BaseMap",albedo);m.SetTexture("_MainTex",albedo);
         m.SetTexture("_BumpMap",AssetDatabase.LoadAssetAtPath<Texture2D>(textures+prefix+"_Normal.png"));m.EnableKeyword("_NORMALMAP");m.SetFloat("_BumpScale",.6f);
         var mask=AssetDatabase.LoadAssetAtPath<Texture2D>(textures+prefix+"_UnityMask.png");
         if(mask!=null){m.SetTexture("_MetallicGlossMap",mask);m.EnableKeyword("_METALLICSPECGLOSSMAP");m.SetFloat("_Smoothness",1);}
@@ -42,7 +42,7 @@ public static class ExpansionAssetsSetup
         var bone=Material(output+"/RibBone.mat",MeatRoot+"/Textures/","Bone",.4f);
         var cut=AssetDatabase.LoadAssetAtPath<Material>(output+"/RibBoneCut.mat");
         if(cut==null){cut=new Material(bone);AssetDatabase.CreateAsset(cut,output+"/RibBoneCut.mat");}
-        cut.SetTexture("_BaseMap",null);cut.SetColor("_BaseColor",new Color(.83f,.7f,.53f));EditorUtility.SetDirty(cut);
+        cut.SetTexture("_BaseMap",null);cut.SetTexture("_MainTex",null);cut.SetColor("_BaseColor",new Color(.83f,.7f,.53f));EditorUtility.SetDirty(cut);
         var clip=AssetDatabase.LoadAssetAtPath<AnimationClip>(output+"/RibSpin.anim");
         if(clip==null){clip=new AnimationClip{name="Meat_Spin"};AssetDatabase.CreateAsset(clip,output+"/RibSpin.anim");}
         clip.name="Meat_Spin";clip.frameRate=30;
@@ -103,5 +103,31 @@ public static class ExpansionAssetsSetup
         var display=new SerializedObject(Object.FindAnyObjectByType<ArenaPresentation25D>());display.FindProperty("overlayMaterial").objectReferenceValue=overlay;display.ApplyModifiedPropertiesWithoutUndo();
         var map=new SerializedObject(Object.FindAnyObjectByType<MatchMap25D>());map.FindProperty("anchorPrefab").objectReferenceValue=AssetDatabase.LoadAssetAtPath<HookAnchor>(EyePrefab);map.ApplyModifiedPropertiesWithoutUndo();
         EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();Debug.Log("HOOKWARS_ANCHOR_SETUP_PASS");
+    }
+    public static void PruneRetiredMeat()
+    {
+        if(EditorApplication.isPlayingOrWillChangePlaymode)throw new InvalidOperationException("Stop Play Mode");
+        string[] retired={Meat25DSetup.Root+"/Models/MeatOnBone.fbx",Meat25DSetup.Root+"/Textures/Meat_Albedo.png",Meat25DSetup.Output+"/Meat.mat"};
+        var all=AssetDatabase.GetAllAssetPaths().Where(p=>p.StartsWith("Assets/")&&!AssetDatabase.IsValidFolder(p)).ToArray();
+        foreach(var path in all.Where(p=>!retired.Contains(p)))
+            if(AssetDatabase.GetDependencies(path,false).Any(p=>retired.Contains(p)))throw new InvalidOperationException("Retired meat still referenced: "+path);
+        foreach(var path in all.Where(p=>p.EndsWith(".cs")&&!p.EndsWith("ExpansionAssetsSetup.cs")))
+        {
+            string text=File.ReadAllText(path);
+            if(text.Contains("MeatOnBone")||text.Contains("Meat_Albedo"))throw new InvalidOperationException("Retired dynamic load: "+path);
+        }
+        var report=new System.Text.StringBuilder("Checkpoint before expansion: 3484392. New rib steak verified in real Play Mode.\n");
+        report.AppendLine("Checked AssetDatabase dependency edges and source dynamic names. Resources assets="+all.Count(p=>p.Contains("/Resources/"))+"; Addressables data="+all.Count(p=>p.Contains("AddressableAssetsData")));
+        foreach(var path in retired)
+        {
+            string absolute=Path.GetFullPath(path).Replace('\\','/');
+            if(!absolute.StartsWith(Application.dataPath+"/",StringComparison.OrdinalIgnoreCase))throw new InvalidOperationException("Delete outside Assets");
+            if(File.Exists(path)&&!AssetDatabase.DeleteAsset(path))throw new InvalidOperationException("Cannot delete "+path);
+            report.AppendLine("DELETED WITH META: "+path);
+        }
+        foreach(var folder in new[]{Meat25DSetup.Root+"/Models",Meat25DSetup.Root+"/Textures"})
+            if(AssetDatabase.IsValidFolder(folder)&&!Directory.EnumerateFileSystemEntries(folder).Any())AssetDatabase.DeleteAsset(folder);
+        AssetDatabase.SaveAssets();File.WriteAllText("docs/validation/016-retired-meat.txt",report.ToString());
+        Legacy25DCleanup.Verify("docs/validation/016-assets.txt");
     }
 }

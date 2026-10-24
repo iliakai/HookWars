@@ -42,6 +42,7 @@ public sealed class HookChain25D : MonoBehaviour
             float chord=Vector3.Distance(previous,next);
             float length=chord*(1+slackRatio)+Mathf.Min(.045f,chord*.1f);
             var chain=spans[i];chain.linkScale=linkScale;chain.visualThickness=thickness;
+            chain.maximumLinkVelocity=Mathf.Max(35,owner.Speed*3,(owner.GetComponent<PlayerMovement>()?.MoveSpeed??0)*3);
             chain.SetStreamingEndpoints(previous,next,length);
             IssuedPhysicalLength+=length;ActiveLinks+=chain.ActiveBodyCount;
             LogicalLength+=Vector3.Distance(owner.GetChainPoint(i),owner.GetChainPoint(i+1));

@@ -188,6 +188,9 @@ public static class GameplayExpansionChecks
             Vector3 allowed=WorldCollision.Slide(movement.transform,desired,ArenaLayout.HeroRadius);
             Check(Vector3.Distance(allowed,desired)<.001f&&Vector3.Distance(cowBefore,cow.transform.position)>.1f,"Hero mass pushes cow instead of being blocked");
             Check(!cow.TryPush(new Vector3(0,0)),"Pushed animal cannot enter river");Object.DestroyImmediate(cow.gameObject);
+            player.TakeDamage(player.CurrentKg-1);
+            var weakCow=Object.Instantiate(AssetDatabase.LoadAssetAtPath<Animal>("Assets/Prefabs/cow.prefab"),movement.transform.position+Vector3.right*.95f,Quaternion.identity);weakCow.enabled=false;
+            Check(Vector3.Distance(WorldCollision.Slide(movement.transform,desired,ArenaLayout.HeroRadius),desired)<.001f,"Even injured hero is not stopped by a free-standing animal");Object.DestroyImmediate(weakCow.gameObject);
             steakSmall=Meat(4);steakSmall.SetAnimalSpecies(Animal.Species.Sheep);
             steakLarge=Meat(80);steakLarge.Initialize(80,player.GetComponent<HookVictim>());steakLarge.transform.position+=Vector3.right;
             bool lane=false;
