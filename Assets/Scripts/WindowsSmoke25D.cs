@@ -115,6 +115,18 @@ public sealed class WindowsSmoke25D : MonoBehaviour
                 var carrier=hero.GetComponent<CarcassCarrier>();
                 Check(carrier.TryCollect(meat)&&carrier.CurrentMassKg==10&&meat.MassKg==70,"Native partial pickup takes ten kg and leaves seventy");
                 victim.TakeDamage(100000,eater);Check(eater.MaximumKg==120,"Repeated dead-target damage cannot award weight twice");
+                var smallObject = new GameObject("Explicit small lifetime fixture"); smallObject.AddComponent<BoxCollider2D>();
+                var smallMeat = smallObject.AddComponent<Carcass>(); smallMeat.Initialize(6);
+                var largeObject = new GameObject("Explicit large lifetime fixture"); largeObject.AddComponent<BoxCollider2D>();
+                var largeMeat = largeObject.AddComponent<Carcass>(); largeMeat.Initialize(80, eater.GetComponent<HookVictim>());
+                Check(smallMeat.GroundLifetimeSeconds==60 && largeMeat.GroundLifetimeSeconds==300,
+                    "Windows small and large meat use sixty and three hundred game seconds");
+                smallMeat.AdvanceGroundLifetime(59); largeMeat.AdvanceGroundLifetime(299);
+                Check(smallMeat.IsAvailable && largeMeat.IsAvailable, "Windows meat survives before each expiry deadline");
+                smallMeat.AdvanceGroundLifetime(1); largeMeat.AdvanceGroundLifetime(1);
+                Check(!smallMeat.IsAvailable && !largeMeat.IsAvailable, "Windows expiry immediately prevents pickup");
+                yield return null;
+                Check(smallMeat==null && largeMeat==null, "Windows player destroys both expired meat objects");
             }
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"chain_"+depth+".png"));yield return new WaitForEndOfFrame();
             var pause=MatchPause.Instance;pause.HandleEscape();Check(pause.IsPaused&&Time.timeScale==0,"Pause freezes game");

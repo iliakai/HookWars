@@ -1,0 +1,2 @@
+PASS: 18 Unity Play Mode assertions
+60/300 game seconds on ground; pause; carrying/drop; direct/lethal capture; split identity/age; same-frame pickup rejection; native Update expiry and world visual cleanup. Boundary setup advances elapsed time directly; final destruction uses actual game frames.

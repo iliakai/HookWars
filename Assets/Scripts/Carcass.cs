@@ -6,6 +6,9 @@ using UnityEngine;
 public class Carcass : MonoBehaviour
 {
     [SerializeField, Min(0.01f)] private float massKg = 6f;
+    [SerializeField, Min(1f)] private float smallGroundLifetimeSeconds = 60f;
+    [SerializeField, Min(1f)] private float largeGroundLifetimeSeconds = 300f;
+    private double groundAgeSeconds;
     private HookVictim sourceVictim;
     private Health sourceHealth;
     private CarcassCarrier carrier;
@@ -14,6 +17,8 @@ public class Carcass : MonoBehaviour
     public float OriginalMassKg { get; private set; }
     public float VisualMassFraction => OriginalMassKg > 0 ? Mathf.Clamp01(massKg / OriginalMassKg) : 1;
     public bool IsHeroCarcass { get; private set; }
+    public float GroundLifetimeSeconds => IsHeroCarcass ? largeGroundLifetimeSeconds : smallGroundLifetimeSeconds;
+    public double RemainingGroundLifetimeSeconds => System.Math.Max(0, GroundLifetimeSeconds - groundAgeSeconds);
     public Animal.Species? AnimalSpecies { get; private set; }
     public void SetAnimalSpecies(Animal.Species species) => AnimalSpecies = species;
     public bool IsStored => carrier != null;
@@ -27,6 +32,7 @@ public class Carcass : MonoBehaviour
             throw new System.ArgumentOutOfRangeException(nameof(mass));
         massKg = mass;
         OriginalMassKg = mass;
+        groundAgeSeconds = 0;
         IsHeroCarcass = source != null && source.GetComponent<Health>() != null;
         FollowHero(source);
     }
@@ -40,6 +46,7 @@ public class Carcass : MonoBehaviour
         portion.IsHeroCarcass = IsHeroCarcass;
         portion.AnimalSpecies = AnimalSpecies;
         portion.OriginalMassKg = OriginalMassKg > 0 ? OriginalMassKg : massKg;
+        portion.groundAgeSeconds = groundAgeSeconds;
         massKg -= amount;
         return portion;
     }
@@ -52,6 +59,20 @@ public class Carcass : MonoBehaviour
     }
 
     internal bool IsLinkedTo(HookVictim source) => sourceVictim == source;
+
+    private void Update() => AdvanceGroundLifetime(Time.deltaTime);
+
+    internal void AdvanceGroundLifetime(double seconds)
+    {
+        // Only unclaimed ground meat ages. Carrying/capture pauses its existing age.
+        if (!IsAvailable || MatchPause.BlocksGameplay || Time.timeScale <= 0 ||
+            !double.IsFinite(seconds) || seconds <= 0) return;
+        groundAgeSeconds += seconds;
+        if (groundAgeSeconds < GroundLifetimeSeconds) return;
+        // Block same-frame pickup before Unity performs deferred destruction.
+        gameObject.SetActive(false);
+        Destroy(gameObject);
+    }
 
     private void LateUpdate()
     {

@@ -1,0 +1,72 @@
+Development Windows player acceptance
+Persistent data directory: C:/Users/iliak.ILIAPC/AppData/LocalLow/DefaultCompany/HookWars
+PASS: First/return scene MainMenu
+PASS: Menu has no match logic/chain bodies
+PASS: Invalid input rejected
+PASS: Single accepted match load
+PASS: Configured depth 4
+PASS: Fresh resources and level
+PASS: Fresh session resets kill growth and percent regeneration
+PASS: Five hook eyes generated at selected bank depth
+PASS: Enemy bank is hidden and fog shader works in Windows player
+PASS: Both 3D heroes and zero world sprites
+PASS: Generated map contains a clear four-meter hook test lane
+PASS: Accepted animated hook cast
+PASS: Flight audio triggered once on actual hook release
+PASS: Native PhysX chain issued in Windows player
+PASS: Pause freezes game
+PASS: Return is accepted only once
+PASS: No residual physics scene or time scale
+PASS: First/return scene MainMenu
+PASS: Menu has no match logic/chain bodies
+PASS: Invalid input rejected
+PASS: Single accepted match load
+PASS: Configured depth 16
+PASS: Fresh resources and level
+PASS: Fresh session resets kill growth and percent regeneration
+PASS: Five hook eyes generated at selected bank depth
+PASS: Enemy bank is hidden and fog shader works in Windows player
+PASS: Windows factory starts with 12kg raw, 18kg product and 2 seconds per kg
+PASS: Windows factory accepts one kg raw meat
+PASS: Windows one kg raw yields half product and half bones
+PASS: Windows full finished storage blocks raw delivery
+PASS: Updated Windows player displays total income 4 with level one shop
+PASS: Windows shop level upgrade accepted
+PASS: Updated Windows player displays total income 6 with level two shop
+PASS: Windows first processing upgrade reduces time to 1.4 seconds per kg
+PASS: Windows second processing upgrade reduces time to .98 seconds per kg
+PASS: Windows first capacity upgrade adds 18kg to both warehouses
+PASS: Windows second capacity upgrade adds another 18kg to both warehouses
+PASS: Both 3D heroes and zero world sprites
+PASS: Generated map contains a clear four-meter hook test lane
+PASS: Accepted animated hook cast
+PASS: Flight audio triggered once on actual hook release
+PASS: Native PhysX chain issued in Windows player
+PASS: Native hero kill divides weight 20/80
+PASS: Native partial pickup takes ten kg and leaves seventy
+PASS: Repeated dead-target damage cannot award weight twice
+PASS: Windows small and large meat use sixty and three hundred game seconds
+PASS: Windows meat survives before each expiry deadline
+PASS: Windows expiry immediately prevents pickup
+PASS: Windows player destroys both expired meat objects
+PASS: Pause freezes game
+PASS: Return is accepted only once
+PASS: No residual physics scene or time scale
+PASS: First/return scene MainMenu
+PASS: Menu has no match logic/chain bodies
+PASS: Invalid input rejected
+PASS: Single accepted match load
+PASS: Configured depth 20
+PASS: Fresh resources and level
+PASS: Fresh session resets kill growth and percent regeneration
+PASS: Five hook eyes generated at selected bank depth
+PASS: Enemy bank is hidden and fog shader works in Windows player
+PASS: Both 3D heroes and zero world sprites
+PASS: Generated map contains a clear four-meter hook test lane
+PASS: Accepted animated hook cast
+PASS: Flight audio triggered once on actual hook release
+PASS: Native PhysX chain issued in Windows player
+PASS: Pause freezes game
+PASS: Return is accepted only once
+PASS: No residual physics scene or time scale
+HOOKWARS_WINDOWS_SMOKE_PASS: 69 assertions

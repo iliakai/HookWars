@@ -19,6 +19,9 @@ public static class GameplayExpansionChecks
     static HookAnchor travelAnchor;
     static Vector3 travelStart, anchorStart;
     static Carcass steakSmall, steakLarge;
+    static Carcass lifetimeSmall, lifetimeLarge, lifetimePortion;
+    static GameObject lifetimeRoot;
+    static Transform lifetimeSmallView, lifetimeLargeView;
     static Quaternion meatRotation;
     static int worldDepthIndex;
     static bool worldRotationCaptured;
@@ -97,6 +100,7 @@ public static class GameplayExpansionChecks
             if(!EditorApplication.isPlaying||Time.time<due)return;
             if(stage=="world"){WorldTick();return;}
             if(stage=="fog"){FogTick();return;}
+            if(stage=="lifetime"){LifetimeTick();return;}
             if(phase==1)
             {
                 foreach(var a in Object.FindObjectsByType<EnemyHookAI>())a.enabled=false;
@@ -126,6 +130,72 @@ public static class GameplayExpansionChecks
     {
                 File.WriteAllText("docs/validation/016-"+stage+".txt",$"PASS: {count} actual Unity Play Mode assertions; stage={stage}\nSee GameplayExpansionChecks for exact cases. Actual Game View snapshot saved.\n");
                 SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_"+stage.ToUpperInvariant()+"_PASS: "+count);Stop();
+    }
+    static void Age(Carcass meat, double seconds) => EconomyChecks.Invoke(meat, "AdvanceGroundLifetime", seconds);
+    static void LifetimeTick()
+    {
+        if (phase == 1)
+        {
+            DisableAI();
+            lifetimeRoot = new GameObject("Ground meat lifetime fixtures");
+            var source = new GameObject("Hero meat source"); source.transform.SetParent(lifetimeRoot.transform);
+            source.AddComponent<Health>(); var victim = source.AddComponent<HookVictim>();
+            var holder = new GameObject("Lifetime carrier"); holder.transform.SetParent(lifetimeRoot.transform);
+            holder.transform.position = new Vector3(-6, -8);
+            var carrier = holder.AddComponent<CarcassCarrier>(); carrier.enabled = false;
+            var hook = Object.FindAnyObjectByType<PlayerMovement>().GetComponent<HookAbility>();
+            lifetimeSmall = Meat(6); lifetimeLarge = Meat(80); lifetimeLarge.Initialize(80, victim);
+            Check(lifetimeSmall.GroundLifetimeSeconds == 60 && lifetimeLarge.GroundLifetimeSeconds == 300,
+                "Animal meat lives sixty ground seconds, hero meat three hundred");
+            Age(lifetimeSmall, 59); Check(Near(lifetimeSmall.RemainingGroundLifetimeSeconds, 1), "Small meat survives before one minute");
+            Age(lifetimeSmall, 0); Age(lifetimeSmall, -1); Age(lifetimeSmall, double.NaN); Age(lifetimeSmall, double.PositiveInfinity);
+            Check(Near(lifetimeSmall.RemainingGroundLifetimeSeconds, 1), "Invalid elapsed time cannot alter meat lifetime");
+            MatchPause.Instance.SetPaused(true); Age(lifetimeSmall, 600);
+            Check(Near(lifetimeSmall.RemainingGroundLifetimeSeconds, 1), "Game pause stops ground expiry");
+            MatchPause.Instance.SetPaused(false);
+            Check(lifetimeSmall.GetComponent<HookVictim>().TryCapture(hook), "Ground meat reserved by a real hook");
+            Age(lifetimeSmall, 600);
+            Check(Near(lifetimeSmall.RemainingGroundLifetimeSeconds, 1), "Direct capture protects meat during pulling");
+            lifetimeSmall.GetComponent<HookVictim>().Release(hook);
+            Check(carrier.TryCollect(lifetimeSmall), "Near-expiry small meat can be carried");
+            Age(lifetimeSmall, 600);
+            Check(lifetimeSmall.IsStored && Near(lifetimeSmall.RemainingGroundLifetimeSeconds, 1), "Stored meat does not expire or lose mass");
+            carrier.DropAll();
+            Check(lifetimeSmall.IsAvailable && Near(lifetimeSmall.RemainingGroundLifetimeSeconds, 1), "Dropping resumes previous age without refreshing it");
+            Age(lifetimeLarge, 100);
+            Check(carrier.TryCollect(lifetimeLarge) && lifetimeLarge.MassKg == 70, "Partial pickup leaves seventy kg of hero meat");
+            lifetimePortion = carrier.StoredCargo[0];
+            Check(lifetimePortion.IsHeroCarcass && lifetimePortion.GroundLifetimeSeconds == 300 &&
+                Near(lifetimePortion.RemainingGroundLifetimeSeconds, 200) && Near(lifetimeLarge.RemainingGroundLifetimeSeconds, 200),
+                "Both split pieces preserve hero type and original ground age");
+            carrier.DropAll();
+            var linked = Meat(80); linked.Initialize(80, victim);
+            source.GetComponent<Health>().TakeDamage(100000); victim.TryCapture(hook); Age(linked, 600);
+            Check(linked.IsReserved && Near(linked.RemainingGroundLifetimeSeconds, 300), "Lethal hero capture also protects its linked carcass");
+            victim.Release(hook); Object.Destroy(linked.gameObject);
+            var expired = Meat(4); Age(expired, 60);
+            Check(!expired.IsAvailable && !carrier.TryCollect(expired), "Exactly sixty seconds blocks same-frame pickup before destruction");
+            Age(lifetimeLarge, 199);
+            Check(lifetimeSmall.IsAvailable && lifetimeLarge.IsAvailable, "Both types survive immediately before their own deadlines");
+            due = Time.time + .05f; phase = 2; return;
+        }
+        if (phase == 2)
+        {
+            var display = Object.FindAnyObjectByType<ArenaPresentation25D>();
+            lifetimeSmallView = display.VisualFor(lifetimeSmall); lifetimeLargeView = display.VisualFor(lifetimeLarge);
+            Check(lifetimeSmallView != null && lifetimeLargeView != null, "Ground meat has real world visuals before expiry");
+            due = Time.time + 1.3f; phase = 3; return;
+        }
+        if (phase == 3)
+        {
+            Check(lifetimeSmall == null && lifetimeLarge == null, "Native Update destroys both types after the remaining game time elapses");
+            Check(lifetimeSmallView == null && lifetimeLargeView == null, "World presentation removes expired meat visuals too");
+            Check(lifetimePortion != null && lifetimePortion.IsAvailable && lifetimePortion.MassKg == 10,
+                "A separately dropped younger portion remains collectible");
+            Object.Destroy(lifetimePortion.gameObject); Object.Destroy(lifetimeRoot);
+            File.WriteAllText("docs/validation/019-meat-lifetime.txt", $"PASS: {count} Unity Play Mode assertions\n60/300 game seconds on ground; pause; carrying/drop; direct/lethal capture; split identity/age; same-frame pickup rejection; native Update expiry and world visual cleanup. Boundary setup advances elapsed time directly; final destruction uses actual game frames.\n");
+            SessionState.SetBool(Key + ".Passed", true); Debug.Log("HOOKWARS_MEAT_LIFETIME_PASS: " + count); Stop();
+        }
     }
     static void Stop(){if(stage=="world")MatchConfiguration.RememberDepth(SessionState.GetInt(Key+".SavedDepth",16));phase=99;EditorApplication.isPlaying=false;}
     static void Building()

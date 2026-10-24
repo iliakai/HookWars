@@ -95,3 +95,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Carcass
   massKg: 6
+  smallGroundLifetimeSeconds: 60
+  largeGroundLifetimeSeconds: 300
