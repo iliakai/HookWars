@@ -15,15 +15,24 @@ public static class GameplayExpansionChecks
     static float due, started, initial;
     static Health player;
     static string stage;
+    static HookAbility travelHook;
+    static HookAnchor travelAnchor;
+    static Vector3 travelStart, anchorStart;
+    static Carcass steakSmall, steakLarge;
+    static Quaternion meatRotation;
+    static int worldDepthIndex;
+    static bool worldRotationCaptured;
     static GameplayExpansionChecks() { if (SessionState.GetBool(Key, false)) Subscribe(); }
     public static void Run(string name)
     {
         ValidationPlayScope.CurrentScene(); EditorSceneManager.OpenScene(Arena25DSetup.ScenePath);
+        SessionState.SetInt(Key+".SavedDepth",MatchConfiguration.LastDepth);
         SessionState.SetString(Key + ".Stage", name); SessionState.SetBool(Key, true); SessionState.SetBool(Key + ".Passed", false); Subscribe();
     }
     static void Subscribe()
     {
-        stage = SessionState.GetString(Key + ".Stage", "mass"); phase = count = 0; due = 0;
+        stage = SessionState.GetString(Key + ".Stage", "mass"); phase = count = worldDepthIndex = 0; due = 0;
+        worldRotationCaptured=false;
         ready = EditorApplication.timeSinceStartup + 3; deadline = ready + 90;
         EditorApplication.update -= Tick; EditorApplication.update += Tick;
     }
@@ -83,6 +92,7 @@ public static class GameplayExpansionChecks
             if(EditorApplication.timeSinceStartup>deadline)throw new TimeoutException("Expansion checks timed out");
             if(phase==0){EditorApplication.isPlaying=true;phase=1;return;}
             if(!EditorApplication.isPlaying||Time.time<due)return;
+            if(stage=="world"){WorldTick();return;}
             if(phase==1)
             {
                 foreach(var a in Object.FindObjectsByType<EnemyHookAI>())a.enabled=false;
@@ -113,7 +123,7 @@ public static class GameplayExpansionChecks
                 File.WriteAllText("docs/validation/016-"+stage+".txt",$"PASS: {count} actual Unity Play Mode assertions; stage={stage}\nSee GameplayExpansionChecks for exact cases. Actual Game View snapshot saved.\n");
                 SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_"+stage.ToUpperInvariant()+"_PASS: "+count);Stop();
     }
-    static void Stop(){phase=99;EditorApplication.isPlaying=false;}
+    static void Stop(){if(stage=="world")MatchConfiguration.RememberDepth(SessionState.GetInt(Key+".SavedDepth",16));phase=99;EditorApplication.isPlaying=false;}
     static void Building()
     {
         var builder=Object.FindAnyObjectByType<PlayerBuilding>();var owner=builder.GetComponent<PlayerProgression>();owner.AddGold(1000);
@@ -142,5 +152,91 @@ public static class GameplayExpansionChecks
         MatchPause.Instance.SetPaused(false);
         due=Time.time+2;
         EditorWindow.GetWindow(typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView")).Show();ScreenCapture.CaptureScreenshot("docs/validation/016-build.png");
+    }
+    static void DisableAI()
+    {
+        foreach(var a in Object.FindObjectsByType<EnemyHookAI>())a.enabled=false;
+        foreach(var a in Object.FindObjectsByType<EnemyChase>())a.enabled=false;
+        foreach(var a in Object.FindObjectsByType<EnemyMelee>())a.enabled=false;
+        foreach(var c in Object.FindObjectsByType<CarcassCarrier>())c.enabled=false;
+    }
+    static void AnchorCount()
+    {
+        var anchors=Object.FindObjectsByType<HookAnchor>();
+        Check(anchors.Length==5,"Exactly five ground anchors at depth "+ArenaLayout.Depth);
+        Check(anchors.All(a=>ArenaLayout.IsInsideBank(a.transform.position,a.transform.position.x>0,.28f)&&a.GetComponent<Health>()==null&&a.GetComponent<GameBuilding>()==null),"Anchors fit banks and cannot be damaged or demolished");
+        var display=Object.FindAnyObjectByType<ArenaPresentation25D>();
+        foreach(var a in anchors)
+        {
+            var view=display.VisualFor(a);Check(view!=null,"Anchor has imported 3D visual");
+            var attach=view.GetComponentsInChildren<Transform>().Single(t=>t.name.StartsWith("Hook_Attach",StringComparison.Ordinal));
+            Check(attach.position.y>view.position.y+.25f,"Imported attachment is upright above ground");
+        }
+    }
+    static void WorldTick()
+    {
+        if(phase==1)
+        {
+            DisableAI();AnchorCount();
+            var movement=Object.FindAnyObjectByType<PlayerMovement>();movement.enabled=false;player=movement.GetComponent<Health>();
+            var cow=Object.Instantiate(AssetDatabase.LoadAssetAtPath<Animal>("Assets/Prefabs/cow.prefab"),movement.transform.position+Vector3.right*.95f,Quaternion.identity);cow.enabled=false;
+            var cowBefore=cow.transform.position;Vector3 desired=movement.transform.position+Vector3.right*.3f;
+            Vector3 allowed=WorldCollision.Slide(movement.transform,desired,ArenaLayout.HeroRadius);
+            Check(Vector3.Distance(allowed,desired)<.001f&&Vector3.Distance(cowBefore,cow.transform.position)>.1f,"Hero mass pushes cow instead of being blocked");
+            Check(!cow.TryPush(new Vector3(0,0)),"Pushed animal cannot enter river");Object.DestroyImmediate(cow.gameObject);
+            steakSmall=Meat(4);steakSmall.SetAnimalSpecies(Animal.Species.Sheep);
+            steakLarge=Meat(80);steakLarge.Initialize(80,player.GetComponent<HookVictim>());steakLarge.transform.position+=Vector3.right;
+            bool lane=false;
+            foreach(var a in Object.FindObjectsByType<HookAnchor>())
+            {
+                for(int i=0;i<8&&!lane;i++)
+                {
+                    Vector3 direction=new Vector3(Mathf.Cos(i*Mathf.PI/4),Mathf.Sin(i*Mathf.PI/4));var p=a.transform.position+direction*3;
+                    if(!ArenaLayout.IsInsideBank(p,a.transform.position.x>0,ArenaLayout.HeroRadius))continue;
+                    bool clear=true;for(float d=1.1f;d<=3.01f;d+=.2f)clear&=WorldCollision.FreeCircle(a.transform.position+direction*d,ArenaLayout.HeroRadius);
+                    if(!clear)continue;travelAnchor=a;anchorStart=a.transform.position;travelStart=p;lane=true;
+                }
+                if(lane)break;
+            }
+            Check(lane,"A free approach lane exists for real anchor hit");
+            movement.transform.position=travelStart;Physics2D.SyncTransforms();travelHook=movement.GetComponent<HookAbility>();
+            travelHook.TryThrow((Vector2)(anchorStart-travelStart));Check(travelHook.IsPreparingThrow,"Anchor throw uses existing animated windup");
+            phase=2;due=0;started=Time.time;return;
+        }
+        if(phase==2)
+        {
+            var view=Object.FindAnyObjectByType<ArenaPresentation25D>().VisualFor(steakLarge);
+            if(view!=null&&!worldRotationCaptured){meatRotation=view.Find("Model/Spin").localRotation;worldRotationCaptured=true;}
+            if(!travelHook.IsSelfPulling&&(travelHook.ActiveHook!=null||travelHook.IsPreparingThrow)&&Time.time-started<3)return;
+            Check(travelHook.IsSelfPulling||Vector3.Distance(travelStart,player.transform.position)>1,"Hook collision with eye starts owner pull");
+            phase=3;return;
+        }
+        if(phase==3)
+        {
+            if(travelHook.ActiveHook!=null&&Time.time-started<4)return;
+            Check(travelHook.ActiveHook==null&&!player.GetComponent<HookVictim>().IsCaught,"Self-pull ends and releases movement lock");
+            Check(Vector3.Distance(travelStart,player.transform.position)>1.8f&&Vector3.Distance(anchorStart,player.transform.position)<1.2f,"Owner approaches stationary anchor without teleporting it");
+            Check(travelAnchor.transform.position==anchorStart,"Anchor itself never moves");
+            due=Time.time+1;phase=4;return;
+        }
+        if(phase==4)
+        {
+            var display=Object.FindAnyObjectByType<ArenaPresentation25D>();var small=display.VisualFor(steakSmall);var large=display.VisualFor(steakLarge);
+            Check(small.GetComponentsInChildren<MeshFilter>().Length==2&&large.GetComponentsInChildren<Animator>().Length==1,"New rib steak uses two static meshes and one safe spin Animator");
+            Check(Meat25DChecks.SafeVisual(large),"New meat has no combat scripts, root motion or events");
+            Check(Quaternion.Angle(meatRotation,large.Find("Model/Spin").localRotation)>20,"New rib steak actually rotates in Play Mode");
+            Butcher25DChecks.CaptureAt(large.position+Vector3.up*.5f,"new_rib_steak",1.1f);
+            Butcher25DChecks.CaptureAt(display.VisualFor(travelAnchor).position+Vector3.up*.3f,"hook_eye_up",1.1f);
+            MatchConfiguration.Prepare(4);UnityEngine.SceneManagement.SceneManager.LoadScene("Arena25D");phase=5;due=0;return;
+        }
+        if(phase==5)
+        {
+            DisableAI();var display=Object.FindAnyObjectByType<ArenaPresentation25D>();
+            if(display==null||Object.FindObjectsByType<HookAnchor>().Any(a=>display.VisualFor(a)==null))return;
+            AnchorCount();
+            if(worldDepthIndex++==0){MatchConfiguration.Prepare(20);UnityEngine.SceneManagement.SceneManager.LoadScene("Arena25D");due=0;return;}
+            File.WriteAllText("docs/validation/016-world.txt",$"PASS: {count} actual Unity Play Mode assertions\nFive upright immutable anchors at 16/4/20m, actual hit and owner pull, safe ending, stationary fixture, cow pushing, river exclusion, new rib steak meshes and actual spin.\n");
+            SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_WORLD_PASS: "+count);Stop();
+        }
     }
 }

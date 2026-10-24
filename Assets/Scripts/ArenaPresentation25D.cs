@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 [DefaultExecutionOrder(1000)]
 public class ArenaPresentation25D : MonoBehaviour
 {
-    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass, Rock }
+    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass, Rock, Anchor }
     [System.Serializable]
     public struct ModelOverride
     {
@@ -17,6 +17,7 @@ public class ArenaPresentation25D : MonoBehaviour
     [SerializeField] private RenderPipelineAsset pipeline;
     [SerializeField] private Material litMaterial;
     [SerializeField] private Material bankMaterial;
+    [SerializeField] private Material overlayMaterial;
     [SerializeField, Min(.1f)] private float grassTileMeters = 4;
     [SerializeField] private Material riverMaterial;
     [SerializeField] private Mesh riverSurfaceMesh;
@@ -97,6 +98,7 @@ public class ArenaPresentation25D : MonoBehaviour
         preview.SetActive(false);
         var builder=FindAnyObjectByType<PlayerBuilding>();
         if(builder!=null){var grid=new GameObject("Building grid");grid.transform.SetParent(generated.transform,false);grid.AddComponent<BuildGrid25D>().Bind(builder);}
+        if(overlayMaterial!=null){var shores=new GameObject("Shorelines");shores.transform.SetParent(generated.transform,false);shores.AddComponent<Shoreline25D>().Bind(overlayMaterial);}
     }
     private void ApplyGroundTiling(string label, GameObject ground, Bounds bounds)
     {
@@ -167,6 +169,7 @@ public class ArenaPresentation25D : MonoBehaviour
             kind=carcass.IsHeroCarcass?VisualKind.Carcass:species==Animal.Species.Cow?VisualKind.CowCarcass:species==Animal.Species.Pig?VisualKind.PigCarcass:VisualKind.SheepCarcass;
         }
         else if (source is PermanentRock) kind=VisualKind.Rock;
+        else if (source is HookAnchor) kind=VisualKind.Anchor;
         else if (source is BoneWall) kind = VisualKind.Wall;
         else if (source is AnimalFarm) kind = VisualKind.Farm;
         else if (source is MeatShop) kind = VisualKind.Shop;
@@ -250,6 +253,8 @@ public class ArenaPresentation25D : MonoBehaviour
             if(rock.gameObject.scene!=gameObject.scene)continue;
             View(rock).transform.rotation=Quaternion.Euler(0,-rock.transform.eulerAngles.z,0);
         }
+        foreach(var anchor in FindObjectsByType<HookAnchor>())
+            if(anchor.gameObject.scene==gameObject.scene)View(anchor).transform.rotation=Quaternion.Euler(0,-anchor.transform.eulerAngles.z,0);
         foreach (HookAbility hook in FindObjectsByType<HookAbility>())
         {
             if (hook.gameObject.scene != gameObject.scene) continue;

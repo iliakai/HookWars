@@ -71,6 +71,10 @@ public static class HookWarsValidationBridge
             }
             File.Delete(path);
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
+            if(request.operation=="expansion-meat-setup")
+            {ExpansionAssetsSetup.ConfigureMeat();Write(request.operation,"passed","New rib steak configured");return;}
+            if(request.operation=="expansion-anchor-setup")
+            {ExpansionAssetsSetup.ConfigureAnchors();Write(request.operation,"passed","Five anchor prefab configured");return;}
             if(request.operation=="flight-audio-setup")
             {HookFlightAudioSetup.Configure();Write(request.operation,"passed","Hook flight audio configured");return;}
             if(request.operation=="grass-setup")

@@ -23,6 +23,7 @@ public static class WorldCollision
     }
     public static Vector3 Slide(Transform mover, Vector3 destination, float radius)
     {
+        PushAnimals(mover,destination,radius);
         if (CanMove(mover, destination, radius)) return destination;
         Vector3 result = mover.position;
         Vector3 x = new Vector3(destination.x, result.y, result.z);
@@ -33,6 +34,25 @@ public static class WorldCollision
         if (CanMove(mover, y, radius)) result = y;
         mover.position = before;
         return result;
+    }
+    private static void PushAnimals(Transform mover,Vector3 destination,float radius)
+    {
+        var hero=mover.GetComponent<Health>();if(hero==null||hero.IsDead)return;
+        Vector2 travel=destination-mover.position;if(travel.sqrMagnitude<.0000001f)return;
+        Physics2D.SyncTransforms();
+        foreach(var hit in Physics2D.CircleCastAll(mover.position,radius,travel.normalized,travel.magnitude,LayerMask.GetMask("Animals")))
+        {
+            var animal=hit.collider.GetComponent<Animal>();if(animal==null||animal.IsDead)continue;
+            Vector2 away=(Vector2)animal.transform.position-(Vector2)destination;
+            float overlap=radius+animal.Radius+.01f-away.magnitude;if(overlap<=0)continue;
+            Vector2 push=away.sqrMagnitude>.0001f?away.normalized:travel.normalized;
+            float strength=Mathf.Clamp(hero.CurrentKg/Mathf.Max(1,animal.MassKg),.25f,1);
+            Vector3 target=animal.transform.position+(Vector3)(push*overlap*strength);
+            if(animal.TryPush(target))continue;
+            Vector2 side=new Vector2(-push.y,push.x);
+            for(int sign=-1;sign<=1;sign+=2)
+                if(animal.TryPush(animal.transform.position+(Vector3)((push+side*sign).normalized*(overlap+.12f))))break;
+        }
     }
     public static bool FreeCircle(Vector3 position, float radius)
     {

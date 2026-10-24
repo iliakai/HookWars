@@ -47,7 +47,8 @@ public class HookAbility: MonoBehaviour
         Ready,
         Flying,
         Returning,
-        Pulling
+        Pulling,
+        PullingOwner
     }
 
     private HookState state = HookState.Ready;
@@ -58,6 +59,8 @@ public class HookAbility: MonoBehaviour
     public bool IsPreparingThrow => GetComponent<HeroActionTiming25D>()?.HookPending ?? false;
 
     public bool IsFlyingOut => state == HookState.Flying;
+    public bool IsSelfPulling => state == HookState.PullingOwner;
+    private HookAnchor caughtAnchor;
 
     public float Range => range;
     public float Damage => damage;
@@ -101,7 +104,7 @@ public class HookAbility: MonoBehaviour
 
         bool blocked =
             (ownHealth != null && ownHealth.IsDead) ||
-            (ownVictim != null && ownVictim.IsCaught);
+            (ownVictim != null && ownVictim.IsCaught && ownVictim.Captor != this);
 
         if (blocked)
         {
@@ -130,6 +133,7 @@ public class HookAbility: MonoBehaviour
         {
             PullTarget();
         }
+        else if(state==HookState.PullingOwner)PullOwner();
     }
 
     private void RememberInitialWidth()
@@ -339,6 +343,8 @@ public class HookAbility: MonoBehaviour
 
         activeHook.position = new Vector3(best.centroid.x, best.centroid.y, activeHook.position.z);
         flightRemaining -= best.distance;
+        var anchor=best.collider.GetComponent<HookAnchor>();
+        if(anchor!=null){BeginAnchorPull(anchor);return;}
         if (IsObstacle(best.collider))
         {
             BoneWall wall = best.collider.GetComponent<BoneWall>();
@@ -457,7 +463,7 @@ public class HookAbility: MonoBehaviour
             width * 0.5f,
             direction.normalized,
             checkDistance,
-            targetLayers.value | carcassLayers.value
+            targetLayers.value | carcassLayers.value | LayerMask.GetMask("Buildings")
         );
 
         // CircleCastAll возвращает попадания по возрастанию расстояния.
@@ -470,6 +476,8 @@ public class HookAbility: MonoBehaviour
             {
                 continue;
             }
+            var anchor=target.GetComponent<HookAnchor>();
+            if(anchor!=null){activeHook.position=hit.centroid;BeginAnchorPull(anchor);return true;}
 
             HookVictim victim = target.GetComponent<HookVictim>();
 
@@ -643,6 +651,11 @@ public class HookAbility: MonoBehaviour
 
     private void ClearHook()
     {
+        if(caughtAnchor!=null||state==HookState.PullingOwner)
+        {
+            GetComponent<HookVictim>()?.Release(this);
+            caughtAnchor=null;
+        }
         wallContacts.Clear();
         bends.Clear();
         lastObstacle = null;
@@ -682,5 +695,32 @@ public class HookAbility: MonoBehaviour
     protected virtual void OnDisable()
     {
         CancelHook();
+    }
+    private void BeginAnchorPull(HookAnchor anchor)
+    {
+        var self=GetComponent<HookVictim>();
+        if(self==null||!self.TryCapture(this)){state=HookState.Returning;return;}
+        caughtAnchor=anchor;state=HookState.PullingOwner;
+    }
+    private void PullOwner()
+    {
+        if(caughtAnchor==null){ClearHook();return;}
+        float budget=pullSpeed*Time.deltaTime;
+        while(budget>.00001f)
+        {
+            Vector3 goal=bends.Count>0?bends[0]:caughtAnchor.transform.position;
+            float remaining=Vector2.Distance(transform.position,goal);
+            if(bends.Count==0&&remaining<=stopDistance){ClearHook();return;}
+            float travel=Mathf.Min(budget,Mathf.Max(0,remaining-(bends.Count==0?stopDistance:0)));
+            Vector3 before=transform.position;
+            Vector3 desired=Vector3.MoveTowards(before,goal,travel);
+            transform.position=WorldCollision.Slide(transform,desired,ArenaLayout.HeroRadius);
+            Physics2D.SyncTransforms();
+            float moved=Vector2.Distance(before,transform.position);budget-=travel;
+            if(moved<travel*.5f){CancelHook();transform.position=ArenaLayout.ClampToBank(transform.position,transform.position.x>0);return;}
+            if(bends.Count>0&&Vector2.Distance(transform.position,goal)<.01f)bends.RemoveAt(0);
+            else if(bends.Count==0&&Vector2.Distance(transform.position,goal)<=stopDistance+.01f){ClearHook();return;}
+            if(travel<.00001f)break;
+        }
     }
 }

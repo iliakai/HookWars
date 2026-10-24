@@ -18,6 +18,7 @@ public class Animal : MonoBehaviour
     private Vector2 direction;
     private float nextDirection;
     private Carcass carcass;
+    private float pushedUntil;
     public bool IsDead => dead;
     public float MassKg => massKg;
     public float Radius => radius;
@@ -37,7 +38,7 @@ public class Animal : MonoBehaviour
     {
         VoluntaryVelocity = Vector2.zero;
         if (Time.deltaTime <= 0) return;
-        if (dead || victim.IsCaught) return;
+        if (dead || victim.IsCaught || Time.time<pushedUntil) return;
         if (Time.time >= nextDirection) PickDirection();
         Vector3 next = transform.position + (Vector3)direction * moveSpeed * Time.deltaTime;
         bool moving = ArenaLayout.IsInsideBank(next, rightBank, radius) && WorldCollision.CanMove(transform, next, radius);
@@ -55,5 +56,10 @@ public class Animal : MonoBehaviour
         gameObject.SetActive(false);
         Destroy(gameObject);
         return carcass;
+    }
+    public bool TryPush(Vector3 destination)
+    {
+        if(dead||victim.IsCaught||!ArenaLayout.IsInsideBank(destination,rightBank,radius)||!WorldCollision.CanMove(transform,destination,radius))return false;
+        transform.position=destination;VoluntaryVelocity=Vector2.zero;pushedUntil=Time.time+.12f;Physics2D.SyncTransforms();return true;
     }
 }

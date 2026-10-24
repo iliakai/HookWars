@@ -1,0 +1,2 @@
+PASS: 47 actual Unity Play Mode assertions
+Five upright immutable anchors at 16/4/20m, actual hit and owner pull, safe ending, stationary fixture, cow pushing, river exclusion, new rib steak meshes and actual spin.

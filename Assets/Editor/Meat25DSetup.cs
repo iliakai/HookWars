@@ -13,6 +13,7 @@ public static class Meat25DSetup
     [MenuItem("HookWars/25D/Meat/Setup hovering meat")]
     public static void Configure()
     {
+        if(System.IO.File.Exists(ExpansionAssetsSetup.MeatModel)){ExpansionAssetsSetup.ConfigureMeat();return;}
         if(EditorApplication.isPlayingOrWillChangePlaymode)throw new InvalidOperationException("Stop Play Mode first");
         if(!AssetDatabase.IsValidFolder(Output))AssetDatabase.CreateFolder(Root,"Integration");
         var textureImporter=(TextureImporter)AssetImporter.GetAtPath(Root+"/Textures/Meat_Albedo.png");

@@ -7,6 +7,7 @@ public sealed class MatchMap25D : MonoBehaviour
 {
     [SerializeField] private SausageFactory factoryPrefab;
     [SerializeField] private PermanentRock rockPrefab;
+    [SerializeField] private HookAnchor anchorPrefab;
     private GameObject mapRoot;
     private readonly List<SausageFactory> factories=new List<SausageFactory>();
     public IReadOnlyList<SausageFactory> Factories=>factories;
@@ -58,6 +59,21 @@ public sealed class MatchMap25D : MonoBehaviour
                     Instantiate(rockPrefab,p,Quaternion.Euler(0,0,90*Random.Range(0,4)),mapRoot.transform);Physics2D.SyncTransforms();placed=true;break;
                 }
                 if(!placed)Debug.LogWarning("Rock placement skipped after bounded attempts on "+(right?"right":"left")+" bank");
+            }
+        }
+        if(anchorPrefab!=null)
+        {
+            bool firstRight=Random.value>.5f;
+            for(int i=0;i<5;i++)
+            {
+                bool right=(i%2==0)==firstRight;Rect bank=ArenaLayout.BankBounds(right,.6f);bool found=false;
+                for(int attempt=0;attempt<200;attempt++)
+                {
+                    Vector3 p=new Vector3(Random.Range(bank.xMin,bank.xMax),Random.Range(bank.yMin,bank.yMax));
+                    if(!WorldCollision.FreeCircle(p,.45f))continue;
+                    Instantiate(anchorPrefab,p,Quaternion.Euler(0,0,Random.Range(0,360)),mapRoot.transform);Physics2D.SyncTransforms();found=true;break;
+                }
+                if(!found)throw new System.InvalidOperationException("Cannot place five hook anchors on fresh map");
             }
         }
     }
