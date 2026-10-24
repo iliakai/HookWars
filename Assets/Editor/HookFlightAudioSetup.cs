@@ -7,12 +7,13 @@ using Object = UnityEngine.Object;
 
 public static class HookFlightAudioSetup
 {
-    public const string ClipPath = "Assets/Audio/ChainFlight.mp3";
+    public const string ClipPath = FlightAudioMixSetup.OutputPath;
     [MenuItem("HookWars/25D/Setup hook flight sound")]
     public static void Configure()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode first");
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        FlightAudioMixSetup.Build();
         AssetDatabase.ImportAsset(ClipPath);
         var importer = AssetImporter.GetAtPath(ClipPath) as AudioImporter;
         if (importer == null) throw new InvalidOperationException("Missing chain flight clip");
@@ -42,7 +43,7 @@ public static class HookFlightAudioSetup
         var pcm = new float[clip.samples * clip.channels]; float peak = 0; double energy = 0;
         if (clip.GetData(pcm, 0)) foreach (float sample in pcm) { peak = Mathf.Max(peak, Mathf.Abs(sample)); energy += sample * sample; }
         var mute = typeof(EditorUtility).GetProperty("audioMasterMute", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        File.WriteAllText("docs/validation/015-audio-import.txt", $"Clip: {clip.name}\nDuration: {clip.length:F3}s; channels: {clip.channels}; frequency: {clip.frequency}Hz\nPCM, DecompressOnLoad, preload, no background loading; 2D sources on both logical heroes.\nDecoded peak: {peak:F6}; RMS: {Math.Sqrt(energy / pcm.Length):F6}\nEditor audioMasterMute: {mute?.GetValue(null)?.ToString() ?? "unavailable"}; AudioListener volume: {AudioListener.volume}; paused: {AudioListener.pause}\n");
+        File.WriteAllText("docs/validation/016-audio-import.txt", $"Clip: {clip.name}\nDuration: {clip.length:F3}s; channels: {clip.channels}; frequency: {clip.frequency}Hz\nPCM, DecompressOnLoad, preload, no background loading; 2D sources on both logical heroes.\nDecoded peak: {peak:F6}; RMS: {Math.Sqrt(energy / pcm.Length):F6}\nEditor audioMasterMute: {mute?.GetValue(null)?.ToString() ?? "unavailable"}; AudioListener volume: {AudioListener.volume}; paused: {AudioListener.pause}\n");
         Debug.Log("HOOKWARS_FLIGHT_AUDIO_SETUP: " + clip.length + " seconds");
     }
 }

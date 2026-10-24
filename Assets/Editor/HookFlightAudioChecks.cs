@@ -59,6 +59,7 @@ public static class HookFlightAudioChecks
                 var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(HookFlightAudioSetup.ClipPath);
                 var pcm = new float[clip.samples * clip.channels];
                 Check(clip.GetData(pcm, 0) && pcm.Max(v => Mathf.Abs(v)) > .001f, "Imported clip decodes to non-silent PCM");
+                Check(Mathf.Abs(clip.length-1.68f)<.005f&&pcm.Max(v=>Mathf.Abs(v))<=.901f,"Imported composite has the intended length and safe peak");
                 for (int i = 0; i < hooks.Length; i++)
                 {
                     var hook = hooks[i]; var timing = hook.GetComponent<HeroActionTiming25D>();
@@ -91,7 +92,7 @@ public static class HookFlightAudioChecks
                 {
                     Check(hooks[i].ActiveHook != null && sounds[i].PlaybackCount == 1,
                         $"Exactly one sound at actual animated release: {i}, count={sounds[i].PlaybackCount}, active={hooks[i].ActiveHook!=null}, pending={hooks[i].IsPreparingThrow}, enabled={hooks[i].enabled}");
-                    Check(sources[i].isPlaying && sources[i].pitch >= .93f && sources[i].pitch <= 1.07f && sources[i].volume >= .6f && sources[i].volume <= .75f,
+                    Check(sources[i].isPlaying && sources[i].clip.name=="ChainFlightMix" && sources[i].pitch >= .93f && sources[i].pitch <= 1.07f && sources[i].volume >= .6f && sources[i].volume <= .75f,
                         "Real audio voice playing with bounded pitch and volume: " + i);
                     var samples = new float[1024]; sources[i].GetOutputData(samples, 0);
                     outputPeak = Mathf.Max(outputPeak, samples.Max(v => Mathf.Abs(v)));
@@ -125,7 +126,7 @@ public static class HookFlightAudioChecks
                 Check(sounds[0].PlaybackCount == 7 && !sources[0].isPlaying, "Disabling audio unsubscribes and stops its source");
                 sounds[0].enabled = true; ReleaseNow(hooks[0]);
                 Check(sounds[0].PlaybackCount == 8, "Re-enable subscribes exactly once");
-                File.WriteAllText("docs/validation/015-flight-audio.txt", $"PASS: {count} actual Unity Play Mode assertions\nBoth heroes; decoded PCM; one 2D source each; rejected/windup/death/capture silence; release exactly once; real playback; variation and independent RNG; pause/resume; cancel; disable/re-enable.\nMeasured AudioSource output peak: {outputPeak:F6}\nSpeaker/headphone listening and subjective volume balance not performed by the agent.\n");
+                File.WriteAllText("docs/validation/016-flight-audio.txt", $"PASS: {count} actual Unity Play Mode assertions\nBoth heroes; decoded PCM; one 2D source each; rejected/windup/death/capture silence; release exactly once; real playback; variation and independent RNG; pause/resume; cancel; disable/re-enable.\nMeasured AudioSource output peak: {outputPeak:F6}\nSpeaker/headphone listening and subjective volume balance not performed by the agent.\n");
                 SessionState.SetBool(Key + ".Passed", true); Debug.Log("HOOKWARS_FLIGHT_AUDIO_PASS: " + count); Stop();
             }
         }

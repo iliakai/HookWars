@@ -1,0 +1,5 @@
+Clip: ChainFlightMix
+Duration: 1,680s; channels: 1; frequency: 44100Hz
+PCM, DecompressOnLoad, preload, no background loading; 2D sources on both logical heroes.
+Decoded peak: 0,899963; RMS: 0,055379
+Editor audioMasterMute: False; AudioListener volume: 1; paused: False

@@ -1,0 +1,4 @@
+Source start: 1ce83086b51f4fb (1,254s, 44100Hz, 1 channels)
+Source end: 3c40cf014c0b451 (2,116s, 44100Hz, 1 channels)
+First 0,70s of start + last 1,10s of end, crossfade 0,12s
+Mix duration=1,680s; PCM16 mono 44100Hz, peak normalized to .9. Existing pitch/volume variation retained.
