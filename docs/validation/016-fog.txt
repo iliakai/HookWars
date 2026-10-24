@@ -1,0 +1,2 @@
+PASS: 10 actual Unity Play Mode assertions
+Player perspective; own bank and river; real enemy renderer hiding; hero/helper circles; actual flying hook corridor and its removal. Random terrain removed only from the corridor test fixture.

@@ -1,6 +1,6 @@
 Shader "HookWars/FieldOverlay"
 {
-    Properties { _BaseColor("Tint", Color)=(1,1,1,1) _UseVertexColor("Vertex colors", Float)=0 }
+    Properties { [MainColor] _BaseColor("Tint", Color)=(1,1,1,1) _UseVertexColor("Vertex colors", Float)=0 }
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "RenderType"="Transparent" "Queue"="Transparent" }

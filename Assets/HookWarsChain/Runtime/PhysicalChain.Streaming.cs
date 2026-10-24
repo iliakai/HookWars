@@ -21,6 +21,11 @@ namespace HookWars.Chain
         private readonly List<Collider> endpointObstacles=new List<Collider>();
         private readonly List<Collider> releaseContacts=new List<Collider>();
         public int EndpointCollisionExclusions { get {int count=0;foreach(var pairs in endpointIgnores.Values)count+=pairs.Count;return count;} }
+        public void SetPresentationVisibility(Func<Vector3,bool> visible)
+        {
+            foreach(var body in streamPool)if(body!=null)
+            {var renderer=body.GetComponentInChildren<Renderer>();if(renderer!=null)renderer.forceRenderingOff=!visible(body.position);}
+        }
         private Vector3 requestedStart,requestedEnd;
         private Vector3 previousStart,previousEnd;
         private float issuedLength;

@@ -13,7 +13,7 @@ public sealed class BuildGrid25D : MonoBehaviour
     private readonly List<int>[] triangles={new List<int>(),new List<int>()};
     private float nextRefresh;
     public int VisibleCells {get;private set;}
-    public void Bind(PlayerBuilding source)
+    public void Bind(PlayerBuilding source,Material overlay)
     {
         builder=source;
         for(int i=0;i<2;i++)
@@ -21,9 +21,10 @@ public sealed class BuildGrid25D : MonoBehaviour
             var go=new GameObject(i==0?"Available cells":"Unavailable cells");go.transform.SetParent(transform,false);
             meshes[i]=new Mesh{name="Build grid cells"};meshes[i].MarkDynamic();go.AddComponent<MeshFilter>().sharedMesh=meshes[i];
             renderers[i]=go.AddComponent<MeshRenderer>();renderers[i].shadowCastingMode=ShadowCastingMode.Off;renderers[i].receiveShadows=false;
-            var m=new Material(Shader.Find("Universal Render Pipeline/Unlit"));materials[i]=m;
-            m.SetFloat("_Surface",1);m.SetFloat("_SrcBlend",(float)BlendMode.SrcAlpha);m.SetFloat("_DstBlend",(float)BlendMode.OneMinusSrcAlpha);
-            m.SetFloat("_ZWrite",0);m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");m.renderQueue=3000;
+            var m=overlay!=null?new Material(overlay):new Material(Shader.Find("Universal Render Pipeline/Unlit"));materials[i]=m;
+            if(overlay==null)
+            {m.SetFloat("_Surface",1);m.SetFloat("_SrcBlend",(float)BlendMode.SrcAlpha);m.SetFloat("_DstBlend",(float)BlendMode.OneMinusSrcAlpha);m.SetFloat("_ZWrite",0);m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");}
+            m.renderQueue=3000;
             m.SetColor("_BaseColor",i==0?new Color(.45f,1,.55f,.10f):new Color(1,.45f,.45f,.10f));renderers[i].sharedMaterial=m;
         }
     }

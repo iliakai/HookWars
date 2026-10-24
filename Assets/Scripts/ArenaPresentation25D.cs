@@ -37,6 +37,7 @@ public class ArenaPresentation25D : MonoBehaviour
     // This allocates native Unity state: never construct it in a field initializer.
     private MaterialPropertyBlock previewProperties;
     private Dictionary<Component, GameObject> views = new Dictionary<Component, GameObject>();
+    public IReadOnlyDictionary<Component,GameObject> Views=>views;
     private Dictionary<HookAbility, GameObject> projectiles = new Dictionary<HookAbility, GameObject>();
     private List<Component> removed = new List<Component>();
     private List<Material> materials = new List<Material>();
@@ -97,8 +98,9 @@ public class ArenaPresentation25D : MonoBehaviour
         var cell=Primitive("Cell highlight",PrimitiveType.Cube,preview.transform,new Vector3(.98f,.004f,.98f),Color.green);cell.transform.localPosition=Vector3.up*.003f;
         preview.SetActive(false);
         var builder=FindAnyObjectByType<PlayerBuilding>();
-        if(builder!=null){var grid=new GameObject("Building grid");grid.transform.SetParent(generated.transform,false);grid.AddComponent<BuildGrid25D>().Bind(builder);}
+        if(builder!=null){var grid=new GameObject("Building grid");grid.transform.SetParent(generated.transform,false);grid.AddComponent<BuildGrid25D>().Bind(builder,overlayMaterial);}
         if(overlayMaterial!=null){var shores=new GameObject("Shorelines");shores.transform.SetParent(generated.transform,false);shores.AddComponent<Shoreline25D>().Bind(overlayMaterial);}
+        if(overlayMaterial!=null&&builder!=null){var fog=new GameObject("Enemy bank fog");fog.transform.SetParent(generated.transform,false);fog.AddComponent<FogOfWar25D>().Bind(this,builder,overlayMaterial);}
     }
     private void ApplyGroundTiling(string label, GameObject ground, Bounds bounds)
     {

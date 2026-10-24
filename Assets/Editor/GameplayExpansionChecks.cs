@@ -22,6 +22,9 @@ public static class GameplayExpansionChecks
     static Quaternion meatRotation;
     static int worldDepthIndex;
     static bool worldRotationCaptured;
+    static FogOfWar25D fog;
+    static Vector3 fogOrigin, fogTarget, fogProbe;
+    static ButcherHelper fogHelper;
     static GameplayExpansionChecks() { if (SessionState.GetBool(Key, false)) Subscribe(); }
     public static void Run(string name)
     {
@@ -93,6 +96,7 @@ public static class GameplayExpansionChecks
             if(phase==0){EditorApplication.isPlaying=true;phase=1;return;}
             if(!EditorApplication.isPlaying||Time.time<due)return;
             if(stage=="world"){WorldTick();return;}
+            if(stage=="fog"){FogTick();return;}
             if(phase==1)
             {
                 foreach(var a in Object.FindObjectsByType<EnemyHookAI>())a.enabled=false;
@@ -239,4 +243,68 @@ public static class GameplayExpansionChecks
             SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_WORLD_PASS: "+count);Stop();
         }
     }
+    static void CaptureFog(string name)
+    {
+        EditorWindow.GetWindow(typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView")).Show();
+        ScreenCapture.CaptureScreenshot("docs/validation/016-fog-"+name+".png");
+    }
+    static void FogTick()
+    {
+        var display=Object.FindAnyObjectByType<ArenaPresentation25D>();
+        var enemy=Object.FindAnyObjectByType<EnemyChase>().GetComponent<Health>();
+        if(phase==1)
+        {
+            DisableAI();var movement=Object.FindAnyObjectByType<PlayerMovement>();movement.enabled=false;player=movement.GetComponent<Health>();
+            fog=Object.FindAnyObjectByType<FogOfWar25D>();if(fog==null||display.VisualFor(enemy)==null)return;
+            fogOrigin=player.transform.position;fogTarget=enemy.transform.position;fog.RefreshObservers();
+            Check(!fog.IsRevealed(fogTarget),"Enemy at home does not reveal its own fog");
+            Check(display.VisualFor(enemy).GetComponentsInChildren<Renderer>().All(r=>r.forceRenderingOff),"Enemy mesh and health bar really hidden, not just tinted");
+            Check(fog.IsRevealed(fogOrigin)&&fog.IsRevealed(Vector2.zero),"Own bank and neutral river stay visible");
+            CaptureFog("hidden");phase=2;due=Time.time+.25f;return;
+        }
+        if(phase==2)
+        {
+            player.transform.position=fogTarget+Vector3.up*3;fog.RefreshObservers();
+            Check(fog.IsRevealed(fogTarget)&&!fog.IsRevealed((Vector2)player.transform.position+Vector2.down*5),"Friendly hero reveals exactly four-meter circle on enemy bank");
+            phase=3;due=Time.time+.2f;return;
+        }
+        if(phase==3)
+        {
+            Check(display.VisualFor(enemy).GetComponentsInChildren<Renderer>().Any(r=>r.enabled&&!r.forceRenderingOff),"Approaching hero restores actual enemy renderers");CaptureFog("hero");
+            phase=8;due=Time.time+.15f;return;
+        }
+        if(phase==8)
+        {
+            player.transform.position=fogOrigin;
+            fogHelper=Object.Instantiate(AssetDatabase.LoadAssetAtPath<ButcherHelper>(GameplayRevisionSetup.HelperPath),fogTarget+Vector3.up*3,Quaternion.identity);
+            fogHelper.Bind(player.GetComponent<OwnerEconomy>().Factory,10);fogHelper.enabled=false;fogHelper.GetComponent<CarcassCarrier>().enabled=false;
+            due=Time.time+.2f;phase=4;return;
+        }
+        if(phase==4)
+        {
+            fog.RefreshObservers();Check(fog.IsRevealed(fogTarget),"Owned helper also reveals its surroundings");Object.DestroyImmediate(fogHelper.gameObject);
+            foreach(var rock in Object.FindObjectsByType<PermanentRock>())Object.DestroyImmediate(rock.gameObject);
+            foreach(var anchor in Object.FindObjectsByType<HookAnchor>())Object.DestroyImmediate(anchor.gameObject);
+            travelHook=player.GetComponent<HookAbility>();EconomyChecks.Set(travelHook,"targetLayers",(LayerMask)0);
+            ReadyHookForFog();travelHook.TryThrow((Vector2)(fogTarget+Vector3.up*3-fogOrigin));
+            started=Time.time;due=0;phase=5;return;
+        }
+        if(phase==5)
+        {
+            if((travelHook.ActiveHook==null||travelHook.ActiveHook.position.x<4.2f)&&Time.time-started<3)return;
+            Check(travelHook.ActiveHook!=null&&travelHook.ActiveHook.position.x>2,"Real hook entered enemy bank");
+            fog.RefreshObservers();Vector2 p=travelHook.ActiveHook.position,d=(p-(Vector2)fogOrigin).normalized,side=new Vector2(-d.y,d.x);
+            Check(fog.IsRevealed(p+side*.9f)&&!fog.IsRevealed(p+side*1.5f),"Hook route reveals one meter each side without widening the whole bank");
+            CaptureFog("hook");fogProbe=p;due=Time.time+.15f;phase=6;return;
+        }
+        if(phase==6){travelHook.CancelHook();due=Time.time+.2f;phase=7;return;}
+        if(phase==7)
+        {
+            fog.RefreshObservers();Check(!fog.IsRevealed(fogProbe),"Returned hook leaves no permanently explored corridor");
+            Check(display.VisualFor(enemy).GetComponentsInChildren<Renderer>().All(r=>r.forceRenderingOff),"Enemy becomes hidden again when observers leave");
+            File.WriteAllText("docs/validation/016-fog.txt",$"PASS: {count} actual Unity Play Mode assertions\nPlayer perspective; own bank and river; real enemy renderer hiding; hero/helper circles; actual flying hook corridor and its removal. Random terrain removed only from the corridor test fixture.\n");
+            SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_FOG_PASS: "+count);Stop();
+        }
+    }
+    static void ReadyHookForFog(){travelHook.CancelHook();EconomyChecks.Set(travelHook,"nextThrowTime",0f);}
 }

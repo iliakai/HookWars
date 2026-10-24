@@ -11,7 +11,7 @@ public sealed class Shoreline25D : MonoBehaviour
         mesh=new Mesh{name="Shore strip"};mesh.vertices=new[]{new Vector3(-.5f,0,-.5f),new Vector3(-.5f,0,.5f),new Vector3(.5f,0,.5f),new Vector3(.5f,0,-.5f)};
         mesh.triangles=new[]{0,1,2,0,2,3};mesh.RecalculateBounds();
         float[] widths={.06f,.08f,.12f},alpha={.35f,.20f,.08f};
-        for(int i=0;i<3;i++)materials[i]=new Material(overlay){color=new Color(.10f,.13f,.07f,alpha[i])};
+        for(int i=0;i<3;i++){materials[i]=new Material(overlay);materials[i].SetColor("_BaseColor",new Color(.10f,.13f,.07f,alpha[i]));}
         foreach(int side in new[]{-1,1})
         {
             float offset=0;
