@@ -96,7 +96,7 @@ public static class HookWarsValidationBridge
             if(request.operation=="windows-build")
             {
                 Write(request.operation,"running","Building in the existing GUI Editor");
-                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/020-windows-build.txt");return;
+                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/021-windows-build.txt");return;
             }
             if (request.operation == "body-measure")
             {

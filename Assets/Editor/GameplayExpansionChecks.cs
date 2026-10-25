@@ -25,6 +25,10 @@ public static class GameplayExpansionChecks
     static PlayerHook modesHook;
     static UnityEngine.InputSystem.Keyboard modesKeyboard;
     static GameObject modesRoot;
+    static Transform auraView;
+    static Renderer auraRenderer;
+    static Material auraMaterial;
+    static Mesh auraMesh;
     static Quaternion meatRotation;
     static int worldDepthIndex;
     static bool worldRotationCaptured;
@@ -105,6 +109,7 @@ public static class GameplayExpansionChecks
             if(stage=="fog"){FogTick();return;}
             if(stage=="lifetime"){LifetimeTick();return;}
             if(stage=="modes"){ModesTick();return;}
+            if(stage=="aura"){AuraTick();return;}
             if(phase==1)
             {
                 foreach(var a in Object.FindObjectsByType<EnemyHookAI>())a.enabled=false;
@@ -136,6 +141,69 @@ public static class GameplayExpansionChecks
                 SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_"+stage.ToUpperInvariant()+"_PASS: "+count);Stop();
     }
     static void Age(Carcass meat, double seconds) => EconomyChecks.Invoke(meat, "AdvanceGroundLifetime", seconds);
+    static Color AuraColor()
+    {var properties=new MaterialPropertyBlock();auraRenderer.GetPropertyBlock(properties);return properties.GetColor("_BaseColor");}
+    static void CaptureAura(string color)
+    {
+        Butcher25DChecks.CaptureAt(auraView.position+Vector3.up*.35f,"hook_aura_"+color,1.25f);
+        File.Copy("Temp/ButcherPreview/hook_aura_"+color+".png","docs/validation/021-aura-"+color+".png",true);
+    }
+    static void AuraTick()
+    {
+        if(phase==1)
+        {
+            DisableAI();modesHook=Object.FindAnyObjectByType<PlayerHook>();modesHook.GetComponent<PlayerMovement>().enabled=false;
+            modesHook.GetComponentInChildren<PlayerAim>().enabled=false;
+            var display=Object.FindAnyObjectByType<ArenaPresentation25D>();auraView=display.VisualFor(modesHook.GetComponent<Health>());
+            if(auraView==null||auraView.Find("Hook mode aura")==null)return;
+            auraRenderer=auraView.Find("Hook mode aura").GetComponent<Renderer>();auraMaterial=auraRenderer.sharedMaterial;
+            auraMesh=auraRenderer.GetComponent<MeshFilter>().sharedMesh;
+            Check(auraRenderer.enabled&&auraMaterial.shader.isSupported,"Player aura uses a supported visible renderer");
+            var red=AuraColor();Check(red.r>.9f&&red.b<.2f,"Default target-pull mode has a warm red aura");
+            Check(auraMesh.colors.Min(c=>c.a)==0&&auraMesh.colors.Max(c=>c.a)<=.28f,
+                "Soft halo fades to transparent edges with restrained opacity");
+            Check(auraRenderer.GetComponents<Collider>().Length==0&&auraRenderer.GetComponents<Collider2D>().Length==0&&
+                auraRenderer.GetComponents<Light>().Length==0&&auraRenderer.GetComponents<ParticleSystem>().Length==0,
+                "Aura has no physics, light or particle effects");
+            Check(auraRenderer.shadowCastingMode==UnityEngine.Rendering.ShadowCastingMode.Off&&!auraRenderer.receiveShadows,
+                "Aura does not cast or receive shadows");
+            Check(Object.FindObjectsByType<Health>().Where(h=>h.GetComponent<PlayerHook>()==null).All(h=>display.VisualFor(h)?.Find("Hook mode aura")==null),
+                "Mode indicator belongs to the controlled hero only");
+            Check(!auraView.Find("Team").gameObject.activeSelf,"Old solid blue player disk does not conflict with red mode aura");
+            CaptureAura("red");Check(modesHook.TryTogglePullMode(),"Select owner-flight aura mode");phase=2;due=Time.time+.1f;return;
+        }
+        if(phase==2)
+        {
+            var blue=AuraColor();Check(blue.b>.9f&&blue.r<.2f,"Mode change updates aura to light blue on the next game frame");
+            Check(auraRenderer.sharedMaterial==auraMaterial&&auraRenderer.GetComponent<MeshFilter>().sharedMesh==auraMesh,
+                "Changing mode reuses the same material and mesh");
+            CaptureAura("blue");modesHook.transform.position+=new Vector3(.5f,.3f);phase=3;due=Time.time+.1f;return;
+        }
+        if(phase==3)
+        {
+            Check(Vector3.Distance(auraView.position,ArenaSpace25D.ToWorld(modesHook.transform.position))<.001f&&auraRenderer.transform.parent==auraView,
+                "Halo follows the detached hero visual in XZ space");
+            MatchPause.Instance.SetPaused(true);var before=AuraColor();
+            Check(!modesHook.TryTogglePullMode()&&AuraColor()==before,"Pause keeps the selected aura color stable");MatchPause.Instance.SetPaused(false);
+            modesHook.GetComponent<Health>().TakeDamage(100000);phase=4;due=Time.time+.1f;return;
+        }
+        if(phase==4)
+        {
+            Check(!auraRenderer.gameObject.activeInHierarchy,"Dead hero has no lingering aura");
+            phase=5;due=Time.time+3.2f;return;
+        }
+        if(phase==5)
+        {
+            Check(!modesHook.GetComponent<Health>().IsDead&&auraRenderer.gameObject.activeInHierarchy&&AuraColor().b>.9f,"Native respawn restores aura in the selected mode");
+            Check(modesHook.TryTogglePullMode(),"Return to target-pull mode");phase=6;due=Time.time+.1f;return;
+        }
+        if(phase==6)
+        {
+            Check(AuraColor().r>.9f&&AuraColor().b<.2f,"Switching back restores red aura");
+            File.WriteAllText("docs/validation/021-aura.txt",$"PASS: {count} actual Unity Play Mode assertions\nActual renderer/property blocks; red/blue/red modes; feathered opacity; no physics/lights/particles; shared material/mesh; movement; pause; death/revival. Actual camera captures saved for both colors.\n");
+            SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_AURA_PASS: "+count);Stop();
+        }
+    }
     static object HookCall(string method, params object[] args) => typeof(HookAbility).GetMethod(method,
         System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(modesHook,args);
     static Transform ModeTarget(Vector3 position)
@@ -169,7 +237,13 @@ public static class GameplayExpansionChecks
             modesRoot=new GameObject("Hook mode fixtures");
             Check(modesHook.SelectedPullMode==HookAbility.PullMode.TargetToOwner,"Fresh match defaults to pulling the target");
             modesKeyboard=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
+            modesKeyboard.MakeCurrent();
             UnityEngine.InputSystem.InputSystem.QueueStateEvent(modesKeyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.E));
+            // Dispatch once explicitly: Editor focus/input passes can otherwise
+            // consume the transient press before the play-loop LateUpdate.
+            UnityEngine.InputSystem.InputSystem.Update();HookCall("LateUpdate");
+            UnityEngine.InputSystem.InputSystem.QueueStateEvent(modesKeyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState());
+            UnityEngine.InputSystem.InputSystem.Update();
             due=Time.time+.1f;phase=2;return;
         }
         if(phase==2)

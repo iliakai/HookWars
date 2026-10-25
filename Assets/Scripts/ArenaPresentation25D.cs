@@ -18,6 +18,11 @@ public class ArenaPresentation25D : MonoBehaviour
     [SerializeField] private Material litMaterial;
     [SerializeField] private Material bankMaterial;
     [SerializeField] private Material overlayMaterial;
+    [SerializeField] private Color hookPullAuraColor = new Color(1f,.18f,.12f,.85f);
+    [SerializeField] private Color hookFlightAuraColor = new Color(.12f,.65f,1f,.85f);
+    private Mesh hookAuraMesh;
+    private Material hookAuraMaterial;
+    private MaterialPropertyBlock hookAuraProperties;
     [SerializeField, Min(.1f)] private float grassTileMeters = 4;
     [SerializeField] private Material riverMaterial;
     [SerializeField] private Mesh riverSurfaceMesh;
@@ -152,6 +157,7 @@ public class ArenaPresentation25D : MonoBehaviour
             {
                 ButcherVisual25D butcher = model.GetComponent<ButcherVisual25D>();
                 if (butcher != null) butcher.Bind(hero);
+                if (hero.GetComponent<PlayerHook>() != null) CreateHookAura(view.transform);
             }
             if (source is GameBuilding building) model.GetComponent<BuildingPresentation25D>()?.Bind(building);
             if (source is Animal animal) model.GetComponent<AnimalPresentation25D>()?.Bind(animal);
@@ -159,6 +165,36 @@ public class ArenaPresentation25D : MonoBehaviour
         view.SetActive(source.gameObject.activeInHierarchy);
         view.transform.position = ArenaSpace25D.ToWorld(source.transform.position);
         return view;
+    }
+    private void CreateHookAura(Transform view)
+    {
+        if(overlayMaterial==null)return;
+        if(hookAuraMesh==null)
+        {
+            const int segments=64;
+            float[] radii={.48f,.58f,.69f,.82f,.94f},alpha={0,.11f,.28f,.09f,0};
+            var vertices=new Vector3[radii.Length*segments];var colors=new Color[vertices.Length];
+            var triangles=new int[(radii.Length-1)*segments*6];int index=0;
+            for(int ring=0;ring<radii.Length;ring++)for(int i=0;i<segments;i++)
+            {
+                float angle=i*Mathf.PI*2/segments;int vertex=ring*segments+i;
+                vertices[vertex]=new Vector3(Mathf.Cos(angle)*radii[ring],.025f,Mathf.Sin(angle)*radii[ring]);
+                colors[vertex]=new Color(1,1,1,alpha[ring]);
+                if(ring==radii.Length-1)continue;
+                int next=ring*segments+(i+1)%segments;
+                triangles[index++]=vertex;triangles[index++]=next;triangles[index++]=vertex+segments;
+                triangles[index++]=next;triangles[index++]=next+segments;triangles[index++]=vertex+segments;
+            }
+            hookAuraMesh=new Mesh{name="Soft hook mode halo",hideFlags=HideFlags.DontSave};
+            hookAuraMesh.vertices=vertices;hookAuraMesh.colors=colors;hookAuraMesh.triangles=triangles;hookAuraMesh.RecalculateBounds();
+            hookAuraMaterial=new Material(overlayMaterial){name="Hook mode aura",hideFlags=HideFlags.DontSave};
+            hookAuraMaterial.SetFloat("_UseVertexColor",1);hookAuraMaterial.renderQueue=3002;materials.Add(hookAuraMaterial);
+        }
+        var aura=new GameObject("Hook mode aura");aura.transform.SetParent(view,false);
+        aura.AddComponent<MeshFilter>().sharedMesh=hookAuraMesh;
+        var renderer=aura.AddComponent<MeshRenderer>();renderer.sharedMaterial=hookAuraMaterial;
+        renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
+        renderer.lightProbeUsage=LightProbeUsage.Off;renderer.reflectionProbeUsage=ReflectionProbeUsage.Off;
     }
     public GameObject ModelFor(Component source)
     {
@@ -204,6 +240,13 @@ public class ArenaPresentation25D : MonoBehaviour
             GameObject view = View(hero);
             view.transform.localScale=helper!=null?Vector3.one*.5f:Vector3.one;
             view.SetActive(hero.gameObject.activeInHierarchy && !hero.IsDead);
+            var aura=view.transform.Find("Hook mode aura");
+            if(aura!=null)
+            {
+                hookAuraProperties ??= new MaterialPropertyBlock();
+                hookAuraProperties.SetColor("_BaseColor",hero.GetComponent<HookAbility>().SelectedPullMode==HookAbility.PullMode.TargetToOwner?hookPullAuraColor:hookFlightAuraColor);
+                aura.GetComponent<Renderer>().SetPropertyBlock(hookAuraProperties);
+            }
             if (view.transform.Find("Facing") == null)
             {
                 GameObject arrow = Primitive("Facing", PrimitiveType.Cube, view.transform, new Vector3(0.16f, 0.12f, 0.85f), Color.yellow);
@@ -218,6 +261,7 @@ public class ArenaPresentation25D : MonoBehaviour
                 hp.transform.localPosition = Vector3.up * (view.GetComponentInChildren<ButcherVisual25D>() != null ? 1.65f : 2.1f);
                 GameObject team = Primitive("Team", PrimitiveType.Cylinder, view.transform, new Vector3(1.1f, 0.005f, 1.1f), color);
                 team.transform.localPosition = Vector3.up * 0.007f;
+                if(hero.GetComponent<PlayerHook>()!=null&&overlayMaterial!=null)team.SetActive(false);
             }
             PlayerAim aim = hero.GetComponentInChildren<PlayerAim>();
             Vector2 direction = aim != null ? aim.AimDirection : helper!=null?helper.AimDirection:(Vector2)(FindPlayerPosition() - hero.transform.position);
@@ -359,6 +403,7 @@ public class ArenaPresentation25D : MonoBehaviour
     private void OnDestroy()
     {
         DestroyGenerated();
+        if(hookAuraMesh!=null)Destroy(hookAuraMesh);
         if (materials != null) foreach (Material material in materials) if (material != null) Destroy(material);
     }
 }

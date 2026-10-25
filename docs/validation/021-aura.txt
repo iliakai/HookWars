@@ -1,0 +1,2 @@
+PASS: 16 actual Unity Play Mode assertions
+Actual renderer/property blocks; red/blue/red modes; feathered opacity; no physics/lights/particles; shared material/mesh; movement; pause; death/revival. Actual camera captures saved for both colors.

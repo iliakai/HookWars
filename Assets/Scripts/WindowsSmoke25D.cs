@@ -28,6 +28,8 @@ public sealed class WindowsSmoke25D : MonoBehaviour
         if(!value){failed=true;File.AppendAllText(Path.Combine(output,"result.txt"),"FAIL: "+text+"\n");Application.Quit(1);throw new InvalidOperationException(text);}
         assertions++;File.AppendAllText(Path.Combine(output,"result.txt"),"PASS: "+text+"\n");
     }
+    static Color AuraTint(Renderer renderer)
+    {var properties=new MaterialPropertyBlock();renderer.GetPropertyBlock(properties);return properties.GetColor("_BaseColor");}
     IEnumerator Start()
     {
         Application.runInBackground=true;previousDepth=MatchConfiguration.LastDepth;
@@ -90,6 +92,10 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             }
             yield return new WaitForSecondsRealtime(.7f);
             Check(FindObjectsByType<ButcherVisual25D>().Length==2&&FindObjectsByType<SpriteRenderer>().Length==0,"Both 3D heroes and zero world sprites");
+            var heroView=FindAnyObjectByType<ArenaPresentation25D>().VisualFor(hero.GetComponent<Health>());
+            var aura=heroView.Find("Hook mode aura")?.GetComponent<Renderer>();
+            Check(aura!=null&&aura.sharedMaterial.shader.isSupported&&AuraTint(aura).r>.9f&&AuraTint(aura).b<.2f&&
+                !heroView.Find("Team").gameObject.activeSelf,"Windows player shows red aura without the conflicting solid blue disk");
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"battle_"+depth+".png"));yield return new WaitForEndOfFrame();
             var hook=hero.GetComponent<HookAbility>();
             Vector2 direction=Vector2.zero;
@@ -147,6 +153,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
                 flightObject.layer=LayerMask.NameToLayer("HookTarget");flightObject.AddComponent<BoxCollider2D>().size=Vector2.one*.3f;
                 flightObject.AddComponent<HookVictim>();var flightHealth=flightObject.AddComponent<Health>();
                 yield return new WaitForSeconds(hook.Cooldown+.1f);
+                Check(AuraTint(aura).b>.9f&&AuraTint(aura).r<.2f,"Windows owner-flight mode shows light blue aura");
                 hook.TryThrow(flightDirection);Check(hook.IsPreparingThrow,"Windows owner-flight uses normal animated windup");
                 float flightDeadline=Time.time+4;
                 while((hook.IsPreparingThrow||hook.ActiveHook!=null)&&Time.time<flightDeadline)yield return null;
@@ -154,6 +161,8 @@ public sealed class WindowsSmoke25D : MonoBehaviour
                     Vector2.Distance(flightTarget,hero.transform.position)<1.2f&&flightObject.transform.position==flightTarget&&flightHealth.CurrentKg==60,
                     "Windows animated hook flies owner to stationary target, deals damage and releases movement lock");
                 Check(hook.TryTogglePullMode()&&hook.SelectedPullMode==HookAbility.PullMode.TargetToOwner,"Windows E-mode action returns to target pull");
+                yield return null;
+                Check(AuraTint(aura).r>.9f&&AuraTint(aura).b<.2f,"Windows switching back restores red aura");
                 Destroy(flightObject);
             }
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"chain_"+depth+".png"));yield return new WaitForEndOfFrame();
