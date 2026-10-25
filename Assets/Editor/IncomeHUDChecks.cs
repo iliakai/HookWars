@@ -74,17 +74,17 @@ public static class IncomeHUDChecks
             }
             if (phase == 2)
             {
-                Rate(2, "Passive income without shops");
+                Rate(.5, "Passive income without shops");
                 stock.AddOutput(12, 0); first = Shop(new Vector2(-6, -5)); Next(3); return;
             }
             if (phase == 3)
             {
-                Rate(4, "Passive plus actual sales from one shop");
+                Rate(2.5, "Passive plus actual sales from one shop");
                 second = Shop(new Vector2(-8, -5)); Next(4); return;
             }
             if (phase == 4)
             {
-                Rate(6, "Two shops share stock and both contribute");
+                Rate(4.5, "Two shops share stock and both contribute");
                 Check(player.TrySpendGold(1), "Purchase accepted without changing income");
                 Directory.CreateDirectory("Temp/IncomePreview");
                 EditorWindow.GetWindow(typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView")).Show();
@@ -93,25 +93,25 @@ public static class IncomeHUDChecks
             }
             if (phase == 5)
             {
-                Rate(6, "Purchases do not reduce gross receipts");
+                Rate(4.5, "Purchases do not reduce gross receipts");
                 second.enabled = false; Next(6); return;
             }
             if (phase == 6)
             {
-                Rate(4, "Disabled shop no longer contributes");
+                Rate(2.5, "Disabled shop no longer contributes");
                 stock.TakeProduct(10000); Next(7); return;
             }
             if (phase == 7)
             {
-                Rate(2, "Empty stock contributes no theoretical shop income");
+                Rate(.5, "Empty stock contributes no theoretical shop income");
                 stock.AddOutput(.025, 0); pausedGold = player.Gold; Next(8); return;
             }
             if (phase == 8)
             {
                 double elapsed = 2.2 + Time.time - due;
-                Check(Math.Abs((player.Gold - pausedGold) - (2 * elapsed + .5)) < .1,
+                Check(Math.Abs((player.Gold - pausedGold) - (.5 * elapsed + .5)) < .1,
                     "Limited stock yields only its actual .5 gold, plus passive income");
-                Rate(2, "Exhausted stock returns to passive rate");
+                Rate(.5, "Exhausted stock returns to passive rate");
                 MatchPause.Instance.SetPaused(true); pausedGold = player.Gold;
                 pausedUntil = EditorApplication.timeSinceStartup + .4; phase = 9; return;
             }
@@ -124,12 +124,12 @@ public static class IncomeHUDChecks
             }
             if (phase == 10)
             {
-                Rate(2, "Resume excludes paused time from income sampling");
+                Rate(.5, "Resume excludes paused time from income sampling");
                 var fresh = new GameObject("Fresh income session").AddComponent<PlayerProgression>();
-                Check(fresh.Gold == 0 && fresh.CurrentGoldIncomePerSecond == 2, "Fresh owner starts with zero gold and default income");
+                Check(fresh.Gold == 0 && fresh.CurrentGoldIncomePerSecond == .5, "Fresh owner starts with zero gold and default income");
                 Object.Destroy(fresh.gameObject);
                 StorageChecks();
-                File.WriteAllText("docs/validation/017-income.txt", $"PASS: {count} actual Unity Play Mode assertions\nPassive income; one/two real shops; shared/empty/limited stock; spending; disabled shop; pause/resume; fresh owner; repeated factory upgrades.\n");
+                File.WriteAllText("docs/validation/022-income.txt", $"PASS: {count} actual Unity Play Mode assertions\nPassive .5/s; one/two real shops; shared/empty/limited stock; spending; disabled shop; pause/resume; fresh owner; repeated factory upgrades.\n");
                 SessionState.SetBool(Key + ".Passed", true); Debug.Log("HOOKWARS_INCOME_PASS: " + count);
                 Stop();
             }

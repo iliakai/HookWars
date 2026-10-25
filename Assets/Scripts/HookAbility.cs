@@ -584,7 +584,7 @@ public class HookAbility: MonoBehaviour
 
         landingDirection.Normalize();
         state = HookState.Pulling;
-        if (SelectedPullMode == PullMode.OwnerToTarget && !BeginOwnerPull())
+        if (SelectedPullMode == PullMode.OwnerToTarget && target.GetComponent<RiverCoin>() == null && !BeginOwnerPull())
         {
             caughtVictim.Release(this); caughtVictim = null; caughtTarget = null;
             state = HookState.Returning;
@@ -638,6 +638,7 @@ public class HookAbility: MonoBehaviour
             caughtTarget.position = landing;
             Carcass carcass = GetPulledCarcass();
             CarcassCarrier droppedCargo = GetPulledDeathCargo();
+            caughtTarget.GetComponent<RiverCoin>()?.TryCollect(this);
             ClearHook();
             CarcassCarrier carrier = GetComponent<CarcassCarrier>();
             if (carcass != null)

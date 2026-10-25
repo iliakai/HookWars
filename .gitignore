@@ -36,3 +36,4 @@
 *.keystore
 *.jks
 /.aws/
+/Temp3DModel/

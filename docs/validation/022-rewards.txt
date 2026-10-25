@@ -1,0 +1,2 @@
+PASS: 47 actual Unity Play Mode assertions
+Stone texture/metre UVs; native coin model; random intervals/values/positions; drift/exit/pause; direct/return and red/blue hook; capture/arrival/cancellation/concurrency/duplicate awards; rising one-second labels; real AI prediction and collection; HH:MM:SS and fresh match. Controlled interaction fixtures disable random terrain colliders only.

@@ -49,6 +49,7 @@ public static class HookWarsValidationBridge
                 EditorApplication.QueuePlayerLoopUpdate();
             }
             string key = active.StartsWith("chain-rock")?ChainRockChecks.Key:active.StartsWith("expansion-")?GameplayExpansionChecks.Key:active=="flight-audio"?HookFlightAudioChecks.Key:active=="river-preview"?River25DPreview.Key:active=="income"?IncomeHUDChecks.Key:active=="meat"?Meat25DChecks.Key:active.StartsWith("revision-") ? GameplayRevisionChecks.Key : active == "acceptance" ? MatchAcceptance25DChecks.Key : active == "launch" ? Launch25DChecks.Key : active == "chain" ? Chain25DChecks.Key : active == "animals" ? Animals25DChecks.Key : active == "world" ? World25DChecks.Key : active == "arena25d" ? "HookWars.25D.Pending" : active == "butcher" ? Butcher25DChecks.Key : "HookWars.CarryingChecks.Pending";
+            if(active=="river-rewards")key=RiverRewardsChecks.Key;
             if (SessionState.GetBool(key, false) || EditorApplication.isPlayingOrWillChangePlaymode) return;
             Application.runInBackground = SessionState.GetBool(Active + ".Background", false);
             Write(active, SessionState.GetBool(key + ".Passed", false) ? "passed" : "failed", "See log.txt");
@@ -73,6 +74,10 @@ public static class HookWarsValidationBridge
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
             if(request.operation=="expansion-meat-setup")
             {ExpansionAssetsSetup.ConfigureMeat();Write(request.operation,"passed","New rib steak configured");return;}
+            if(request.operation=="river-rewards-setup")
+            {RiverRewardsSetup.Configure();Write(request.operation,"passed","Coin model, river rewards, clock and mountain texture configured");return;}
+            if(request.operation=="river-rewards-verify")
+            {Legacy25DCleanup.Verify("docs/validation/022-assets.txt");Write(request.operation,"passed","Coin integration and all scene/prefab/material references verified");return;}
             if(request.operation=="expansion-anchor-setup")
             {ExpansionAssetsSetup.ConfigureAnchors();Write(request.operation,"passed","Five anchor prefab configured");return;}
             if(request.operation=="expansion-prune")
@@ -96,7 +101,7 @@ public static class HookWarsValidationBridge
             if(request.operation=="windows-build")
             {
                 Write(request.operation,"running","Building in the existing GUI Editor");
-                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/021-windows-build.txt");return;
+                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/022-windows-build.txt");return;
             }
             if (request.operation == "body-measure")
             {
@@ -138,7 +143,7 @@ public static class HookWarsValidationBridge
             {
                 Butcher25DSetup.Configure(); Write(request.operation, "passed", "Arena25D adapted butcher saved"); return;
             }
-            if (!request.operation.StartsWith("chain-rock")&&!request.operation.StartsWith("expansion-")&&request.operation!="flight-audio"&&request.operation!="river-preview"&&request.operation!="income"&&request.operation!="meat"&&!request.operation.StartsWith("revision-") && request.operation != "acceptance" && request.operation != "launch" && request.operation != "chain" && request.operation != "animals" && request.operation != "world" && request.operation != "arena25d" && request.operation != "regressions" && request.operation != "butcher")
+            if (request.operation!="river-rewards"&&!request.operation.StartsWith("chain-rock")&&!request.operation.StartsWith("expansion-")&&request.operation!="flight-audio"&&request.operation!="river-preview"&&request.operation!="income"&&request.operation!="meat"&&!request.operation.StartsWith("revision-") && request.operation != "acceptance" && request.operation != "launch" && request.operation != "chain" && request.operation != "animals" && request.operation != "world" && request.operation != "arena25d" && request.operation != "regressions" && request.operation != "butcher")
                 throw new InvalidOperationException("Unsupported validation operation");
             SessionState.SetString(Active, request.operation);
             ValidationPlayScope.CurrentScene();
@@ -149,6 +154,7 @@ public static class HookWarsValidationBridge
             else if(request.operation=="flight-audio")HookFlightAudioChecks.Run();
             else if(request.operation=="river-preview")River25DPreview.Run();
             else if(request.operation=="income")IncomeHUDChecks.Run();
+            else if(request.operation=="river-rewards")RiverRewardsChecks.Run();
             else if(request.operation=="meat")Meat25DChecks.Run();
             else if (request.operation.StartsWith("revision-")) GameplayRevisionChecks.Run(request.operation.Substring(9));
             else if (request.operation == "acceptance") MatchAcceptance25DChecks.Run();

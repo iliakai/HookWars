@@ -104,7 +104,7 @@ public static class Launch25DChecks
                 if(SceneManager.GetActiveScene().name!=MainMenuController.BattleScene||MatchPause.Instance==null)return;
                 Check(snapshot,"Configuration and zeroed session exist after Awake before first Update at depth "+depths[cycle]);
                 Check(Object.FindObjectsByType<ArenaLayout>().Length==1&&Object.FindObjectsByType<MatchPause>().Length==1&&Object.FindObjectsByType<ArenaPresentation25D>().Length==1,"One layout/session/presentation per battle");
-                Check(owner.GoldPerSecond==2&&owner.ExperiencePerSecond==0,"New match keeps +2 gold/s and no passive XP");
+                Check(owner.GoldPerSecond==.5f&&owner.ExperiencePerSecond==0,"New match keeps +0.5 gold/s and no passive XP");
                 Check(Object.FindObjectsByType<GameBuilding>().Length==2&&Object.FindObjectsByType<SausageFactory>().Length==2&&Object.FindObjectsByType<Carcass>().Length==0&&Object.FindObjectsByType<ButcherHelper>().Length==0,"New match has exactly two fresh factories and no old buildings, helpers or corpses");
                 Check((int)Read(Object.FindAnyObjectByType<TrainingMatch>(),"kills")==0&&(int)Read(Object.FindAnyObjectByType<TrainingMatch>(),"deaths")==0,"Score starts from zero");
                 Check(Mathf.Abs(ArenaLayout.BankBounds(false).width-(depths[cycle]-1))<.001f,"Logical bank uses selected depth");
@@ -125,7 +125,7 @@ public static class Launch25DChecks
             }
             if(phase==4)
             {
-                Check(Math.Abs(owner.Gold-incomeGold-2*(Time.time-incomeTime))<.05,"Passive income uses game time exactly once");
+                Check(Math.Abs(owner.Gold-incomeGold-.5*(Time.time-incomeTime))<.05,"Passive income uses game time exactly once");
                 Check(timing.BeginAxe(.7f,()=>staleHits++),"Begin accepted delayed action before pause");
                 MatchPause.Instance.HandleEscape();Check(MatchPause.Instance.IsPaused&&Time.timeScale==0,"Second Escape pauses the match");
                 pausedGold=owner.Gold;pausePosition=owner.transform.position;

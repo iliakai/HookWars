@@ -44,6 +44,10 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             Check(menu.StartBattle()&&!menu.StartBattle(),"Single accepted match load");
             yield return new WaitUntil(()=>SceneManager.GetActiveScene().name=="Arena25D");
             var hero=FindAnyObjectByType<PlayerMovement>();var progress=hero.GetComponent<PlayerProgression>();
+            var clock=MatchHud25D.Instance;var coinStream=FindAnyObjectByType<RiverCoinStream>();
+            Check(clock!=null&&clock.ElapsedSeconds<1&&clock.PopupCount==0&&coinStream!=null&&coinStream.SecondsUntilSpawn>=24&&coinStream.SecondsUntilSpawn<=35&&progress.GoldPerSecond==.5f,
+                "Windows fresh match starts HH:MM:SS clock, random coin delay and half-gold passive income");
+            coinStream.enabled=false; // Explicit fixtures below control rewards; ordinary games keep autonomous spawning.
             Check(ArenaLayout.Depth==depth,"Configured depth "+depth);
             Check(progress.Gold<2&&progress.Experience==0&&progress.Level==1&&hero.GetComponent<OwnerEconomy>().Bones==0&&hero.GetComponent<OwnerEconomy>().ProductKg==0,"Fresh resources and level");
             Check(hero.GetComponent<Health>().MaximumKg==100&&hero.GetComponent<Health>().RegenerationPercentPerSecond==0,"Fresh session resets kill growth and percent regeneration");
@@ -73,12 +77,12 @@ public sealed class WindowsSmoke25D : MonoBehaviour
                 var saleObject = new GameObject("Explicit economy smoke shop");
                 var shop = saleObject.AddComponent<MeatShop>(); shop.Initialize(progress);
                 yield return new WaitForSeconds(2.2f);
-                Check(Math.Abs(progress.CurrentGoldIncomePerSecond-4)<.03,
-                    "Updated Windows player displays total income 4 with level one shop");
+                Check(Math.Abs(progress.CurrentGoldIncomePerSecond-2.5)<.03,
+                    "Updated Windows player displays total income 2.5 with level one shop");
                 progress.AddGold(100); Check(shop.TryUpgrade(0), "Windows shop level upgrade accepted");
                 yield return new WaitForSeconds(2.2f);
-                Check(Math.Abs(progress.CurrentGoldIncomePerSecond-6)<.03 && shop.GoldPerKg==20 && shop.Level==2,
-                    "Updated Windows player displays total income 6 with level two shop");
+                Check(Math.Abs(progress.CurrentGoldIncomePerSecond-4.5)<.03 && shop.GoldPerKg==20 && shop.Level==2,
+                    "Updated Windows player displays total income 4.5 with level two shop");
                 progress.AddGold(1000);
                 Check(factory.TryUpgrade(0) && Math.Abs(factory.SecondsPerKg-1.4)<1e-6,
                     "Windows first processing upgrade reduces time to 1.4 seconds per kg");
@@ -164,14 +168,46 @@ public sealed class WindowsSmoke25D : MonoBehaviour
                 yield return null;
                 Check(AuraTint(aura).r>.9f&&AuraTint(aura).b<.2f,"Windows switching back restores red aura");
                 Destroy(flightObject);
+                yield return new WaitForSeconds(hook.Cooldown+.1f);
+                Vector3 coinOrigin=Vector3.zero;bool coinLane=false;
+                for(float y=-7;y<=7&&!coinLane;y++)
+                {
+                    var candidate=new Vector3(hero.transform.position.x>0?4:-4,y);
+                    if(!WorldCollision.FreeCircle(candidate,ArenaLayout.HeroRadius))continue;
+                    Vector2 intoRiver=new Vector2(-Mathf.Sign(candidate.x),0);
+                    bool blocked=Physics2D.CircleCastAll(candidate,hook.Width*.5f,intoRiver,Mathf.Abs(candidate.x),LayerMask.GetMask("Buildings","Mountains","HookTarget"))
+                        .Any(hit=>hit.transform!=hero.transform&&(!hit.collider.isTrigger||hit.collider.GetComponent<HookAnchor>()!=null));
+                    if(!blocked){coinOrigin=candidate;coinLane=true;}
+                }
+                Check(coinLane,"Windows generated map contains a clear bank-to-river coin lane");hero.transform.position=coinOrigin;Physics2D.SyncTransforms();
+                var coin=coinStream.SpawnOne();coin.transform.position=new Vector3(0,coinOrigin.y);
+                int reward=coin.Value;Check(reward>=25&&reward<=75,"Windows coin reward is an integer in inclusive range twenty-five to seventy-five");
+                Check(hook.TryTogglePullMode()&&hook.SelectedPullMode==HookAbility.PullMode.OwnerToTarget,"Select blue mode to verify coin-only pull override");
+                yield return null;
+                var coinView=FindAnyObjectByType<ArenaPresentation25D>().VisualFor(coin);
+                Check(coinView!=null&&coinView.GetComponentsInChildren<MeshRenderer>().All(r=>r.sharedMaterials.All(m=>m.shader.isSupported&&m.GetFloat("_Cull")==0&&m.IsKeywordEnabled("_EMISSION"))),"Windows imported gold coin has supported shaders, both-face rendering and readable gold fill");
+                float distance=Vector2.Distance(coinOrigin,coin.transform.position);
+                Vector2 predicted=(Vector2)coin.transform.position+Vector2.down*coin.FlowSpeed*(HeroActionTiming25D.HookRelease+distance/hook.Speed);
+                double goldBefore=progress.Gold,xpBefore=progress.Experience;float coinStarted=Time.time;
+                hook.TryThrow(predicted-(Vector2)coinOrigin);Check(hook.IsPreparingThrow,"Windows coin catch starts an actual animated throw");
+                float coinDeadline=Time.time+4;while(coin!=null&&Time.time<coinDeadline)yield return null;
+                Check(coin==null&&Vector2.Distance(hero.transform.position,coinOrigin)<.001f&&
+                    Math.Abs(progress.Gold-goldBefore-.5*(Time.time-coinStarted)-reward)<.1&&progress.Experience==xpBefore,
+                    "Windows blue hook pulls coin to stationary hero and awards its value once without XP");
+                Check(clock.PopupCount==1,"Windows delivered coin shows one rising gold reward label");
+                yield return new WaitForSeconds(1.1f);Check(clock.PopupCount==0,"Windows reward label disappears after one game second");
+                var missed=coinStream.SpawnOne();missed.transform.position=new Vector3(0,-10.55f);missed.Advance(1);yield return null;
+                Check(missed==null,"Windows missed coin washes out and is destroyed");
             }
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"chain_"+depth+".png"));yield return new WaitForEndOfFrame();
             var pause=MatchPause.Instance;pause.HandleEscape();Check(pause.IsPaused&&Time.timeScale==0,"Pause freezes game");
+            double pausedClock=clock.ElapsedSeconds;yield return new WaitForSecondsRealtime(.15f);
+            Check(clock.ElapsedSeconds==pausedClock,"Windows match clock freezes during pause");
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"pause_"+depth+".png"));yield return new WaitForEndOfFrame();
             Check(pause.ReturnToMenu()&&!pause.ReturnToMenu(),"Return is accepted only once");
             yield return new WaitUntil(()=>SceneManager.GetActiveScene().name=="MainMenu");
             yield return new WaitForSecondsRealtime(.4f);
-            Check(Time.timeScale==1&&SceneManager.sceneCount==1,"No residual physics scene or time scale");
+            Check(Time.timeScale==1&&SceneManager.sceneCount==1&&MatchHud25D.Instance==null&&FindObjectsByType<RiverCoin>().Length==0,"No residual physics scene, clock, coins or time scale");
         }
         MatchConfiguration.RememberDepth(previousDepth);
         File.AppendAllText(Path.Combine(output,"result.txt"),"HOOKWARS_WINDOWS_SMOKE_PASS: "+assertions+" assertions\n");Application.Quit(0);

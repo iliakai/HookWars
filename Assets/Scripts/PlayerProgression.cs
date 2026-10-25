@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerProgression : MonoBehaviour
 {
     [Header("Passive Income")]
-    [SerializeField, Min(0f)] private float goldPerSecond = 2f;
+    [SerializeField, Min(0f)] private float goldPerSecond = .5f;
     [SerializeField, Min(0f)] private float experiencePerSecond = 0f;
 
     [Header("Level Settings")]

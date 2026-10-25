@@ -778,7 +778,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fea5545d54f19449b8507f6e7da5612, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProgression
-  goldPerSecond: 2
+  goldPerSecond: 0.5
   experiencePerSecond: 0
   firstLevelExperience: 20
   experienceGrowth: 1.05
@@ -1322,7 +1322,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fea5545d54f19449b8507f6e7da5612, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProgression
-  goldPerSecond: 2
+  goldPerSecond: 0.5
   experiencePerSecond: 0
   firstLevelExperience: 20
   experienceGrowth: 1.25
@@ -1981,6 +1981,8 @@ GameObject:
   - component: {fileID: 2100000011}
   - component: {fileID: 2100000012}
   - component: {fileID: 2100000013}
+  - component: {fileID: 2100000015}
+  - component: {fileID: 2100000014}
   m_Layer: 0
   m_Name: Arena25D Presentation
   m_TagString: Untagged
@@ -2018,7 +2020,10 @@ MonoBehaviour:
   pipeline: {fileID: 11400000, guid: 683606ffeb604d3c82427dab1b7f8b70, type: 2}
   litMaterial: {fileID: 2100000, guid: c8ccbc87102546de80166e7bb48bc895, type: 2}
   bankMaterial: {fileID: 2100000, guid: f16d2ae063a836746be07a369a90071f, type: 2}
+  mountainMaterial: {fileID: 2100000, guid: 2cb05fe4e82763f4f8d4b040cc901f5f, type: 2}
   overlayMaterial: {fileID: 2100000, guid: 5c529fdf104acee40808be7f1dfd231c, type: 2}
+  hookPullAuraColor: {r: 1, g: 0.18, b: 0.12, a: 0.85}
+  hookFlightAuraColor: {r: 0.12, g: 0.65, b: 1, a: 0.85}
   grassTileMeters: 4
   riverMaterial: {fileID: 2100000, guid: 0f5aa32780d38ad48b092c4f61e44038, type: 2}
   riverSurfaceMesh: {fileID: 4300000, guid: 359e11c55ae69354c9dc9722d9f5b339, type: 2}
@@ -2062,6 +2067,8 @@ MonoBehaviour:
     prefab: {fileID: 8161290722125603731, guid: e18be5661c588934a8b9739d2ce56d1f, type: 3}
   - kind: 15
     prefab: {fileID: 4298678512928019479, guid: b19f4cde65ed598448408c42f9445517, type: 3}
+  - kind: 16
+    prefab: {fileID: 4860969470800265398, guid: 9a92660b9258076419d16640de1a928c, type: 3}
 --- !u!114 &2100000013
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2074,6 +2081,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c090ee25b91f5474089a56423cc95fff, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ChainEnvironment25D
+--- !u!114 &2100000014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bbf80ada4e3a914ca91d1b9c890449e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MatchHud25D
+--- !u!114 &2100000015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0427eae7f40a90142a095bac08937be6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RiverCoinStream
+  coinPrefab: {fileID: 7058809716990667895, guid: 938180fd1668da844b2def1bbd085c69, type: 3}
+  presentation: {fileID: 2100000012}
 --- !u!1 &2100000020
 GameObject:
   m_ObjectHideFlags: 0

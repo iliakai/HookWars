@@ -32,9 +32,7 @@ public class EnemyHookAI : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (playerHealth == null ||
-            ownHealth.IsDead ||
-            playerHealth.IsDead ||
+        if (MatchPause.BlocksGameplay || ownHealth.IsDead ||
             victim.IsCaught)
         {
             nextDecisionTime = Time.time + decisionInterval;
@@ -47,6 +45,10 @@ public class EnemyHookAI : MonoBehaviour
         }
 
         nextDecisionTime = Time.time + decisionInterval;
+
+        if(TryAimAtCoin(out Vector2 coinDirection))
+        {hook.TryThrow(coinDirection);return;}
+        if(playerHealth==null||playerHealth.IsDead)return;
 
         Vector2 direction =
             (Vector2)playerHealth.transform.position -
@@ -70,5 +72,25 @@ public class EnemyHookAI : MonoBehaviour
             inaccurateDirection.x,
             inaccurateDirection.y
         ));
+    }
+    private bool TryAimAtCoin(out Vector2 direction)
+    {
+        direction=Vector2.zero;float nearest=float.PositiveInfinity;
+        Physics2D.SyncTransforms();
+        foreach(var coin in FindObjectsByType<RiverCoin>())
+        {
+            if(!coin.IsAvailable)continue;
+            float distance=Vector2.Distance(transform.position,coin.transform.position);
+            float lead=HeroActionTiming25D.HookRelease+distance/Mathf.Max(.1f,hook.Speed);
+            Vector2 target=(Vector2)coin.transform.position+Vector2.down*(coin.FlowSpeed*lead);
+            Vector2 aim=target-(Vector2)transform.position;distance=aim.magnitude;
+            if(distance<.1f||distance>hook.Range||distance>=nearest||target.y < -ArenaLayout.FieldHeight*.5f)continue;
+            var hits=Physics2D.CircleCastAll(transform.position,hook.Width*.5f,aim.normalized,distance,LayerMask.GetMask("Buildings","Mountains"));
+            bool blocked=false;foreach(var hit in hits)
+                if(hit.transform!=transform&&(!hit.collider.isTrigger||hit.collider.GetComponent<HookAnchor>()!=null)){blocked=true;break;}
+            if(blocked)continue;
+            nearest=distance;direction=aim.normalized;
+        }
+        return nearest<float.PositiveInfinity;
     }
 }

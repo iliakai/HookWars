@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 [DefaultExecutionOrder(1000)]
 public class ArenaPresentation25D : MonoBehaviour
 {
-    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass, Rock, Anchor }
+    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass, Rock, Anchor, Coin }
     [System.Serializable]
     public struct ModelOverride
     {
@@ -17,6 +17,8 @@ public class ArenaPresentation25D : MonoBehaviour
     [SerializeField] private RenderPipelineAsset pipeline;
     [SerializeField] private Material litMaterial;
     [SerializeField] private Material bankMaterial;
+    [SerializeField] private Material mountainMaterial;
+    private readonly List<Mesh> mountainMeshes=new List<Mesh>();
     [SerializeField] private Material overlayMaterial;
     [SerializeField] private Color hookPullAuraColor = new Color(1f,.18f,.12f,.85f);
     [SerializeField] private Color hookFlightAuraColor = new Color(.12f,.65f,1f,.85f);
@@ -28,6 +30,7 @@ public class ArenaPresentation25D : MonoBehaviour
     [SerializeField] private Mesh riverSurfaceMesh;
     [SerializeField, Min(.1f)] private float riverTileMeters = 4;
     [SerializeField, Min(0)] private float riverFlowMetersPerSecond = .6f;
+    public float RiverFlowMetersPerSecond=>riverFlowMetersPerSecond;
     private MaterialPropertyBlock groundProperties;
     [SerializeField] private Mesh physicalChainMesh;
     [SerializeField] private Material physicalChainMaterial;
@@ -91,6 +94,20 @@ public class ArenaPresentation25D : MonoBehaviour
             ground.transform.position = ArenaSpace25D.ToWorld(bounds.center, mountain ? height / 2 : -height / 2);
             if (label.EndsWith("bank") && bankMaterial != null)
                 ground.GetComponent<Renderer>().sharedMaterial = bankMaterial;
+            if(mountain&&mountainMaterial!=null)
+            {
+                ground.GetComponent<Renderer>().sharedMaterial=mountainMaterial;
+                var mesh=Instantiate(ground.GetComponent<MeshFilter>().sharedMesh);mesh.name="Mountain stone metre UVs";
+                var vertices=mesh.vertices;var normals=mesh.normals;var uv=new Vector2[vertices.Length];
+                var size=ground.transform.localScale;
+                for(int i=0;i<uv.Length;i++)
+                {
+                    var p=Vector3.Scale(vertices[i],size);
+                    uv[i]=Mathf.Abs(normals[i].x)>.5f?new Vector2(p.z,p.y)*.5f:
+                        Mathf.Abs(normals[i].y)>.5f?new Vector2(p.x,p.z)*.5f:new Vector2(p.x,p.y)*.5f;
+                }
+                mesh.uv=uv;mountainMeshes.Add(mesh);ground.GetComponent<MeshFilter>().sharedMesh=mesh;
+            }
             if (label == "river" && riverMaterial != null && riverSurfaceMesh != null)
             {
                 ground.GetComponent<Renderer>().sharedMaterial = riverMaterial;
@@ -208,6 +225,7 @@ public class ArenaPresentation25D : MonoBehaviour
         }
         else if (source is PermanentRock) kind=VisualKind.Rock;
         else if (source is HookAnchor) kind=VisualKind.Anchor;
+        else if (source is RiverCoin) kind=VisualKind.Coin;
         else if (source is BoneWall) kind = VisualKind.Wall;
         else if (source is AnimalFarm) kind = VisualKind.Farm;
         else if (source is MeatShop) kind = VisualKind.Shop;
@@ -283,6 +301,13 @@ public class ArenaPresentation25D : MonoBehaviour
             if (animal.gameObject.scene != gameObject.scene) continue;
             GameObject view = View(animal);
             view.SetActive(animal.gameObject.activeInHierarchy && !animal.IsDead);
+        }
+        foreach(var coin in FindObjectsByType<RiverCoin>(FindObjectsInactive.Include))
+        {
+            if(coin.gameObject.scene!=gameObject.scene)continue;
+            var model=View(coin).transform.Find("Model");
+            model.localPosition=Vector3.up*(.62f+.035f*Mathf.Sin(Time.time*Mathf.PI+coin.Value));
+            model.localRotation=Quaternion.Euler(0,Time.time*90+coin.Value*7,0);
         }
         foreach (Carcass carcass in FindObjectsByType<Carcass>(FindObjectsInactive.Include))
             if (carcass.gameObject.scene == gameObject.scene)
@@ -404,6 +429,7 @@ public class ArenaPresentation25D : MonoBehaviour
     {
         DestroyGenerated();
         if(hookAuraMesh!=null)Destroy(hookAuraMesh);
+        foreach(var mesh in mountainMeshes)if(mesh!=null)Destroy(mesh);
         if (materials != null) foreach (Material material in materials) if (material != null) Destroy(material);
     }
 }

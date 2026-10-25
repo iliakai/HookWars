@@ -1,0 +1,2 @@
+PASS: 31 actual Unity Play Mode assertions
+Passive .5/s; one/two real shops; shared/empty/limited stock; spending; disabled shop; pause/resume; fresh owner; repeated factory upgrades.

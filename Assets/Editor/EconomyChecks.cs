@@ -66,7 +66,7 @@ public static class EconomyChecks
             Set(carrier, "capacityKg", 18f);
             OwnerEconomy wallet = hero.AddComponent<OwnerEconomy>();
             PlayerProgression owner = hero.GetComponent<PlayerProgression>();
-            Check(owner.Gold == 0 && owner.ExperiencePerSecond == 0 && owner.GoldPerSecond == 2, "Target starting income");
+            Check(owner.Gold == 0 && owner.ExperiencePerSecond == 0 && owner.GoldPerSecond == .5f, "Target starting income");
             SausageFactory prefab = AssetDatabase.LoadAssetAtPath<SausageFactory>(EconomySetup.FactoryPath);
             SausageFactory factory = Object.Instantiate(prefab, new Vector3(-10, 8), Quaternion.identity, root.transform);
             Check(factory.Initialize(owner) && !prefab.CanBuild(owner), "One factory per owner");

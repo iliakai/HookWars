@@ -166,7 +166,7 @@ public static class Legacy25DCleanup
             var scene=EditorSceneManager.OpenScene(path);
             foreach(var root in scene.GetRootGameObjects())CheckRoot(root,true);
         }
-        foreach(string path in AssetDatabase.FindAssets("t:Prefab",new[]{"Assets/Prefabs","Assets/HookWarsButcher/Integration","Assets/HookWarsAnimals/Integration","Assets/HookWarsBuildings/Integration","Assets/HookWarsRocks/Integration","Assets/HookWarsMeat/Integration","Assets/HookWarsHookEye/Integration"}).Select(AssetDatabase.GUIDToAssetPath))
+        foreach(string path in AssetDatabase.FindAssets("t:Prefab",new[]{"Assets/Prefabs","Assets/HookWarsButcher/Integration","Assets/HookWarsAnimals/Integration","Assets/HookWarsBuildings/Integration","Assets/HookWarsRocks/Integration","Assets/HookWarsMeat/Integration","Assets/HookWarsHookEye/Integration","Assets/HookWarsCoinPickup/Integration"}).Select(AssetDatabase.GUIDToAssetPath))
             CheckRoot(AssetDatabase.LoadAssetAtPath<GameObject>(path),path.StartsWith("Assets/Prefabs/"));
         var missing=new List<string>();
         foreach(string path in AssetDatabase.GetAllAssetPaths().Where(p=>p.StartsWith("Assets/")&&(p.EndsWith(".unity")||p.EndsWith(".prefab")||p.EndsWith(".mat"))))
