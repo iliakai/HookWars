@@ -1,0 +1,115 @@
+Development Windows player acceptance, helper harvest delivery027
+PASS: Main menu starts without a match
+PASS: Removed eight metre depth is rejected
+PASS: New depth starts: 12
+PASS: Fresh map preserves normal hero progression and half-gold income
+PASS: New match creates two unfinished bridges
+PASS: Four hook eyes on each bank keep eight metres clear of mountains
+PASS: Fresh match has no old troops orders or match result
+PASS: Factory is strongest and finished storage is unlimited
+PASS: Friendly damage cannot hurt its own factory
+PASS: Unpaid bridge stage cannot complete
+PASS: Unfinished bridge does not open a walking route
+PASS: Bridge model loads without duplicate three dimensional physics
+PASS: Bridge materials survive player shader stripping
+PASS: Windows map can zoom in
+PASS: Windows harvesting keeps the real factory solid
+PASS: Windows normal factory order spawns a helper for a complete harvesting cycle
+PASS: Windows harvest fixture creates an actual moving animal
+PASS: Windows worker kills collects and delivers animal meat with factory collision enabled
+PASS: Windows completed delivery has no periodic sideways movement
+PASS: Windows first collection provides a loose meat fixture
+PASS: Windows worker completes a second loose-meat delivery to its solid factory
+PASS: Windows full harvesting test never disabled factory collision
+PASS: Large ready inventory permits raw acceptance
+PASS: Both ready meat and bones can exceed old capacity
+PASS: Pause freezes the ordinary match
+PASS: Return to menu is accepted
+PASS: Menu clears bridges troops queues and pause/result state
+PASS: Main menu starts without a match
+PASS: Removed eight metre depth is rejected
+PASS: New depth starts: 24
+PASS: Fresh map preserves normal hero progression and half-gold income
+PASS: New match creates two unfinished bridges
+PASS: Four hook eyes on each bank keep eight metres clear of mountains
+PASS: Fresh match has no old troops orders or match result
+PASS: Factory is strongest and finished storage is unlimited
+PASS: Friendly damage cannot hurt its own factory
+PASS: Unpaid bridge stage cannot complete
+PASS: Unfinished bridge does not open a walking route
+PASS: Bridge model loads without duplicate three dimensional physics
+PASS: Bridge materials survive player shader stripping
+PASS: Windows map can zoom in
+PASS: Bridge supports consume five hundred bones
+PASS: Bridge bun consumes ten thousand gold
+PASS: Bridge sausage consumes five hundred ready meat
+PASS: Finished bridge opens only its own crossing and cannot charge a fourth stage
+PASS: Windows constructs a durable barracks with conveyor off
+PASS: Two left-click orders immediately reserve and spend their complete cost
+PASS: Upgrade branch 0 costs one thousand
+PASS: Upgrade branch 1 costs one thousand
+PASS: Upgrade branch 2 costs one thousand
+PASS: Upgrade branch 3 costs one thousand
+PASS: Upgrade branch 4 costs one thousand
+PASS: Upgrade branch 5 costs one thousand
+PASS: First paid warrior is produced after twelve native game seconds
+PASS: Paid queue snapshot precedes later upgrades
+PASS: Second order completes sequentially and manual production stops
+PASS: Restored bridge keeps warriors under individual orders
+PASS: Windows selection picks only the intended friendly warrior
+PASS: Windows group movement produces a green destination marker
+PASS: Windows warrior traverses the completed public bridge along its raised arch
+PASS: Enemy shop has durability and rejects its own owner's damage
+PASS: Windows attack command shows a red destination marker
+PASS: Warrior animated attack damages a hostile building
+PASS: A new paid order can be placed after upgrades
+PASS: New paid warrior inherits upgraded combat characteristics
+PASS: Body and club upgrades have visibly stronger model scaling
+PASS: Acid club tint survives the Windows player build
+PASS: Stopped shop consumes no meat and grants no income
+PASS: Restarted shop resumes actual native-frame sales
+PASS: Windows shop upgrade improves price and throughput together
+PASS: Windows upgraded shop sells for five gold per second
+PASS: Windows farm improves interval and future weight without mutating an existing animal
+PASS: Windows farm really creates a heavier animal
+PASS: Windows animal model and collider shrink together
+PASS: Windows main hero size remains unchanged
+PASS: Windows factory can order its faster helper
+PASS: Windows helper starts its real delayed animal strike
+PASS: Windows helper kills moving heavy animal in a single committed blow
+PASS: Windows helper preserves cargo and uses faster movement
+PASS: Windows helper model and collider use reduced size
+PASS: Windows destroyed cargo cannot leave the worker stuck returning
+PASS: Windows worker resumes meat gathering after missing cargo cleanup
+PASS: Windows worker without tasks stays still without periodic reassignment
+PASS: Windows tiny residue is actually picked up as cargo
+PASS: Windows tiny residue is delivered through factory acceptance instead of hanging forever
+PASS: Selecting a shop uses its compact building toolbar
+PASS: Selected building has its ground highlight
+PASS: Actual enemy kill supports partial hero meat pickup
+PASS: Carried meat casts no stretched screen-wide shadow
+PASS: Own factory still retains its strongest full durability
+PASS: Enemy factory destruction ends and freezes the Windows match
+PASS: Finished match rejects further paid production
+PASS: Return to menu is accepted
+PASS: Menu clears bridges troops queues and pause/result state
+PASS: Main menu starts without a match
+PASS: Removed eight metre depth is rejected
+PASS: New depth starts: 36
+PASS: Fresh map preserves normal hero progression and half-gold income
+PASS: New match creates two unfinished bridges
+PASS: Four hook eyes on each bank keep eight metres clear of mountains
+PASS: Fresh match has no old troops orders or match result
+PASS: Factory is strongest and finished storage is unlimited
+PASS: Friendly damage cannot hurt its own factory
+PASS: Unpaid bridge stage cannot complete
+PASS: Unfinished bridge does not open a walking route
+PASS: Bridge model loads without duplicate three dimensional physics
+PASS: Bridge materials survive player shader stripping
+PASS: Windows map can zoom in
+PASS: Large ready inventory permits raw acceptance
+PASS: Both ready meat and bones can exceed old capacity
+PASS: Pause freezes the ordinary match
+PASS: Return to menu is accepted
+PASS: Menu clears bridges troops queues and pause/result state
+HOOKWARS_WINDOWS_SMOKE_PASS: 113 assertions

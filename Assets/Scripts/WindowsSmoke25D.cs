@@ -29,7 +29,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
     IEnumerator Start()
     {
         Application.runInBackground=true;savedDepth=MatchConfiguration.LastDepth;
-        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance, helper idle recovery026\n");
+        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance, helper harvest delivery027\n");
         foreach(int depth in new[]{12,24,36})
         {
             yield return new WaitForSecondsRealtime(.3f);
@@ -56,6 +56,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             foreach(var carrier in FindObjectsByType<CarcassCarrier>())carrier.enabled=false;
             hero.enabled=false;owner.enabled=false;
             var rival=FindAnyObjectByType<EnemyChase>().GetComponent<PlayerProgression>();rival.enabled=false;
+            if(depth==12)yield return ExerciseHarvest(hero,owner,stock);
             if(depth==24)yield return ExerciseSiege(hero,owner,rival,bridge,display);
             else
             {
@@ -71,6 +72,44 @@ public sealed class WindowsSmoke25D : MonoBehaviour
         }
         MatchConfiguration.RememberDepth(savedDepth);
         File.AppendAllText(Path.Combine(output,"result.txt"),"HOOKWARS_WINDOWS_SMOKE_PASS: "+assertions+" assertions\n");Application.Quit(0);
+    }
+    IEnumerator ExerciseHarvest(PlayerMovement hero,PlayerProgression owner,OwnerEconomy stock)
+    {
+        var factory=stock.Factory;owner.AddGold(1000);
+        Check(factory.GetComponent<BoxCollider2D>().enabled&&!factory.GetComponent<BoxCollider2D>().isTrigger,"Windows harvesting keeps the real factory solid");
+        Check(factory.TryOrderHelper(),"Windows normal factory order spawns a helper for a complete harvesting cycle");
+        var worker=FindObjectsByType<ButcherHelper>().Single();
+        Vector3 FreePoint(float distance)
+        {
+            for(int i=0;i<32;i++)
+            {
+                float a=i*Mathf.PI/16;var p=factory.transform.position+new Vector3(Mathf.Cos(a),Mathf.Sin(a))*distance;
+                if(ArenaLayout.IsInsideBank(p,p.x>0,.4f)&&WorldCollision.FreeCircle(p,.4f))return p;
+            }
+            throw new InvalidOperationException("No free Windows harvest fixture point");
+        }
+        var farmPrefab=hero.GetComponent<PlayerBuilding>().BuildingPrefabs.OfType<AnimalFarm>().Single();
+        var fixture=Instantiate(farmPrefab,FreePoint(7),Quaternion.identity);fixture.Initialize(owner);fixture.enabled=false;
+        var prey=fixture.TrySpawn();Check(prey!=null,"Windows harvest fixture creates an actual moving animal");
+        prey.transform.position=FreePoint(4.5f);float mass=prey.MassKg;Destroy(fixture.gameObject);
+        Carcass loose=null;bool sawCargo=false;float until=Time.time+18;
+        double Accepted()=>factory.RawKg+stock.ProductKg*2;
+        while((Accepted()<mass-.001||worker.Returning||prey!=null&&!prey.IsDead)&&Time.time<until)
+        {
+            if(worker.Returning)
+            {
+                sawCargo=true;
+                if(loose==null){loose=Instantiate(worker.GetComponent<CarcassCarrier>().StoredCargo[0],FreePoint(5),Quaternion.identity);loose.Initialize(6);}
+            }
+            yield return null;
+        }
+        Check((prey==null||prey.IsDead)&&sawCargo&&Accepted()>=mass-.001&&!worker.Returning,"Windows worker kills collects and delivers animal meat with factory collision enabled");
+        var rest=worker.transform.position;int resets=worker.IdleRecoveries;yield return new WaitForSeconds(2.2f);
+        Check(Vector3.Distance(rest,worker.transform.position)<.02f&&worker.IdleRecoveries==resets,"Windows completed delivery has no periodic sideways movement");
+        Check(loose!=null,"Windows first collection provides a loose meat fixture");loose.gameObject.SetActive(true);until=Time.time+18;sawCargo=false;
+        while((Accepted()<mass+6-.001||worker.Returning)&&Time.time<until){sawCargo|=worker.Returning;yield return null;}
+        Check(sawCargo&&Accepted()>=mass+6-.001&&!worker.Returning,"Windows worker completes a second loose-meat delivery to its solid factory");
+        Check(factory.GetComponent<BoxCollider2D>().enabled,"Windows full harvesting test never disabled factory collision");Destroy(worker.gameObject);yield return null;
     }
     IEnumerator ExerciseSiege(PlayerMovement hero,PlayerProgression owner,PlayerProgression rival,RiverBridge bridge,ArenaPresentation25D display)
     {
@@ -150,7 +189,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
         var tiny=Instantiate(helper.GetComponent<CarcassCarrier>().StoredCargo[0],helper.transform.position,Quaternion.identity);tiny.Initialize(.00001f);
         helper.GetComponent<CarcassCarrier>().DropAll();foreach(var c in FindObjectsByType<Carcass>())Destroy(c.gameObject);yield return null;
         helper.enabled=true;int resets=helper.IdleRecoveries;yield return new WaitForSeconds(3.3f);
-        Check(helper.IdleRecoveries>=resets+2,"Windows worker repeatedly reassigns its idle task every second");
+        Check(helper.IdleRecoveries==resets,"Windows worker without tasks stays still without periodic reassignment");
         helper.enabled=false;helper.transform.position=stock.Factory.transform.position+Vector3.right*1.5f;
         tiny.transform.position=helper.transform.position;tiny.gameObject.SetActive(true);
         Check(helper.GetComponent<CarcassCarrier>().TryCollect(tiny),"Windows tiny residue is actually picked up as cargo");

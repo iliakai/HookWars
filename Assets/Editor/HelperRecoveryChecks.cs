@@ -60,7 +60,7 @@ public static class HelperRecoveryChecks
             }
             if(phase==2)
             {
-                Check(helper.IdleRecoveries>=3,"Idle worker repeatedly resets its task once per second, not just once");
+                Check(helper.IdleRecoveries==0,"Worker without a task waits without interrupting work each second");
                 Check(Vector3.Distance(before,helper.transform.position)<.001f,"No available work does not cause random wandering");
                 meat=Meat(helper.transform.position,4);Check(helper.GetComponent<CarcassCarrier>().TryCollect(meat),"Real stored cargo fixture collected");
                 Object.Destroy(meat.gameObject);Next(3,.2f);return;

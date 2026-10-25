@@ -54,6 +54,7 @@ public static class HookWarsValidationBridge
             if(active=="siege")key=SiegeChecks.Key;
             if(active=="workers")key=WorkersChecks.Key;
             if(active=="helper-recovery")key=HelperRecoveryChecks.Key;
+            if(active=="helper-delivery")key=HelperDeliveryChecks.Key;
             if (SessionState.GetBool(key, false) || EditorApplication.isPlayingOrWillChangePlaymode) return;
             Application.runInBackground = SessionState.GetBool(Active + ".Background", false);
             Write(active, SessionState.GetBool(key + ".Passed", false) ? "passed" : "failed", "See log.txt");
@@ -76,6 +77,11 @@ public static class HookWarsValidationBridge
             }
             File.Delete(path);
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
+            if(request.operation=="helper-delivery")
+            {
+                SessionState.SetString(Active,request.operation);ValidationPlayScope.CurrentScene();SessionState.SetBool(Active+".Background",Application.runInBackground);
+                Write(request.operation,"running","Full meat harvesting with solid factory collision");HelperDeliveryChecks.Run();return;
+            }
             if(request.operation=="helper-recovery")
             {
                 SessionState.SetString(Active,request.operation);ValidationPlayScope.CurrentScene();SessionState.SetBool(Active+".Background",Application.runInBackground);
@@ -134,7 +140,7 @@ public static class HookWarsValidationBridge
             if(request.operation=="windows-build")
             {
                 Write(request.operation,"running","Building in the existing GUI Editor");
-                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/026-windows-build.txt");return;
+                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/027-windows-build.txt");return;
             }
             if (request.operation == "body-measure")
             {

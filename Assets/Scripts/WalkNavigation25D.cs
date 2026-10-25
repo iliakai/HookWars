@@ -10,7 +10,7 @@ public static class WalkNavigation25D
         for(int i=0;i<=count;i++)if(!RiverBridge.Walkable(Vector2.Lerp(from,to,i/(float)count),radius))return false;
         return true;
     }
-    public static void Build(Transform mover,Vector3 goal,float radius,float arrival,List<Vector3> path,Collider2D target=null,bool includeActors=false)
+    public static void Build(Transform mover,Vector3 goal,float radius,float arrival,List<Vector3> path,Collider2D target=null,bool includeActors=false,bool centerGoal=false)
     {
         path.Clear();Physics2D.SyncTransforms();
         Vector2 origin=new Vector2(-ArenaLayout.OuterEdge+radius+.03f,-ArenaLayout.FieldHeight*.5f+radius+.03f);
@@ -19,7 +19,8 @@ public static class WalkNavigation25D
         Vector3 Point(int i)=>new Vector3(origin.x+i%width*cell,origin.y+i/width*cell);
         int sx=Mathf.Clamp(Mathf.RoundToInt((mover.position.x-origin.x)/cell),0,width-1),sy=Mathf.Clamp(Mathf.RoundToInt((mover.position.y-origin.y)/cell),0,height-1);
         int start=sy*width+sx,found=-1;var previous=new int[width*height];System.Array.Fill(previous,-2);
-        bool Arrived(Vector3 p)=>Vector2.Distance(p,target!=null?target.ClosestPoint(p):(Vector2)goal)<=(target!=null?arrival:Mathf.Max(arrival,.36f));
+        Vector2 Destination(Vector3 p)=>target!=null&&!centerGoal?target.ClosestPoint(p):(Vector2)goal;
+        bool Arrived(Vector3 p)=>Vector2.Distance(p,Destination(p))<=(target!=null&&!centerGoal?arrival:Mathf.Max(arrival,.36f));
         if(Arrived(mover.position))return;
         var queue=new Queue<int>();
         var free=new sbyte[previous.Length];
@@ -43,7 +44,7 @@ public static class WalkNavigation25D
         while(queue.Count>0)
         {
             int i=queue.Dequeue();var current=Point(i);
-            if(Arrived(current)&&WorldCollision.ClearAttackLine(current,target!=null?target.ClosestPoint(current):(Vector2)goal,target)){found=i;break;}
+            if(Arrived(current)&&WorldCollision.ClearAttackLine(current,Destination(current),target)){found=i;break;}
             foreach(var step in steps)
             {
                 int x=i%width+step.x,y=i/width+step.y;

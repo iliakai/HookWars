@@ -1,0 +1,8 @@
+PASS Real starting factory retains enabled solid footprint and live processing
+PASS Helper is bought and spawned by the ordinary factory API
+PASS Ordinary carrier stays enabled and helper remains a child of its real factory
+PASS Worker actually kills a moving animal on its own bank
+PASS Worker actually collects the animal meat before delivery
+FAIL System.InvalidOperationException: Animal meat reaches the live factory with its solid collider enabled; p=(-9.35, 2.29, 0.00) cargo=10
+  at HelperDeliveryChecks.Check (System.Boolean ok, System.String text) [0x00040] in P:\GameDevelopment\HookWars-iliak\Assets\Editor\HelperDeliveryChecks.cs:28
+  at HelperDeliveryChecks.Tick () [0x002f3] in P:\GameDevelopment\HookWars-iliak\Assets\Editor\HelperDeliveryChecks.cs:69

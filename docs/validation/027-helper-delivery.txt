@@ -1,0 +1,18 @@
+PASS Real starting factory retains enabled solid footprint and live processing
+PASS Helper is bought and spawned by the ordinary factory API
+PASS Ordinary carrier stays enabled and helper remains a child of its real factory
+PASS Worker actually kills a moving animal on its own bank
+PASS Worker actually collects the animal meat before delivery
+PASS Animal meat reaches the live factory with its solid collider enabled; p=(-15.13, -7.30, 0.00) cargo=0
+PASS Completed delivery does not trigger periodic sideways movement or reassignment
+PASS Worker picks up loose meat on its own bank and completes a second delivery to the solid factory: p=(-15.03, -8.30, 0.00) factory=(-17.00, -8.00, 0.00) cargo=0 accepted=16,000002387038 meatParent=gone heroCargo=0
+PASS Solid factory collision stayed enabled throughout both full harvesting cycles
+PASS Opposite owner retains a solid factory on the right bank
+PASS Opposite owner orders its own helper normally
+PASS Worker actually kills a moving animal on its own bank
+PASS Worker actually collects the animal meat before delivery
+PASS Animal meat reaches the live factory with its solid collider enabled; p=(14.95, 8.70, 0.00) cargo=0
+PASS Completed delivery does not trigger periodic sideways movement or reassignment
+PASS Worker picks up loose meat on its own bank and completes a second delivery to the solid factory: p=(14.40, 8.20, 0.00) factory=(16.00, 7.00, 0.00) cargo=0 accepted=16,0000031116069 meatParent=gone heroCargo=0
+PASS Solid factory collision stayed enabled throughout both full harvesting cycles
+HOOKWARS_HELPER_DELIVERY_PASS: 17 assertions in Unity Play Mode

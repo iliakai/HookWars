@@ -1,0 +1,18 @@
+PASS Worker without a task waits without interrupting work each second
+PASS No available work does not cause random wandering
+PASS Real stored cargo fixture collected
+PASS Destroyed stored meat cannot leave a phantom delivery task
+PASS Worker automatically finds and delivers new meat after phantom cargo removal
+PASS Fault fixture contains an actual stale pending callback
+PASS Independent idle watchdog cancels stale swing that would block Update forever
+PASS Worker resumes gathering after stale animation cancellation
+PASS Worker follows an existing detour around a wall through pickup and delivery
+PASS Blocked delivery fixture keeps real meat
+PASS Worker escapes an overlapping crowd collider and delivers without teleporting or dropping meat
+PASS Full-storage fixture stores two kg
+PASS Full raw storage is legitimate waiting and watchdog preserves its cargo and position
+PASS Delivery resumes immediately after storage processing frees room
+PASS Tiny positive meat residue is a real stored item
+PASS Tiny positive cargo is delivered instead of keeping an endless return task
+PASS Paused game does not repeatedly reset worker tasks
+HOOKWARS_HELPER_RECOVERY_PASS: 17 assertions in Unity Play Mode
