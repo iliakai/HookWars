@@ -17,6 +17,8 @@ public class EnemyMelee : MonoBehaviour
     private Health ownHealth;
     private float readyAt;
     private float nextAttackTime;
+    private Health attackTarget;
+    public Vector2 AimDirection {get;private set;}=Vector2.up;
 
     private void Awake()
     {
@@ -40,7 +42,6 @@ public class EnemyMelee : MonoBehaviour
 
         bool blocked =
             ownHealth.IsDead ||
-            playerHealth.IsDead ||
             playerHook.IsPullingTarget(transform) ||
             (ownHook != null && (ownHook.ActiveHook != null || ownHook.IsPreparingThrow));
 
@@ -53,6 +54,19 @@ public class EnemyMelee : MonoBehaviour
         Vector2 toPlayer =
             (Vector2)playerHealth.transform.position -
             (Vector2)transform.position;
+
+        Health desiredTarget=playerHealth.IsDead?null:playerHealth;
+        float nearest=desiredTarget!=null?toPlayer.sqrMagnitude:float.PositiveInfinity;
+        foreach(var warrior in FindObjectsByType<SausageWarrior>())
+        {
+            var candidate=warrior.GetComponent<Health>();
+            if(candidate.IsDead||warrior.GetComponent<HookVictim>().IsCaught||!CombatOwnership.Enemies(ownHealth,candidate))continue;
+            float distance=(candidate.transform.position-transform.position).sqrMagnitude;
+            if(distance<nearest&&WorldCollision.ClearAttackLine(transform.position,candidate.transform.position)){nearest=distance;desiredTarget=candidate;}
+        }
+        if(desiredTarget==null){readyAt=Time.time+reactionDelay;return;}
+        toPlayer=desiredTarget.transform.position-transform.position;
+        if(toPlayer.sqrMagnitude>.00001f)AimDirection=toPlayer.normalized;
 
         if (toPlayer.sqrMagnitude > attackRange * attackRange)
         {
@@ -68,20 +82,21 @@ public class EnemyMelee : MonoBehaviour
         HeroActionTiming25D timing = GetComponent<HeroActionTiming25D>();
         if (timing != null && timing.enabled)
         {
-            if (timing.BeginAxe(attackCooldown, ApplyAttack)) nextAttackTime = Time.time + attackCooldown;
+            if (timing.BeginAxe(attackCooldown, ApplyAttack)){attackTarget=desiredTarget;nextAttackTime = Time.time + attackCooldown;}
             return;
         }
         nextAttackTime = Time.time + attackCooldown;
+        attackTarget=desiredTarget;
         ApplyAttack();
     }
     private void ApplyAttack()
     {
-        if (!isActiveAndEnabled || ownHealth.IsDead || playerHealth == null || playerHealth.IsDead ||
-            GetComponent<HookVictim>()?.IsCaught == true || !playerHealth.gameObject.activeInHierarchy) return;
-        Vector2 toPlayer = (Vector2)(playerHealth.transform.position - transform.position);
+        if (!isActiveAndEnabled || ownHealth.IsDead || attackTarget == null || attackTarget.IsDead ||
+            GetComponent<HookVictim>()?.IsCaught == true || !attackTarget.gameObject.activeInHierarchy) return;
+        Vector2 toPlayer = (Vector2)(attackTarget.transform.position - transform.position);
         if (toPlayer.sqrMagnitude > attackRange * attackRange) return;
-
-        playerHealth.TakeDamage(damage, ownHealth);
+        if(attackTarget.GetComponent<SausageWarrior>()!=null&&!WorldCollision.ClearAttackLine(transform.position,attackTarget.transform.position))return;
+        attackTarget.TakeDamage(damage, ownHealth);
     }
     private void OnDisable() => GetComponent<HeroActionTiming25D>()?.CancelAxe();
 }

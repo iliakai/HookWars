@@ -11,7 +11,7 @@ public static class EconomySetup
     public static void Stage5()
     {
         CarryingSetup.Configure();
-        foreach(string path in new[]{FactoryPath,ShopPath,FarmPath,WallPath})
+        foreach(string path in new[]{FactoryPath,ShopPath,FarmPath,WallPath,BarracksSetup.Building})
         {
             var building=AssetDatabase.LoadAssetAtPath<GameBuilding>(path);
             if(building==null||building.GetComponent<BoxCollider2D>()?.size!=(Vector2)building.Footprint||building.transform.localScale!=Vector3.one)
@@ -20,8 +20,13 @@ public static class EconomySetup
         foreach(var builder in Object.FindObjectsByType<PlayerBuilding>())
         {
             var data=new SerializedObject(builder);var prefabs=data.FindProperty("buildingPrefabs");
-            if(prefabs.arraySize!=3)throw new InvalidOperationException("Shop/farm/wall choices required");
-            for(int i=0;i<3;i++)if(prefabs.GetArrayElementAtIndex(i).objectReferenceValue==null||((GameBuilding)prefabs.GetArrayElementAtIndex(i).objectReferenceValue).Kind==BuildingKind.Factory)throw new InvalidOperationException("Invalid building choice");
+            if(prefabs.arraySize!=4)throw new InvalidOperationException("Shop/farm/wall/barracks choices required");
+            var kinds=new System.Collections.Generic.HashSet<BuildingKind>();
+            for(int i=0;i<prefabs.arraySize;i++)
+            {
+                var choice=prefabs.GetArrayElementAtIndex(i).objectReferenceValue as GameBuilding;
+                if(choice==null||choice.Kind==BuildingKind.Factory||!kinds.Add(choice.Kind))throw new InvalidOperationException("Invalid or duplicate building choice");
+            }
         }
     }
     public static void Stage4()=>Stage5();

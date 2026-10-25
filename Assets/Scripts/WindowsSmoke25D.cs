@@ -50,6 +50,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             coinStream.enabled=false; // Explicit fixtures below control rewards; ordinary games keep autonomous spawning.
             Check(ArenaLayout.Depth==depth,"Configured depth "+depth);
             Check(progress.Gold<2&&progress.Experience==0&&progress.Level==1&&hero.GetComponent<OwnerEconomy>().Bones==0&&hero.GetComponent<OwnerEconomy>().ProductKg==0,"Fresh resources and level");
+            Check(FindObjectsByType<Barracks>().Length==0&&FindObjectsByType<SausageWarrior>().Length==0,"Windows fresh match contains no previous barracks or warriors");
             Check(hero.GetComponent<Health>().MaximumKg==100&&hero.GetComponent<Health>().RegenerationPercentPerSecond==0,"Fresh session resets kill growth and percent regeneration");
             var anchors=FindObjectsByType<HookAnchor>();
             Check(anchors.Length==10&&anchors.Count(a=>a.transform.position.x<0)==5&&anchors.Count(a=>a.transform.position.x>0)==5,"Five hook eyes generated on each bank");
@@ -199,6 +200,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
                 var missed=coinStream.SpawnOne();missed.transform.position=new Vector3(0,-10.55f);missed.Advance(1);yield return null;
                 Check(missed==null,"Windows missed coin washes out and is destroyed");
             }
+            if(depth==16)yield return CheckBarracks(hero,progress);
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"chain_"+depth+".png"));yield return new WaitForEndOfFrame();
             var pause=MatchPause.Instance;pause.HandleEscape();Check(pause.IsPaused&&Time.timeScale==0,"Pause freezes game");
             double pausedClock=clock.ElapsedSeconds;yield return new WaitForSecondsRealtime(.15f);
@@ -208,10 +210,55 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             yield return new WaitUntil(()=>SceneManager.GetActiveScene().name=="MainMenu");
             yield return new WaitForSecondsRealtime(.4f);
             Check(Time.timeScale==1&&SceneManager.sceneCount==1&&MatchHud25D.Instance==null&&FindObjectsByType<RiverCoin>().Length==0,"No residual physics scene, clock, coins or time scale");
+            Check(FindObjectsByType<Barracks>().Length==0&&FindObjectsByType<SausageWarrior>().Length==0&&FindObjectsByType<WarriorPoison>().Length==0,"Windows menu cleans all barracks warriors and poison");
         }
         MatchConfiguration.RememberDepth(previousDepth);
         File.AppendAllText(Path.Combine(output,"result.txt"),"HOOKWARS_WINDOWS_SMOKE_PASS: "+assertions+" assertions\n");Application.Quit(0);
     }
-    void Update(){if(Time.realtimeSinceStartup>100&&!failed){failed=true;File.AppendAllText(Path.Combine(output,"result.txt"),"FAIL: timeout\n");Application.Quit(1);}}
+    IEnumerator CheckBarracks(PlayerMovement hero,PlayerProgression progress)
+    {
+        var builder=hero.GetComponent<PlayerBuilding>();var prefab=builder.BuildingPrefabs.OfType<Barracks>().Single();
+        Check(prefab.BuildCost==250&&prefab.Footprint==new Vector2Int(2,2),"Windows construction palette contains the two by two barracks for 250 gold");
+        // Controlled fixture area; normal matches retain all generated collisions.
+        foreach(var item in FindObjectsByType<GameBuilding>())foreach(var c in item.GetComponents<Collider2D>())c.enabled=false;
+        foreach(var item in FindObjectsByType<PermanentRock>())foreach(var c in item.GetComponents<Collider2D>())c.enabled=false;
+        foreach(var item in FindObjectsByType<HookAnchor>())foreach(var c in item.GetComponents<Collider2D>())c.enabled=false;
+        hero.transform.position=new Vector3(-12.5f,-6);progress.AddGold(10000);
+        var stock=hero.GetComponent<OwnerEconomy>();stock.TakeProduct(stock.ProductKg);stock.TrySpendBones((int)stock.Bones);
+        builder.SelectBuilding(prefab);var building=(Barracks)builder.TryBuildAt(new Vector3(-10,-6));builder.CloseInterface();
+        Check(building!=null&&!building.AutoProduction,"Windows constructs a barracks with production initially off");
+        double gold=progress.Gold;building.SetProduction(true);building.Advance(.01f);
+        Check(!building.HasOrder&&progress.Gold==gold,"Windows missing stock cannot partially spend production gold");
+        stock.AddOutput(4,2);double beforeMeat=stock.ProductKg,beforeBones=stock.BoneKg;building.Advance(.01f);
+        Check(building.HasOrder&&Math.Abs(gold-progress.Gold-50)<.0001&&Math.Abs(beforeMeat-stock.ProductKg-4)<.0001&&Math.Abs(beforeBones-stock.BoneKg-2)<.0001,"Windows order atomically pays four meat two bones and fifty gold");
+        for(int i=0;i<6;i++){gold=progress.Gold;Check(building.TryUpgrade(i)&&Math.Abs(gold-progress.Gold-1000)<.0001,"Windows upgrade branch "+i+" costs one thousand gold");}
+        Check(building.OrderStats.healthLevel==0&&building.Upgrades.healthLevel==1,"Windows upgrade preserves the started order snapshot");
+        yield return new WaitForSeconds(12.15f);building.SetProduction(false);
+        var soldier=FindObjectsByType<SausageWarrior>().Single();
+        Check(soldier.GetComponent<Health>().MaximumKg==40&&soldier.Owner==progress,"Windows automatic twelve second order releases its original forty kilogram warrior");
+        var display=FindAnyObjectByType<ArenaPresentation25D>();var view=display.VisualFor(soldier.GetComponent<Health>());
+        Check(view!=null&&view.GetComponentsInChildren<SkinnedMeshRenderer>().Length==4&&view.GetComponentInChildren<Animator>().runtimeAnimatorController!=null,"Windows renders the authored warrior rig and animator");
+        Check(display.VisualFor(building)!=null&&view.GetComponentsInChildren<Renderer>().All(r=>r.sharedMaterials.All(m=>m.shader.isSupported)),"Windows barracks and soldier materials survive build shader stripping");
+        Vector3 start=soldier.transform.position;yield return new WaitForSeconds(1.5f);
+        Check(Vector2.Distance(start,soldier.transform.position)>.05f&&ArenaLayout.IsInsideBank(soldier.transform.position,false,SausageWarrior.BodyRadius),"Windows warrior wanders on its home bank");
+        stock.AddOutput(4,2);building.SetProduction(true);building.Advance(.1f);float frozen=building.Progress;
+        MatchPause.Instance.SetPaused(true);building.Advance(12);yield return new WaitForSecondsRealtime(.15f);
+        Check(building.Progress==frozen,"Windows pause freezes the paid barracks order");MatchPause.Instance.SetPaused(false);
+        soldier.transform.position=new Vector3(-15,-7);soldier.enabled=false;building.Advance(12);building.SetProduction(false);
+        var upgraded=FindObjectsByType<SausageWarrior>().Single(w=>w!=soldier);upgraded.enabled=false;upgraded.transform.position=new Vector3(-7,-3.7f);
+        Check(upgraded.GetComponent<Health>().MaximumKg==50&&upgraded.Stats.poisonLevel==1,"Windows next warrior inherits improved health and poison");
+        var rival=FindAnyObjectByType<EnemyChase>().GetComponent<PlayerProgression>();
+        var target=Instantiate(soldier,new Vector3(-7,-3),Quaternion.identity);target.Bind(rival,new WarriorStats{healthLevel=20},false);target.enabled=false;
+        upgraded.enabled=true;float deadline=Time.time+3;
+        while(target.GetComponent<Health>().CurrentKg==240&&Time.time<deadline)yield return null;
+        upgraded.enabled=false;float after=target.GetComponent<Health>().CurrentKg;
+        Check(after==233||after==226,"Windows animated warrior strike deals approved ordinary or double critical damage");
+        yield return new WaitForSeconds(1.1f);
+        Check(target.GetComponent<Health>().CurrentKg==after-1,"Windows poison ticks once per game second after a successful strike");
+        ScreenCapture.CaptureScreenshot(Path.Combine(output,"barracks_16.png"));yield return new WaitForEndOfFrame();
+        gold=progress.Gold;int alive=FindObjectsByType<SausageWarrior>().Length;
+        Check(building.Demolish(progress)&&progress.Gold==gold&&FindObjectsByType<SausageWarrior>().Length==alive,"Windows demolition preserves soldiers and refunds no gold");
+    }
+    void Update(){if(Time.realtimeSinceStartup>115&&!failed){failed=true;File.AppendAllText(Path.Combine(output,"result.txt"),"FAIL: timeout\n");Application.Quit(1);}}
 #endif
 }

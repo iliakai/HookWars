@@ -6,8 +6,8 @@ public class BuildingUpgradeMenu : MonoBehaviour
     [SerializeField] private Camera worldCamera;
     private GameBuilding selected;
     public bool SelectedThisFrame { get; private set; }
-    public static Rect ScreenRect => new Rect(Screen.width - 412, Mathf.Max(70,Screen.height-390), 400, 378);
-    private Rect Panel => ScreenRect;
+    public static Rect ScreenRect => new Rect(Screen.width - 412, Mathf.Max(70,Screen.height-502), 400, 490);
+    private Rect Panel => selected is Barracks ? ScreenRect : new Rect(Screen.width-412,Mathf.Max(70,Screen.height-390),400,378);
     public bool Contains(Vector2 point) => selected != null && Panel.Contains(point);
     private void Awake() { if (worldCamera == null) worldCamera = Camera.main; }
     private bool CanAct => !MatchPause.BlocksGameplay && !GetComponent<Health>().IsDead && !GetComponent<HookVictim>().IsCaught;
@@ -41,6 +41,13 @@ public class BuildingUpgradeMenu : MonoBehaviour
         for (int i = 0; i < selected.UpgradeCount; i++)
             if (GUI.Button(new Rect(box.x + 10, box.y + 104 + i * 40, 380, 36), selected.UpgradeLabel(i)))
                 selected.TryUpgrade(i);
+        if(selected is Barracks barracks)
+        {
+            if(GUI.Button(new Rect(box.x+10,box.y+348,380,30),barracks.AutoProduction?"Производство: ВКЛ — приостановить":"Производство: ВЫКЛ — включить"))
+                barracks.SetProduction(!barracks.AutoProduction);
+            var stats=barracks.Upgrades;
+            GUI.Label(new Rect(box.x+10,box.y+384,380,62),$"Следующие: {stats.Health:0} кг · урон {stats.Damage:0} · радиус {stats.Range:0.0} м\nУдар: {stats.AttackPeriod:0.###} с · яд {stats.Poison:0} кг/с × 10 с\nКрит: {stats.CriticalChance*100:0.##}% · урон ×2");
+        }
         if (GUI.Button(new Rect(box.x + 320, box.y + box.height-38, 70, 26), "Закрыть")) selected = null;
         if(selected!=null&&selected.Kind!=BuildingKind.Factory&&GUI.Button(new Rect(box.x+10,box.y+box.height-38,290,26),"Снести (без возврата ресурсов)"))
             if(selected.Demolish(GetComponent<PlayerProgression>()))selected=null;

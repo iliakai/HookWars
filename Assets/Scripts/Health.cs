@@ -11,6 +11,11 @@ public class Health : MonoBehaviour
     public float RegenerationPercentPerSecond=>regenerationPercentPerSecond;
     public float RegenerationKgPerSecond=>maxHealth * regenerationPercentPerSecond / 100;
     public float CarcassMassOnDeath { get; private set; }
+    public void ConfigureSpawnHealth(float amount)
+    {
+        if(!float.IsFinite(amount)||amount<=0)throw new ArgumentOutOfRangeException(nameof(amount));
+        maxHealth=currentHealth=amount;CarcassMassOnDeath=0;
+    }
     public void EatEnemyMass(float amount)
     {
         if (IsDead || !float.IsFinite(amount) || amount <= 0) return;

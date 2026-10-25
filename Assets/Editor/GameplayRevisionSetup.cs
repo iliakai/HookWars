@@ -67,9 +67,9 @@ public static class GameplayRevisionSetup
         config.FindProperty("rockPrefab").objectReferenceValue=AssetDatabase.LoadAssetAtPath<PermanentRock>(RockLogic);config.ApplyModifiedPropertiesWithoutUndo();
         foreach(var builder in Object.FindObjectsByType<PlayerBuilding>())
         {
-            var data=new SerializedObject(builder);var choices=data.FindProperty("buildingPrefabs");choices.arraySize=3;
-            string[] paths={EconomySetup.ShopPath,EconomySetup.FarmPath,EconomySetup.WallPath};
-            for(int i=0;i<3;i++)choices.GetArrayElementAtIndex(i).objectReferenceValue=AssetDatabase.LoadAssetAtPath<GameBuilding>(paths[i]);data.ApplyModifiedPropertiesWithoutUndo();
+            var data=new SerializedObject(builder);var choices=data.FindProperty("buildingPrefabs");choices.arraySize=4;
+            string[] paths={EconomySetup.ShopPath,EconomySetup.FarmPath,EconomySetup.WallPath,BarracksSetup.Building};
+            for(int i=0;i<paths.Length;i++)choices.GetArrayElementAtIndex(i).objectReferenceValue=AssetDatabase.LoadAssetAtPath<GameBuilding>(paths[i]);data.ApplyModifiedPropertiesWithoutUndo();
         }
         var display=new SerializedObject(Object.FindAnyObjectByType<ArenaPresentation25D>());var models=display.FindProperty("models");int index=-1;
         for(int i=0;i<models.arraySize;i++)if(models.GetArrayElementAtIndex(i).FindPropertyRelative("kind").enumValueIndex==(int)ArenaPresentation25D.VisualKind.Rock)index=i;

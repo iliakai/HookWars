@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public enum BuildingKind { Factory, Shop, Farm, Wall }
+public enum BuildingKind { Factory, Shop, Farm, Wall, Barracks }
 
 public abstract class GameBuilding : MonoBehaviour
 {

@@ -2,6 +2,13 @@ using UnityEngine;
 
 public static class WorldCollision
 {
+    public static int WalkingLayers=>WalkingMask;
+    public static bool ClearAttackLine(Vector2 start,Vector2 end)
+    {
+        foreach(var hit in Physics2D.LinecastAll(start,end,LayerMask.GetMask("Buildings","Mountains")))
+            if(!hit.collider.isTrigger)return false;
+        return true;
+    }
     private static int WalkingMask => LayerMask.GetMask("Buildings", "Mountains", "HookTarget", "PlayerTarget", "Animals");
     public static bool CanMove(Transform mover, Vector3 destination, float radius)
     {

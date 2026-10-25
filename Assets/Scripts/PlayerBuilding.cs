@@ -11,6 +11,7 @@ public class PlayerBuilding : MonoBehaviour
     private Transform preview;
     public Color PreviewColor {get;private set;}
     public GameBuilding SelectedPrefab=>selectedPrefab;
+    public System.Collections.Generic.IReadOnlyList<GameBuilding> BuildingPrefabs=>buildingPrefabs;
     private GameBuilding selectedPrefab;
     private bool homeRightBank;
     public bool HomeRightBank => homeRightBank;
@@ -21,7 +22,7 @@ public class PlayerBuilding : MonoBehaviour
     public int QuarterTurns {get;private set;}
     public Quaternion PlacementRotation=>Quaternion.Euler(0,0,-90*QuarterTurns);
     public Vector2Int PlacementSize=>selectedPrefab==null?Vector2Int.one:(QuarterTurns%2==0?selectedPrefab.Footprint:new Vector2Int(selectedPrefab.Footprint.y,selectedPrefab.Footprint.x));
-    public static Rect ScreenRect => new Rect(12, Screen.height - 206, 370, 194);
+    public static Rect ScreenRect => new Rect(12, Screen.height - 244, 370, 232);
     private Rect MenuRect => ScreenRect;
     public bool BlocksMouseInput
     {
@@ -130,7 +131,7 @@ public class PlayerBuilding : MonoBehaviour
         if (MatchPause.BlocksGameplay) return;
         bool wasEnabled=GUI.enabled; GUI.enabled=CanAct;
         Rect box = MenuRect;
-        GUI.Box(box, "Строительство: клетка 1×1 м");
+        GUI.Box(box, "Строительство · R — поворот");
         if (buildingPrefabs != null)
             for (int i = 0; i < buildingPrefabs.Length; i++)
             {
@@ -138,8 +139,8 @@ public class PlayerBuilding : MonoBehaviour
                 if (prefab != null && GUI.Button(new Rect(box.x + 10, box.y + 26 + i * 31, 350, 28),
                     $"{prefab.DisplayName}: {prefab.BuildCost} {(prefab.Kind == BuildingKind.Wall ? "кг костей" : "золота")}")) SelectBuilding(prefab);
             }
-        GUI.Label(new Rect(box.x + 10, box.y + 158, 350, 30), status);
-        if(IsBuilding&&GUI.Button(new Rect(box.x+10,box.y+124,350,28),"Отменить выбор [Q]"))CloseBuildMode();
+        GUI.Label(new Rect(box.x + 10, box.y + 198, 350, 30), status);
+        if(IsBuilding&&GUI.Button(new Rect(box.x+10,box.y+160,350,28),"Отменить выбор [Q]"))CloseBuildMode();
         GUI.enabled=wasEnabled;
     }
     private void OnDisable() => CloseBuildMode();

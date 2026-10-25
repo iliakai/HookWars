@@ -1,0 +1,70 @@
+PASS Barracks costs 250 gold and occupies two by two cells
+PASS Insufficient building gold creates no barracks
+PASS Actual construction places and pays for barracks once
+PASS New barracks starts switched off without a queued unit
+PASS Missing meat cannot partially spend bones or gold
+PASS Missing bones cannot partially spend meat or gold
+PASS Missing gold cannot partially spend stock
+PASS Invalid transaction inputs are rejected without mutation
+PASS Owner can enable automatic production
+PASS Order atomically spends exactly fifty gold and four meat and two bones
+PASS Improvement branch 0 costs one thousand gold
+PASS Improvement branch 1 costs one thousand gold
+PASS Improvement branch 2 costs one thousand gold
+PASS Improvement branch 3 costs one thousand gold
+PASS Improvement branch 4 costs one thousand gold
+PASS Improvement branch 5 costs one thousand gold
+PASS Already started order retains its original upgrade snapshot
+PASS Repeated upgrade still costs exactly one thousand
+PASS Invalid upgrade indices are rejected
+PASS Switching production off preserves the paid order and freezes progress
+PASS Pause blocks production and paid management actions
+PASS Completed unit waits when its exit is blocked
+PASS Waiting at blocked exit cannot spend another order
+PASS Released unit has the original forty kilogram snapshot
+PASS One completed order produces one soldier on dry land
+PASS Different barracks has independent upgrade levels
+PASS Competing barracks cannot spend the same stock twice
+PASS Next order captures all purchased upgrades
+PASS Health damage range and attack period follow the approved formulas
+PASS Poison probability and model growth follow purchased levels
+PASS Large levels retain finite health positive periods and valid probability
+PASS Real Update starts and advances an automatic twelve second order
+PASS Both models are registered as detached XZ presentation
+PASS Authored barracks meshes and all four soldier surfaces are present
+PASS Imported graphics contain no duplicate three dimensional gameplay physics
+PASS Soldier has configured Generic animation with root motion disabled
+PASS All imported model materials use supported shaders
+PASS An idle soldier wanders on actual game frames
+PASS Wandering soldier stays on its dry home territory
+PASS Real pause freezes wandering and automatic production
+PASS Twelve second automatic production releases exactly one new soldier and waits for more resources
+PASS Soldier starts its attack animation without dealing immediate damage
+PASS Pausing mid-swing freezes its phase without cancelling or restarting the attack
+PASS Native animation timing applies one normal hit or exactly double critical damage
+PASS An ally in the same attack sector takes no friendly damage
+PASS Successful strike applies poison once to its enemy
+PASS Poison deals one kilogram on a real one second game tick
+PASS Fresh poison expires after exactly ten isolated one second ticks
+PASS Overlapping poisons use the strongest damage instead of adding together
+PASS Pause also blocks isolated poison advancement
+PASS Death clears all poison doses
+PASS Reviving cannot restore poison from the previous life
+PASS A solid wall blocks the melee line
+PASS An actual strike cannot damage through the wall
+PASS Existing hero hook can damage and capture a sausage warrior
+PASS Cancelling the hook releases the warrior
+PASS Health improvements visibly enlarge the soldier model
+PASS Area upgrade extends the weapon bone independently from its damage thickness
+PASS Poison upgrades tint only the club with the soldier's acid color
+PASS Critical chance upgrades apply the individual roasted body tint
+PASS Owner can demolish a barracks with an unfinished paid order
+PASS Demolition refunds nothing and preserves already released soldiers
+PASS A guaranteed critical hit doubles base damage instead of changing its multiplier with upgrades
+PASS Enemy soldier and health graphics obey the unrevealed enemy bank fog
+PASS Enemy hero retaliates against a nearby hostile warrior on native animation frames
+PASS Leaving a populated barracks match is accepted
+PASS Returning to menu removes barracks soldiers poison and pause state
+PASS A new match can start after barracks production and combat
+PASS New match starts without previous soldiers barracks upgrades or product stock
+HOOKWARS_BARRACKS_PASS: 69

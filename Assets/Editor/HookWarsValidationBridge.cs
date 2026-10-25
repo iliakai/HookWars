@@ -50,6 +50,7 @@ public static class HookWarsValidationBridge
             }
             string key = active.StartsWith("chain-rock")?ChainRockChecks.Key:active.StartsWith("expansion-")?GameplayExpansionChecks.Key:active=="flight-audio"?HookFlightAudioChecks.Key:active=="river-preview"?River25DPreview.Key:active=="income"?IncomeHUDChecks.Key:active=="meat"?Meat25DChecks.Key:active.StartsWith("revision-") ? GameplayRevisionChecks.Key : active == "acceptance" ? MatchAcceptance25DChecks.Key : active == "launch" ? Launch25DChecks.Key : active == "chain" ? Chain25DChecks.Key : active == "animals" ? Animals25DChecks.Key : active == "world" ? World25DChecks.Key : active == "arena25d" ? "HookWars.25D.Pending" : active == "butcher" ? Butcher25DChecks.Key : "HookWars.CarryingChecks.Pending";
             if(active=="river-rewards")key=RiverRewardsChecks.Key;
+            if(active=="barracks")key=BarracksChecks.Key;
             if (SessionState.GetBool(key, false) || EditorApplication.isPlayingOrWillChangePlaymode) return;
             Application.runInBackground = SessionState.GetBool(Active + ".Background", false);
             Write(active, SessionState.GetBool(key + ".Passed", false) ? "passed" : "failed", "See log.txt");
@@ -72,6 +73,16 @@ public static class HookWarsValidationBridge
             }
             File.Delete(path);
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
+            if(request.operation=="barracks-setup")
+            {BarracksSetup.Configure();Write(request.operation,"passed","Barracks and sausage warriors configured");return;}
+            if(request.operation=="barracks-verify")
+            {Legacy25DCleanup.Verify("docs/validation/023-assets.txt");Write(request.operation,"passed","All scene prefab material GUID references verified");return;}
+            if(request.operation=="barracks")
+            {
+                SessionState.SetString(Active,request.operation);ValidationPlayScope.CurrentScene();
+                SessionState.SetBool(Active+".Background",Application.runInBackground);Application.runInBackground=true;
+                Write(request.operation,"running","Barracks Play Mode checks");BarracksChecks.Run();return;
+            }
             if(request.operation=="expansion-meat-setup")
             {ExpansionAssetsSetup.ConfigureMeat();Write(request.operation,"passed","New rib steak configured");return;}
             if(request.operation=="river-rewards-setup")
@@ -101,7 +112,7 @@ public static class HookWarsValidationBridge
             if(request.operation=="windows-build")
             {
                 Write(request.operation,"running","Building in the existing GUI Editor");
-                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/022-windows-build.txt");return;
+                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/023-windows-build.txt");return;
             }
             if (request.operation == "body-measure")
             {

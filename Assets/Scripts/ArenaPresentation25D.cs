@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 [DefaultExecutionOrder(1000)]
 public class ArenaPresentation25D : MonoBehaviour
 {
-    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass, Rock, Anchor, Coin }
+    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass, Rock, Anchor, Coin, Barracks, Warrior }
     [System.Serializable]
     public struct ModelOverride
     {
@@ -164,7 +164,7 @@ public class ArenaPresentation25D : MonoBehaviour
                 throw new System.InvalidOperationException("3D model must contain no gameplay physics or sprites: "+prefab.name);
             foreach(var script in prefab.GetComponentsInChildren<MonoBehaviour>(true))
                 if(script==null||!(script is ButcherVisual25D||script is BuildingPresentation25D||script is AnimalPresentation25D||
-                    script is HookWars.Animals.AnimalMotion||script is HookWars.Buildings.BuildingVisualController))
+                    script is HookWars.Animals.AnimalMotion||script is HookWars.Buildings.BuildingVisualController||script is WarriorVisual25D||script is BarracksVisual25D))
                     throw new System.InvalidOperationException("Unexpected script in visual prefab: "+prefab.name);
             view = new GameObject(source.name + " 25D"); view.transform.SetParent(generated.transform, false);
             GameObject model=Instantiate(prefab, view.transform, false);model.name="Model";
@@ -174,9 +174,11 @@ public class ArenaPresentation25D : MonoBehaviour
             {
                 ButcherVisual25D butcher = model.GetComponent<ButcherVisual25D>();
                 if (butcher != null) butcher.Bind(hero);
+                model.GetComponent<WarriorVisual25D>()?.Bind(hero.GetComponent<SausageWarrior>());
                 if (hero.GetComponent<PlayerHook>() != null) CreateHookAura(view.transform);
             }
             if (source is GameBuilding building) model.GetComponent<BuildingPresentation25D>()?.Bind(building);
+            if (source is Barracks barracks) model.GetComponent<BarracksVisual25D>()?.Bind(barracks);
             if (source is Animal animal) model.GetComponent<AnimalPresentation25D>()?.Bind(animal);
         }
         view.SetActive(source.gameObject.activeInHierarchy);
@@ -216,7 +218,7 @@ public class ArenaPresentation25D : MonoBehaviour
     public GameObject ModelFor(Component source)
     {
         VisualKind kind;
-        if (source is Health) kind = source.GetComponent<PlayerMovement>() != null||source.GetComponent<ButcherHelper>()?.Factory?.Owner.GetComponent<PlayerMovement>()!=null ? VisualKind.Player : VisualKind.Enemy;
+        if (source is Health) kind = source.GetComponent<SausageWarrior>()!=null ? VisualKind.Warrior : source.GetComponent<PlayerMovement>() != null||source.GetComponent<ButcherHelper>()?.Factory?.Owner.GetComponent<PlayerMovement>()!=null ? VisualKind.Player : VisualKind.Enemy;
         else if (source is Animal animal) kind = animal.Kind == Animal.Species.Cow ? VisualKind.Cow : animal.Kind == Animal.Species.Pig ? VisualKind.Pig : VisualKind.Sheep;
         else if (source is Carcass carcass)
         {
@@ -229,6 +231,7 @@ public class ArenaPresentation25D : MonoBehaviour
         else if (source is BoneWall) kind = VisualKind.Wall;
         else if (source is AnimalFarm) kind = VisualKind.Farm;
         else if (source is MeatShop) kind = VisualKind.Shop;
+        else if (source is Barracks) kind = VisualKind.Barracks;
         else if (source is GameBuilding) kind = VisualKind.Factory;
         else kind = VisualKind.Hook;
         if (models != null) foreach (ModelOverride model in models) if (model.kind == kind) return model.prefab;
@@ -253,10 +256,11 @@ public class ArenaPresentation25D : MonoBehaviour
         {
             if (hero.gameObject.scene != gameObject.scene) continue;
             var helper=hero.GetComponent<ButcherHelper>();
-            bool friendly=hero.GetComponent<PlayerMovement>()!=null||helper?.Factory?.Owner.GetComponent<PlayerMovement>()!=null;
+            var warrior=hero.GetComponent<SausageWarrior>();
+            bool friendly=CombatOwnership.OwnerOf(hero)?.GetComponent<PlayerMovement>()!=null;
             Color color = friendly ? new Color(0.2f, 0.65f, 1) : new Color(0.95f, 0.24f, 0.18f);
             GameObject view = View(hero);
-            view.transform.localScale=helper!=null?Vector3.one*.5f:Vector3.one;
+            view.transform.localScale=Vector3.one*(warrior!=null?warrior.Stats.BodyScale:helper!=null?.5f:1f);
             view.SetActive(hero.gameObject.activeInHierarchy && !hero.IsDead);
             var aura=view.transform.Find("Hook mode aura");
             if(aura!=null)
@@ -277,12 +281,13 @@ public class ArenaPresentation25D : MonoBehaviour
                 cargo.AddComponent<CargoPresentation25D>().Bind(hero.GetComponent<CarcassCarrier>(),this);
                 GameObject hp = Primitive("Health", PrimitiveType.Cube, view.transform, new Vector3(0.9f, 0.09f, 0.12f), Color.green);
                 hp.transform.localPosition = Vector3.up * (view.GetComponentInChildren<ButcherVisual25D>() != null ? 1.65f : 2.1f);
+                if(warrior!=null){hp.transform.localPosition=Vector3.up*1.2f;arrow.SetActive(false);tip.SetActive(false);}
                 GameObject team = Primitive("Team", PrimitiveType.Cylinder, view.transform, new Vector3(1.1f, 0.005f, 1.1f), color);
                 team.transform.localPosition = Vector3.up * 0.007f;
                 if(hero.GetComponent<PlayerHook>()!=null&&overlayMaterial!=null)team.SetActive(false);
             }
             PlayerAim aim = hero.GetComponentInChildren<PlayerAim>();
-            Vector2 direction = aim != null ? aim.AimDirection : helper!=null?helper.AimDirection:(Vector2)(FindPlayerPosition() - hero.transform.position);
+            Vector2 direction = aim != null ? aim.AimDirection : warrior!=null?warrior.AimDirection:helper!=null?helper.AimDirection:hero.GetComponent<EnemyMelee>()?.AimDirection??(Vector2)(FindPlayerPosition() - hero.transform.position);
             HeroActionTiming25D timing = hero.GetComponent<HeroActionTiming25D>();
             if (timing != null) direction = timing.ResolveFacing(direction);
             Quaternion facing=ArenaSpace25D.Facing(direction);
