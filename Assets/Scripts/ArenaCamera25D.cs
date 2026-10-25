@@ -10,32 +10,45 @@ public class ArenaCamera25D : MonoBehaviour
     private Camera view;
     public float Zoom {get;private set;}=1;
     private Vector2 center;
-    public void SetZoom(float zoom){Zoom=Mathf.Clamp(zoom,1,4);if(Zoom==1)center=Vector2.zero;Fit();}
+    private float targetZoom=1,yaw;
+    private bool orbiting;
+    private Vector2 lastMouse,zoomAnchor;
+    public float Yaw=>yaw;
+    public void SetZoom(float zoom){targetZoom=Zoom=Mathf.Clamp(zoom,1,4);if(Zoom==1)center=Vector2.zero;Fit();}
     public float Tilt { get => tilt; set => tilt = Mathf.Clamp(value, 25, 80); }
     private void Awake() { view = GetComponent<Camera>(); Fit(); }
     private void LateUpdate()
     {
         var mouse=Mouse.current;
-        if(mouse!=null&&!MatchPause.BlocksGameplay&&!GamePointer.OverInterface(mouse.position.ReadValue()))
+        if(mouse!=null&&!MatchPause.BlocksGameplay)
         {
+            Vector2 position=mouse.position.ReadValue();bool overUI=GamePointer.OverInterface(position);
+            if(mouse.middleButton.wasPressedThisFrame&&!overUI){orbiting=true;lastMouse=position;}
+            if(!mouse.middleButton.isPressed)orbiting=false;
+            if(orbiting){var delta=position-lastMouse;yaw=Mathf.Repeat(yaw+delta.x*.3f,360);Tilt+=delta.y*.25f;lastMouse=position;}
             float scroll=mouse.scroll.ReadValue().y;
-            if(Mathf.Abs(scroll)>.01f)
+            if(!overUI&&Mathf.Abs(scroll)>.01f)
             {
-                GamePointer.TryLogicalPoint(view,mouse.position.ReadValue(),out var before);
-                SetZoom(Zoom*Mathf.Pow(1.15f,scroll/120f));
-                GamePointer.TryLogicalPoint(view,mouse.position.ReadValue(),out var after);
-                center+=(Vector2)(before-after);
+                targetZoom=Mathf.Clamp(targetZoom*Mathf.Pow(1.4f,scroll/120f),1,4);zoomAnchor=position;
+            }
+            if(Mathf.Abs(Zoom-targetZoom)>.0001f)
+            {
+                GamePointer.TryLogicalPoint(view,zoomAnchor,out var before);
+                Zoom=Mathf.Lerp(Zoom,targetZoom,1-Mathf.Exp(-18*Time.unscaledDeltaTime));
+                if(Mathf.Abs(Zoom-targetZoom)<.001f)Zoom=targetZoom;
+                Fit();GamePointer.TryLogicalPoint(view,zoomAnchor,out var after);center+=(Vector2)(before-after);
                 center.x=Mathf.Clamp(center.x,-ArenaLayout.OuterEdge*(1-1/Zoom),ArenaLayout.OuterEdge*(1-1/Zoom));
-                center.y=Mathf.Clamp(center.y,-10*(1-1/Zoom),10*(1-1/Zoom));
+                center.y=Mathf.Clamp(center.y,-ArenaLayout.FieldHeight*.5f*(1-1/Zoom),ArenaLayout.FieldHeight*.5f*(1-1/Zoom));
             }
         }
+        else orbiting=false;
         Fit();
     }
     public void Fit()
     {
         if (view == null) view = GetComponent<Camera>();
         // Camera is south of the field: logical +Y projects UP; +X projects RIGHT.
-        transform.rotation = Quaternion.Euler(tilt, 0, 0);
+        transform.rotation = Quaternion.Euler(tilt, yaw, 0);
         transform.position = new Vector3(center.x, 1, center.y) - transform.forward * 65f;
         view.orthographic = true;
         view.nearClipPlane = 0.1f; view.farClipPlane = 150;

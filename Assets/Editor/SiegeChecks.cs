@@ -120,7 +120,7 @@ public static class SiegeChecks
                 Check(barracks.QueueCount==0&&!barracks.AutoProduction&&Object.FindObjectsByType<SausageWarrior>().Length==3,"Paid manual queue is produced sequentially and stops when empty");
                 stock.AddOutput(4,2);barracks.SetProduction(true);barracks.Advance(.1f);Check(barracks.QueueCount==1,"Explicit conveyor mode pays one next order when stock is available");
                 barracks.SetProduction(false);EconomyChecks.Set(barracks,"nextExitCheck",0f);barracks.Advance(12);Check(Object.FindObjectsByType<SausageWarrior>().Length==4&&barracks.QueueCount==0,"Disabling conveyor preserves and finishes its already paid order");
-                Check(barracks.SetSending(true)&&Object.FindObjectsByType<SausageWarrior>().All(w=>w.AutoRaiding),"Completing the own bridge unlocks sending for its existing troops");
+                Check(!barracks.SetSending(true)&&Object.FindObjectsByType<SausageWarrior>().All(w=>!w.AutoRaiding),"Completed bridges do not enable automatic troop sending");
                 owner.transform.position=new Vector3(-10,0);rival.transform.position=new Vector3(12,0);
                 soldier.transform.position=new Vector3(-4,7);soldier.enabled=true;soldier.SetAutoRaid(false);
                 var camera=Camera.main;var screen=(Vector2)camera.WorldToScreenPoint(ArenaSpace25D.ToWorld(soldier.transform.position));dragMin=screen-Vector2.one*24;dragMax=screen+Vector2.one*24;
@@ -187,7 +187,7 @@ public static class SiegeChecks
                 {
                     var unit=Object.FindObjectsByType<SausageWarrior>().Single(w=>w.Stats.healthLevel==level&&w.SourceBarracks==null);
                     var visual=display.VisualFor(unit.GetComponent<Health>());visual.rotation=Quaternion.Euler(0,180,0);
-                    Check(Near(visual.localScale.x,1+.15f*level),"Health level "+level+" has triple visible growth per purchase");
+                    Check(Near(visual.localScale.x,(1+.15f*level)/1.5f),"Health level "+level+" has triple visible growth per purchase");
                     var club=visual.GetComponentsInChildren<SkinnedMeshRenderer>().Single(r=>r.name.Contains("Femur_Club"));var baked=new Mesh();club.BakeMesh(baked);
                     float lowest=baked.vertices.Min(v=>club.transform.TransformPoint(v).y);Object.DestroyImmediate(baked);
                     Check(lowest>=-.025f,"Upgraded club at level "+level+" remains visible above the ground");
@@ -226,6 +226,7 @@ public static class SiegeChecks
             {
                 helperCrossed|=returningHelper.transform.position.x<-2.8f;
                 if(returningHelper.GetComponent<CarcassCarrier>().CurrentMassKg>0&&Time.time-started<30)return;
+                Debug.Log("SIEGE_CHECK_HELPER: p="+returningHelper.transform.position+" cargo="+returningHelper.GetComponent<CarcassCarrier>().CurrentMassKg+" factory="+returningHelper.Factory.transform.position+" raw="+returningHelper.Factory.RawKg+" free="+returningHelper.Factory.FreeRawKg+" crossed="+helperCrossed+" colliders="+string.Join(",",Physics2D.OverlapCircleAll(returningHelper.transform.position,returningHelper.Radius+.02f).Select(c=>c.name)));
                 Check(helperCrossed&&returningHelper.GetComponent<CarcassCarrier>().CurrentMassKg==0,"Native helper AI returns over the bridge and delivers meat to its own factory");Time.timeScale=1;
                 var factory=rival.GetComponent<OwnerEconomy>().Factory;
                 Check(factory.MaximumHP==3000&&factory.CurrentHP==3000,"Enemy factory retains its full strongest durability before siege");

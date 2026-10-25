@@ -1,0 +1,32 @@
+Log: INCOME_CHECK: Passive income without shops: expected 0,5, actual 0,5
+Log: INCOME_CHECK: Real shop initialized for HUD owner
+Log: INCOME_CHECK: Passive plus actual sales from one shop: expected 2,5, actual 2,50000002980232
+Log: INCOME_CHECK: Real shop initialized for HUD owner
+Log: INCOME_CHECK: Two shops share stock and both contribute: expected 4,5, actual 4,50000005960464
+Log: INCOME_CHECK: Purchase accepted without changing income
+Log: INCOME_CHECK: Purchases do not reduce gross receipts: expected 4,5, actual 4,50000005960464
+Log: INCOME_CHECK: Disabled shop no longer contributes: expected 2,5, actual 2,50000002980232
+Log: INCOME_CHECK: Empty stock contributes no theoretical shop income: expected 0,5, actual 0,5
+Log: INCOME_CHECK: Limited stock yields only its actual .5 gold, plus passive income
+Log: INCOME_CHECK: Exhausted stock returns to passive rate: expected 0,5, actual 0,5
+Log: INCOME_CHECK: Pause displays zero income: expected 0, actual 0
+Log: INCOME_CHECK: No gold arrives while paused
+Log: INCOME_CHECK: Resume excludes paused time from income sampling: expected 0,5, actual 0,5
+Log: INCOME_CHECK: Fresh owner starts with zero gold and default income
+Log: INCOME_CHECK: Production fixture owns its own storage
+Log: INCOME_CHECK: Factory accepts one kg raw meat
+Log: INCOME_CHECK: One kg raw becomes exactly .5 kg ready meat plus .5 kg bones
+Log: INCOME_CHECK: Eighteen kg ready stock no longer blocks raw acceptance and its XP
+Log: INCOME_CHECK: Unlimited ready storage continues processing with conserved output
+Log: INCOME_CHECK: Level one shop sells .1kg for 2 gold from unlimited ready storage
+Log: INCOME_CHECK: Raw acceptance depends only on raw capacity
+Log: INCOME_CHECK: Processing can exceed the former finished storage capacity without blocking
+Log: INCOME_CHECK: Empty raw queue closes working visual state
+Log: INCOME_CHECK: Taking finished stock does not create extra product or bones
+Log: INCOME_CHECK: Storage upgrade expands raw capacity while finished stock remains unlimited
+Log: INCOME_CHECK: Level two shop improves both sale speed and price to five gold/s
+Log: INCOME_CHECK: Remaining 1.9kg finished meat sells for forty-seven and a half gold
+Log: INCOME_CHECK: Second capacity upgrade adds another eighteen raw kg without limiting finished stock
+Log: INCOME_CHECK: First processing upgrade reduces seconds per kg by thirty percent
+Log: INCOME_CHECK: Second processing upgrade compounds the thirty percent reduction
+Log: HOOKWARS_INCOME_PASS: 31

@@ -45,7 +45,7 @@ public static class GameplayRevisionSetup
         root=new GameObject("ButcherHelper");
         try
         {
-            root.AddComponent<CircleCollider2D>().radius=.25f;
+            root.AddComponent<CircleCollider2D>().radius=.25f/1.5f;
             root.AddComponent<Health>();root.AddComponent<HookVictim>();root.AddComponent<CarcassCarrier>();
             root.AddComponent<HeroActionTiming25D>();root.AddComponent<ButcherHelper>();
             var corpse=root.AddComponent<HeroCarcassSpawner>();var data=new SerializedObject(corpse);

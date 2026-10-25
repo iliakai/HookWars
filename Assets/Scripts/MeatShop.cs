@@ -18,7 +18,7 @@ public class MeatShop : GameBuilding
     public override BuildingKind Kind => BuildingKind.Shop;
     public override string DisplayName => "Мясная лавка";
     public override string Info => $"Уровень: {level}\nПродажа: {saleKgPerSecond:0.##} кг/с, доход до {GoldPerSecond:0.#} зол./с\nЦена: {goldPerKg:0.##} золота/кг\nПродаёт готовое мясо со склада цеха";
-    public override string UpgradeLabel(int index) => $"Уровень {level} → {level+1}: +{saleSpeedIncrease*goldPerKg:0.#} зол./с за {upgradeCost} зол.";
+    public override string UpgradeLabel(int index) => $"Уровень {level} → {level+1}: +0,1 кг/с, +5 зол./кг за {upgradeCost} зол.";
     private void Update() => Advance(Time.deltaTime);
     public double Advance(double seconds)
     {
@@ -32,6 +32,7 @@ public class MeatShop : GameBuilding
     {
         if (owner == null || index != 0 || !owner.TrySpendGold(upgradeCost)) return false;
         saleKgPerSecond += saleSpeedIncrease;
+        goldPerKg += 5;
         level++;
         upgradeCost = NextCost(upgradeCost);
         return true;

@@ -172,10 +172,10 @@ public static class IncomeHUDChecks
             owner.AddGold(1000);
             Check(factory.TryUpgrade(1) && double.IsPositiveInfinity(factory.ProductCapacityKg) && factory.CapacityKg == 30,
                 "Storage upgrade expands raw capacity while finished stock remains unlimited");
-            Check(shop.TryUpgrade(0) && shop.Level == 2 && Math.Abs(shop.GoldPerSecond - 4) < 1e-6 && shop.GoldPerKg == 20,
-                "Level two shop earns four gold/s at unchanged twenty gold/kg");
+            Check(shop.TryUpgrade(0) && shop.Level == 2 && Math.Abs(shop.GoldPerSecond - 5) < 1e-6 && shop.GoldPerKg == 25,
+                "Level two shop improves both sale speed and price to five gold/s");
             wallet.TakeProduct(wallet.ProductKg);wallet.AddOutput(1.9, 0); gold = owner.Gold; shop.Advance(10);
-            Check(Math.Abs(owner.Gold - gold - 38) < 1e-5, "Remaining 1.9kg finished meat sells for thirty-eight gold");
+            Check(Math.Abs(owner.Gold - gold - 47.5) < 1e-5, "Remaining 1.9kg finished meat sells for forty-seven and a half gold");
             Check(factory.TryUpgrade(1) && factory.CapacityKg == 48 && double.IsPositiveInfinity(factory.ProductCapacityKg),
                 "Second capacity upgrade adds another eighteen raw kg without limiting finished stock");
             Check(factory.TryUpgrade(0) && EconomyChecks.Near(factory.SecondsPerKg, 1.4),

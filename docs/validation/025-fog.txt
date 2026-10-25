@@ -1,0 +1,11 @@
+Log: EXPANSION_CHECK: Enemy at home does not reveal its own fog
+Log: EXPANSION_CHECK: Enemy mesh and health bar really hidden, not just tinted
+Log: EXPANSION_CHECK: Own bank and neutral river stay visible
+Log: EXPANSION_CHECK: Friendly hero reveals exactly four-meter circle on enemy bank
+Log: EXPANSION_CHECK: Approaching hero restores actual enemy renderers
+Log: EXPANSION_CHECK: Owned helper also reveals its surroundings
+Log: EXPANSION_CHECK: Real hook entered enemy bank
+Log: EXPANSION_CHECK: Hook route reveals one meter each side without widening the whole bank
+Log: EXPANSION_CHECK: Returned hook leaves no permanently explored corridor
+Log: EXPANSION_CHECK: Enemy becomes hidden again when observers leave
+Log: HOOKWARS_EXPANSION_FOG_PASS: 10

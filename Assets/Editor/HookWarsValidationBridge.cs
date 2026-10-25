@@ -52,6 +52,7 @@ public static class HookWarsValidationBridge
             if(active=="river-rewards")key=RiverRewardsChecks.Key;
             if(active=="barracks")key=BarracksChecks.Key;
             if(active=="siege")key=SiegeChecks.Key;
+            if(active=="workers")key=WorkersChecks.Key;
             if (SessionState.GetBool(key, false) || EditorApplication.isPlayingOrWillChangePlaymode) return;
             Application.runInBackground = SessionState.GetBool(Active + ".Background", false);
             Write(active, SessionState.GetBool(key + ".Passed", false) ? "passed" : "failed", "See log.txt");
@@ -74,6 +75,11 @@ public static class HookWarsValidationBridge
             }
             File.Delete(path);
             if (request.operation == "status") { Write("status", "ready", Application.dataPath); return; }
+            if(request.operation=="workers")
+            {
+                SessionState.SetString(Active,request.operation);ValidationPlayScope.CurrentScene();SessionState.SetBool(Active+".Background",Application.runInBackground);
+                Write(request.operation,"running","Workers economy camera Play Mode checks");WorkersChecks.Run();return;
+            }
             if(request.operation=="siege-setup")
             {SiegeSetup.Configure();Write(request.operation,"passed","Bridges, orders, durability and controls configured");return;}
             if(request.operation=="siege")
@@ -122,7 +128,7 @@ public static class HookWarsValidationBridge
             if(request.operation=="windows-build")
             {
                 Write(request.operation,"running","Building in the existing GUI Editor");
-                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/024-windows-build.txt");return;
+                WindowsDevelopment25D.Build();Write(request.operation,"passed","See docs/validation/025-windows-build.txt");return;
             }
             if (request.operation == "body-measure")
             {

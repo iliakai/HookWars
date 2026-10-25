@@ -5,13 +5,13 @@ using UnityEngine;
 [DefaultExecutionOrder(180),RequireComponent(typeof(Health),typeof(HookVictim),typeof(CircleCollider2D))]
 public sealed class SausageWarrior : MonoBehaviour
 {
-    public const float BodyRadius=.2f,MoveSpeed=1.5f,DetectionRange=4;
+    public const float BodyRadius=.2f/1.5f,MoveSpeed=1.5f,DetectionRange=4;
     private Health health,target;
     private GameBuilding buildingTarget;
     private HookVictim victim;
-    private bool homeRight,impactApplied,autoRaid,manualMove,manualAttack;
-    private float attackPhase,nextSearch,nextWander,nextPath;
-    private Vector3 wanderGoal,pathGoal,moveGoal;
+    private bool homeRight,impactApplied,manualMove,manualAttack;
+    private float attackPhase,nextSearch,nextPath;
+    private Vector3 pathGoal,moveGoal;
     private readonly List<Vector3> path=new List<Vector3>();
     public PlayerProgression Owner {get;private set;}
     public Barracks SourceBarracks {get;private set;}
@@ -21,7 +21,7 @@ public sealed class SausageWarrior : MonoBehaviour
     public bool Attacking {get;private set;}
     public bool IsSelected {get;set;}
     public bool HasManualOrder=>manualMove||manualAttack;
-    public bool AutoRaiding=>autoRaid;
+    public bool AutoRaiding=>false;
     public float AttackPhase=>attackPhase;
     public int AttackSerial {get;private set;}
     public Health Target=>target;
@@ -32,10 +32,10 @@ public sealed class SausageWarrior : MonoBehaviour
     {
         Owner=owner;Stats=stats;homeRight=rightBank;
         gameObject.layer=LayerMask.NameToLayer(owner.GetComponent<PlayerMovement>()!=null?"PlayerTarget":"HookTarget");
-        GetComponent<CircleCollider2D>().radius=BodyRadius;health.ConfigureSpawnHealth(stats.Health);wanderGoal=transform.position;
+        GetComponent<CircleCollider2D>().radius=BodyRadius;health.ConfigureSpawnHealth(stats.Health);
     }
     public void AssignBarracks(Barracks barracks)=>SourceBarracks=barracks;
-    public void SetAutoRaid(bool enabled){autoRaid=enabled;nextSearch=nextPath=0;}
+    public void SetAutoRaid(bool enabled){}
     public bool CommandMove(Vector3 position)
     {
         if(MatchPause.BlocksGameplay||health.IsDead||!RiverBridge.Walkable(position,BodyRadius))return false;
@@ -66,7 +66,7 @@ public sealed class SausageWarrior : MonoBehaviour
             WalkTo(moveGoal,.36f);if(Vector2.Distance(transform.position,moveGoal)<.4f)manualMove=false;
             return;
         }
-        if(!Available(target))target=null;if(!Available(buildingTarget))buildingTarget=null;
+        if(!Available(target)||!manualAttack&&target!=null&&!SameBank(target.transform.position))target=null;if(!Available(buildingTarget))buildingTarget=null;
         if(manualAttack&&target==null&&buildingTarget==null)manualAttack=false;
         if(!manualAttack&&Time.time>=nextSearch)
         {
@@ -74,19 +74,11 @@ public sealed class SausageWarrior : MonoBehaviour
             float best=DetectionRange*DetectionRange;
             foreach(var h in FindObjectsByType<Health>())
             {
-                if(!autoRaid&&(h.transform.position.x>0)!=(transform.position.x>0))continue;
+                if(!SameBank(h.transform.position))continue;
                 if(!Available(h))continue;float distance=(h.transform.position-transform.position).sqrMagnitude;
                 if(distance<best&&WorldCollision.ClearAttackLine(transform.position,h.transform.position)){best=distance;target=h;}
             }
-            if(target==null&&autoRaid)
-            {
-                best=float.PositiveInfinity;
-                foreach(var b in FindObjectsByType<GameBuilding>())
-                {
-                    if(!Available(b))continue;float distance=(b.ClosestPoint(transform.position)-(Vector2)transform.position).sqrMagnitude;
-                    if(distance<best){best=distance;buildingTarget=b;}
-                }
-            }
+
         }
         if(target!=null||buildingTarget!=null)
         {
@@ -94,18 +86,13 @@ public sealed class SausageWarrior : MonoBehaviour
             Vector3 goal=buildingTarget!=null?buildingTarget.transform.position:target.transform.position;
             Vector2 aim=buildingTarget!=null?buildingTarget.ClosestPoint(transform.position):(Vector2)goal;
             Vector2 direction=aim-(Vector2)transform.position;if(direction.sqrMagnitude>.00001f)AimDirection=direction.normalized;
-            if(direction.magnitude<=Stats.Range&&WorldCollision.ClearAttackLine(transform.position,aim,buildingTarget!=null?collider:null))
+            if(SameBank(goal)&&direction.magnitude<=Stats.Range&&WorldCollision.ClearAttackLine(transform.position,aim,buildingTarget!=null?collider:null))
             {path.Clear();Attacking=true;impactApplied=false;attackPhase=0;AttackSerial++;return;}
-            WalkTo(goal,Stats.Range*.85f,buildingTarget!=null?collider:null);return;
+            WalkTo(goal,SameBank(goal)?Stats.Range*.85f:.4f,buildingTarget!=null?collider:null);return;
         }
-        if(Time.time>=nextWander||Vector2.Distance(transform.position,wanderGoal)<.2f)
-        {
-            nextWander=Time.time+Random.Range(2,5);bool right=Mathf.Abs(transform.position.x)>ArenaLayout.RiverHalfWidth?transform.position.x>0:homeRight;
-            var bank=ArenaLayout.BankBounds(right,BodyRadius+.03f);
-            wanderGoal=new Vector3(bank.xMin+Random.Range(0,Mathf.FloorToInt(bank.width/.5f)+1)*.5f,bank.yMin+Random.Range(0,Mathf.FloorToInt(bank.height/.5f)+1)*.5f);nextPath=0;
-        }
-        WalkTo(wanderGoal,.3f);
+        path.Clear();
     }
+    private bool SameBank(Vector3 point)=>(point.x>0)==(transform.position.x>0);
     private void ApplyStrike()
     {
         if(health.IsDead||victim.IsCaught||MatchPause.BlocksGameplay)return;
@@ -116,7 +103,7 @@ public sealed class SausageWarrior : MonoBehaviour
             var h=hit.GetComponent<Health>();var b=hit.GetComponent<GameBuilding>();
             Vector2 point=b!=null?b.ClosestPoint(transform.position):(Vector2)hit.bounds.center;
             Vector2 direction=point-(Vector2)transform.position;
-            if(direction.magnitude>Stats.Range||Vector2.Angle(AimDirection,direction)>50||!WorldCollision.ClearAttackLine(transform.position,point,b!=null?hit:null))continue;
+            if(!SameBank(hit.transform.position)||direction.magnitude>Stats.Range||Vector2.Angle(AimDirection,direction)>50||!WorldCollision.ClearAttackLine(transform.position,point,b!=null?hit:null))continue;
             if(Available(h)&&hitOnce.Add(h)){h.TakeDamage(damage,health);if(!h.IsDead)WarriorPoison.Apply(h,health,Stats.Poison);}
             if(Available(b)&&buildings.Add(b))b.TakeDamage(Owner,damage);
         }

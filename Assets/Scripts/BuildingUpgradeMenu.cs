@@ -23,7 +23,8 @@ public class BuildingUpgradeMenu : MonoBehaviour
             return new Rect(screen.x-54,Screen.height-screen.y-20,108,34);
         }
     }
-    public bool Contains(Vector2 point)=>(selected!=null||bridge!=null)&&(Compact?ToolbarRect:ScreenRect).Contains(point);
+    public Rect StatsRect=>new Rect(Mathf.Clamp(ToolbarRect.center.x-165,0,Mathf.Max(0,Screen.width-330)),ToolbarRect.yMax+4,330,90);
+    public bool Contains(Vector2 point)=>(selected!=null||bridge!=null)&&(Compact?(ToolbarRect.Contains(point)||StatsRect.Contains(point)):ScreenRect.Contains(point));
     private void Awake(){if(worldCamera==null)worldCamera=Camera.main;}
     private bool CanAct=>!MatchPause.BlocksGameplay&&GetComponent<Health>()?.IsDead!=true&&GetComponent<HookVictim>()?.IsCaught!=true;
     public bool CloseInterface(){bool open=selected!=null||bridge!=null;selected=null;bridge=null;return open;}
@@ -99,7 +100,9 @@ public class BuildingUpgradeMenu : MonoBehaviour
             {selected.Demolish(GetComponent<PlayerProgression>());CloseInterface();return;}
             if(Picture(new Rect(rect.x+74,rect.y,34,34),selected.IsOperating?2:3,selected.IsOperating?Color.green:Color.red,true,selected.IsOperating?"Приостановить":"Продолжить"))
                 selected.SetOperating(GetComponent<PlayerProgression>(),!selected.IsOperating);
-            if(!string.IsNullOrEmpty(GUI.tooltip))GUI.Box(new Rect(rect.x-60,rect.y+38,230,28),GUI.tooltip);
+            GUI.Box(StatsRect,"");
+            var details=StatsRect;details.x+=8;details.y+=4;details.width-=16;
+            GUI.Label(details,selected.Info+$"\nСледующий уровень: {price} золота");
             return;
         }
         var panel=ScreenRect;GUI.Box(panel,selected.DisplayName);
@@ -113,11 +116,8 @@ public class BuildingUpgradeMenu : MonoBehaviour
             var evt=Event.current;
             if(evt.type==EventType.MouseDown&&production.Contains(evt.mousePosition))
             {if(evt.button==0)barracks.TryQueue();if(evt.button==1)barracks.SetProduction(!barracks.AutoProduction);evt.Use();}
-            bool ready=RiverBridge.OwnComplete(barracks.Owner);
-            if(Icon(new Rect(panel.x+12,panel.y+406,396,34),ready?$"Отправка на другой берег: {(barracks.SendToEnemy?"ВКЛ":"ВЫКЛ")}":"Для отправки восстановите свой мост",ready?Color.white:Color.gray,ready,"Ручные приказы имеют приоритет"))
-                barracks.SetSending(!barracks.SendToEnemy);
             var stats=barracks.Upgrades;
-            GUI.Label(new Rect(panel.x+12,panel.y+448,396,72),$"Следующие: {stats.Health:0} кг · урон {stats.Damage:0} · радиус {stats.Range:0.0} м\nУдар {stats.AttackPeriod:0.###} с · яд {stats.Poison:0} кг/с × 10 с\nКрит {stats.CriticalChance*100:0.##}% ×2");
+            GUI.Label(new Rect(panel.x+12,panel.y+412,396,100),$"Следующие: {stats.Health:0} кг · урон {stats.Damage:0} · радиус {stats.Range:0.0} м\nУдар {stats.AttackPeriod:0.###} с · яд {stats.Poison:0} кг/с × 10 с\nКрит {stats.CriticalChance*100:0.##}% ×2\nВыделите воинов и отдайте приказ ПКМ");
         }
         if(GUI.Button(new Rect(panel.x+320,panel.y+panel.height-42,88,30),"Закрыть"))CloseInterface();
         if(selected!=null&&selected.Kind!=BuildingKind.Factory&&GUI.Button(new Rect(panel.x+12,panel.y+panel.height-42,300,30),"Снести без возврата"))

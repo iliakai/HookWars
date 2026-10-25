@@ -34,7 +34,7 @@ public class SausageFactory : GameBuilding
         {
             Vector2 offset=UnityEngine.Random.insideUnitCircle.normalized*UnityEngine.Random.Range(1.5f,2.5f);
             Vector3 position=transform.position+(Vector3)offset;
-            if(!ArenaLayout.IsInsideBank(position,transform.position.x>0,.27f)||!WorldCollision.FreeCircle(position,.27f))continue;
+            if(!ArenaLayout.IsInsideBank(position,transform.position.x>0,helperPrefab.Radius+.02f)||!WorldCollision.FreeCircle(position,helperPrefab.Radius+.02f))continue;
             if(!owner.TrySpendGold(helperPrice))return false;
             var helper=Instantiate(helperPrefab,position,Quaternion.identity,transform);helper.Bind(this,helperCapacityKg);helpers.Add(helper);return true;
         }

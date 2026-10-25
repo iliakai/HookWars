@@ -1,0 +1,78 @@
+PASS Map depth range is twelve through thirty-six metres
+PASS Each owner starts with its own bridge at the specified river end
+PASS Ghost bridges do not permit walking through water
+PASS Exactly four hook eyes exist on each bank
+PASS All hook eyes stay at least eight metres from mountain boundaries
+PASS Barracks and factory have their approved durability
+PASS Fresh barracks has no conveyor queue or sending before its bridge is complete
+PASS A rival cannot pay for another owner's bridge
+PASS Missing first-stage bones do not partially spend stock
+PASS First stage spends exactly five hundred bones once
+PASS Second stage rejects nine thousand nine hundred ninety-nine gold without spending
+PASS Second stage spends exactly ten thousand gold
+PASS Third stage requires all five hundred ready meat
+PASS Third stage consumes five hundred meat and opens the crossing
+PASS Repeated completion cannot charge again or open the other owner's bridge
+PASS Completed bridge is public walkable terrain while the rest of the river remains blocked
+PASS Presentation height follows the authored bridge arch and returns to shore level
+PASS A million ready meat does not block raw acceptance
+PASS Ready meat and bones can both grow past their old limits without loss
+PASS Queue rejects an unpaid order when resources are absent
+PASS Three clicks immediately pay for three queued warriors without enabling a conveyor
+PASS Upgrade branch 0 is purchasable for later paid orders
+PASS Upgrade branch 1 is purchasable for later paid orders
+PASS Upgrade branch 2 is purchasable for later paid orders
+PASS Upgrade branch 3 is purchasable for later paid orders
+PASS Upgrade branch 4 is purchasable for later paid orders
+PASS Upgrade branch 5 is purchasable for later paid orders
+PASS Already paid queue retains its original stats after upgrades
+PASS Paid manual queue is produced sequentially and stops when empty
+PASS Explicit conveyor mode pays one next order when stock is available
+PASS Disabling conveyor preserves and finishes its already paid order
+PASS Completed bridges do not enable automatic troop sending
+PASS Native mouse dragging selects the intended friendly warrior
+PASS Selection drag does not cast the hero hook
+PASS Native right-click issues a troop order without swinging the hero axe
+PASS A commanded warrior follows a real route across the bridge with raised arch presentation
+PASS Shops and farms have four hundred durability
+PASS A friendly warrior reveals the approved four metre scouting circle after crossing
+PASS Own attacks cannot damage own buildings
+PASS Troop attack orders reject allied buildings and accept enemy buildings
+PASS Warrior attacks actually reduce the enemy building durability on animation frames
+PASS Stopped shop neither consumes meat nor grants income
+PASS Stopped farm cannot spawn animals or accumulate a burst
+PASS Restarting the selected shop resumes real sales
+PASS Upgrade arrow is unavailable when the next level cannot be paid
+PASS Exact next-level gold enables one upgrade and then disables the more expensive next level
+PASS Selecting a shop exposes its compact world toolbar rather than the former side menu
+PASS World building icons block gameplay clicks
+PASS Camera zoom changes the actual orthographic framing
+PASS Selected building is highlighted on the ground
+PASS Health level 0 has triple visible growth per purchase
+PASS Upgraded club at level 0 remains visible above the ground
+PASS Health level 1 has triple visible growth per purchase
+PASS Upgraded club at level 1 remains visible above the ground
+PASS Health level 3 has triple visible growth per purchase
+PASS Upgraded club at level 3 remains visible above the ground
+PASS Damage and area improvements have three times their previous visual increments
+PASS Real enemy kill and partial meat pickup reproduce the carried-cargo scenario
+PASS Actual partially collected hero meat cannot cast a long carried shadow
+PASS Native WASD hero movement can walk across the completed bridge
+PASS A helper stranded across the river can carry a real meat portion
+PASS Native helper AI returns over the bridge and delivers meat to its own factory
+PASS Enemy factory retains its full strongest durability before siege
+PASS Destroying the enemy factory ends and freezes the match exactly once
+PASS Finished match blocks further production and bridge purchases
+PASS Pause controls cannot resume an already finished match
+PASS Finished match permits returning to the main menu
+PASS Menu clears bridges troops and the finished-match freeze
+PASS A fresh match accepts the new depth 12
+PASS Fresh depth 12 regenerates two unfinished bridges without old stages
+PASS Both range extremes retain four safe hook eyes per bank
+PASS New match has no old result troops or paid queues
+PASS Menu clears bridges troops and the finished-match freeze
+PASS A fresh match accepts the new depth 36
+PASS Fresh depth 36 regenerates two unfinished bridges without old stages
+PASS Both range extremes retain four safe hook eyes per bank
+PASS New match has no old result troops or paid queues
+HOOKWARS_SIEGE_PASS: 77

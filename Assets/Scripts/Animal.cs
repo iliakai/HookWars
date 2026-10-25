@@ -21,11 +21,12 @@ public class Animal : MonoBehaviour
     private float pushedUntil;
     public bool IsDead => dead;
     public float MassKg => massKg;
-    public float Radius => radius;
+    public float Radius => radius/1.5f;
+    public void ConfigureSpawnMass(float mass){if(float.IsFinite(mass)&&mass>0&&!dead)massKg=mass;}
     private void Awake()
     {
         victim = GetComponent<HookVictim>();
-        GetComponent<CircleCollider2D>().radius = radius;
+        GetComponent<CircleCollider2D>().radius = Radius;
         rightBank = transform.position.x > 0;
         PickDirection();
     }
@@ -41,7 +42,7 @@ public class Animal : MonoBehaviour
         if (dead || victim.IsCaught || Time.time<pushedUntil) return;
         if (Time.time >= nextDirection) PickDirection();
         Vector3 next = transform.position + (Vector3)direction * moveSpeed * Time.deltaTime;
-        bool moving = ArenaLayout.IsInsideBank(next, rightBank, radius) && WorldCollision.CanMove(transform, next, radius);
+        bool moving = ArenaLayout.IsInsideBank(next, rightBank, Radius) && WorldCollision.CanMove(transform, next, Radius);
         if (moving) { VoluntaryVelocity = (Vector2)(next-transform.position)/Time.deltaTime; transform.position = next; Physics2D.SyncTransforms(); }
         else PickDirection();
     }
@@ -59,7 +60,7 @@ public class Animal : MonoBehaviour
     }
     public bool TryPush(Vector3 destination)
     {
-        if(dead||victim.IsCaught||!ArenaLayout.IsInsideBank(destination,rightBank,radius)||!WorldCollision.CanMove(transform,destination,radius))return false;
+        if(dead||victim.IsCaught||!ArenaLayout.IsInsideBank(destination,rightBank,Radius)||!WorldCollision.CanMove(transform,destination,Radius))return false;
         transform.position=destination;VoluntaryVelocity=Vector2.zero;pushedUntil=Time.time+.12f;Physics2D.SyncTransforms();return true;
     }
 }

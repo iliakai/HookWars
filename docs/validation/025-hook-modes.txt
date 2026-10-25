@@ -1,0 +1,33 @@
+Log: EXPANSION_CHECK: Fresh match defaults to pulling the target
+Log: EXPANSION_CHECK: Actual E key event switches player hook to owner flight
+Log: EXPANSION_CHECK: Pause blocks mode changes
+Log: EXPANSION_CHECK: Outbound hit locks both target and flying owner
+Log: EXPANSION_CHECK: Owner-flight hit deals normal forty kg damage once
+Log: EXPANSION_CHECK: Active hook cannot switch modes midway
+Log: EXPANSION_CHECK: Owner moves while the captured target stays fixed
+Log: EXPANSION_CHECK: Owner arrival clears hook and both capture locks
+Log: EXPANSION_CHECK: Owner stops at the normal safe separation
+Log: EXPANSION_CHECK: Owner follows the first saved bend instead of cutting across the route
+Log: EXPANSION_CHECK: Owner completes the saved bent route
+Log: EXPANSION_CHECK: Returning hook finds a real target collider
+Log: EXPANSION_CHECK: Owner travel can cross the river
+Log: EXPANSION_CHECK: Cancellation in river restores last dry position and releases stationary target
+Log: EXPANSION_CHECK: Near-shore target lands the flying owner on the destination bank
+Log: EXPANSION_CHECK: Impassable terrain cancels owner flight without passing through it
+Log: EXPANSION_CHECK: Disappearing target safely cancels river flight
+Log: EXPANSION_CHECK: Ready hook switches back to target pull
+Log: EXPANSION_CHECK: Default mode still pulls the target without moving owner
+Log: EXPANSION_CHECK: Anchor always pulls owner in selected mode 0
+Log: EXPANSION_CHECK: Anchor remains stationary and releases owner in mode 0
+Log: EXPANSION_CHECK: Select owner mode for second anchor test
+Log: EXPANSION_CHECK: Anchor always pulls owner in selected mode 1
+Log: EXPANSION_CHECK: Anchor remains stationary and releases owner in mode 1
+Log: EXPANSION_CHECK: Flying to meat collects it after releasing owner capture
+Log: EXPANSION_CHECK: Animal hit replaces its body with meat and owner flight collects the ten kg
+Log: EXPANSION_CHECK: Prepare enemy cargo before lethal owner-flight hook
+Log: EXPANSION_CHECK: Lethal owner-flight hit reserves corpse and dropped cargo
+Log: EXPANSION_CHECK: Lethal owner flight preserves partial pickup and the full dropped cargo at target bank
+Log: EXPANSION_CHECK: Lethal arrival releases corpse on dry destination bank
+Log: EXPANSION_CHECK: Owner death during river flight automatically clears both captures and returns to dry ground
+Log: EXPANSION_CHECK: Dead owner cannot change hook mode
+Log: HOOKWARS_HOOK_MODES_PASS: 32

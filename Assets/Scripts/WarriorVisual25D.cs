@@ -43,7 +43,7 @@ public sealed class WarriorVisual25D : MonoBehaviour
             Vector3 local=transform.InverseTransformDirection(velocity);
             animator.SetFloat("MoveX",local.x*eastSign);animator.SetFloat("MoveY",local.z);
             animator.SetFloat("Speed",source.Velocity.magnitude);
-            animator.SetFloat("WalkRate",source.Velocity.magnitude/(.84f/2.55f*source.Stats.BodyScale));
+            animator.SetFloat("WalkRate",source.Velocity.magnitude/(.84f/2.55f*source.Stats.BodyScale/1.5f));
         }
         // Bone scale runs after Animator, so animation curves cannot undo upgrades.
         weapon.localScale=Vector3.Scale(weaponScale,new Vector3(source.Stats.ClubWidth,source.Stats.ClubLength,source.Stats.ClubWidth));

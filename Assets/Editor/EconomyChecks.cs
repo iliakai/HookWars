@@ -361,8 +361,8 @@ public static class EconomyChecks
         comparison.Advance(5);
         Check(Near(a.Gold - gold, b.Gold) && Near(stockA.ProductKg, stockB.ProductKg), "Sales preserve fractional results across time steps");
         a.AddGold(100);
-        Check(shopA.TryUpgrade(0) && Near(shopA.SaleKgPerSecond, 0.2) && shopA.GoldPerKg == 20 && shopA.Level == 2,
-            "Local level upgrade doubles throughput and keeps price at 20");
+        Check(shopA.TryUpgrade(0) && Near(shopA.SaleKgPerSecond, 0.2) && shopA.GoldPerKg == 25 && shopA.Level == 2,
+            "Local level upgrade doubles throughput and raises price to 25");
         Check(shopB.Level == 1 && comparison.Level == 1 && Near(shopB.SaleKgPerSecond, .1) && comparison.GoldPerKg == 20, "Other shop levels and owners remain independent");
 
     }

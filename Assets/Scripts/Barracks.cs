@@ -17,7 +17,7 @@ public sealed class Barracks : GameBuilding
     public override Vector2Int Footprint=>new Vector2Int(2,2);
     public override int UpgradeCount=>6;
     public bool AutoProduction {get;private set;}
-    public bool SendToEnemy {get;private set;}
+    public bool SendToEnemy=>false;
     public int QueueCount=>pending.Count+(hasOrder?1:0);
     public bool CanQueue=>owner!=null&&warriorPrefab!=null&&owner.Gold>=warriorGold&&owner.GetComponent<OwnerEconomy>().ProductKg>=warriorMeat&&owner.GetComponent<OwnerEconomy>().BoneKg>=warriorBones;
     public bool HasOrder=>hasOrder;
@@ -36,13 +36,8 @@ public sealed class Barracks : GameBuilding
         if(owner==null||warriorPrefab==null||!owner.GetComponent<OwnerEconomy>().TrySpendResources(warriorGold,warriorMeat,warriorBones))return false;
         pending.Enqueue(upgrades);return true;
     }
-    public bool SetSending(bool active)
-    {
-        if(!CanManage()||active&&!RiverBridge.OwnComplete(owner))return false;
-        SendToEnemy=active;
-        foreach(var warrior in FindObjectsByType<SausageWarrior>())if(warrior.SourceBarracks==this)warrior.SetAutoRaid(active);
-        return true;
-    }
+    // Retained for older validation callers; troops now receive orders individually.
+    public bool SetSending(bool active)=>!active&&CanManage();
     public bool SetProduction(bool enabled)
     {
         if(!CanManage())return false;
@@ -77,7 +72,7 @@ public sealed class Barracks : GameBuilding
         if(!TryFindExit(out var position))return;
         var warrior=Instantiate(warriorPrefab,position,Quaternion.identity);
         warrior.Bind(owner,order,transform.position.x>0);
-        warrior.AssignBarracks(this);warrior.SetAutoRaid(SendToEnemy);
+        warrior.AssignBarracks(this);
         hasOrder=false;progress=0;
     }
     public bool TryFindExit(out Vector3 position)

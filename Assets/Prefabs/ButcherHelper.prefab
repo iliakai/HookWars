@@ -143,7 +143,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57c6421973ee4d44f87a990afe587a7a, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ButcherHelper
-  moveSpeed: 3
+  moveSpeed: 4.5
   attackRange: 0.9
   attackCooldown: 1
 --- !u!114 &2766445824729899481

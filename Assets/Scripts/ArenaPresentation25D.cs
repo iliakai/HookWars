@@ -48,6 +48,7 @@ public class ArenaPresentation25D : MonoBehaviour
     private MaterialPropertyBlock previewProperties;
     private Dictionary<Component, GameObject> views = new Dictionary<Component, GameObject>();
     public IReadOnlyDictionary<Component,GameObject> Views=>views;
+    public Material OverlayTemplate=>overlayMaterial;
     private Dictionary<HookAbility, GameObject> projectiles = new Dictionary<HookAbility, GameObject>();
     private List<Component> removed = new List<Component>();
     private List<Material> materials = new List<Material>();
@@ -281,7 +282,7 @@ public class ArenaPresentation25D : MonoBehaviour
             bool friendly=CombatOwnership.OwnerOf(hero)?.GetComponent<PlayerMovement>()!=null;
             Color color = friendly ? new Color(0.2f, 0.65f, 1) : new Color(0.95f, 0.24f, 0.18f);
             GameObject view = View(hero);
-            view.transform.localScale=Vector3.one*(warrior!=null?warrior.Stats.BodyScale:helper!=null?.5f:1f);
+            view.transform.localScale=Vector3.one*(warrior!=null?warrior.Stats.BodyScale/1.5f:helper!=null?.5f/1.5f:1f);
             Selection(view,warrior!=null&&warrior.IsSelected);
             view.SetActive(hero.gameObject.activeInHierarchy && !hero.IsDead);
             var aura=view.transform.Find("Hook mode aura");
@@ -327,6 +328,7 @@ public class ArenaPresentation25D : MonoBehaviour
         {
             if (animal.gameObject.scene != gameObject.scene) continue;
             GameObject view = View(animal);
+            view.transform.localScale=Vector3.one/1.5f;
             view.SetActive(animal.gameObject.activeInHierarchy && !animal.IsDead);
         }
         foreach(var coin in FindObjectsByType<RiverCoin>(FindObjectsInactive.Include))

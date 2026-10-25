@@ -13,11 +13,12 @@ public class AnimalFarm : GameBuilding
     public float SpawnInterval => spawnInterval;
     public int Level {get;private set;}=1;
     public int UpgradeCost=>upgradeCost;
-    public bool CanUpgrade=>owner!=null&&owner.Gold>=upgradeCost&&spawnInterval>minimumInterval;
+    public bool CanUpgrade=>owner!=null&&owner.Gold>=upgradeCost;
+    public float MassMultiplier=>1+.2f*(Level-1);
     public override BuildingKind Kind => BuildingKind.Farm;
     public override string DisplayName => "Ферма";
-    public override string Info => $"Случайное животное каждые {spawnInterval:0.##} с\nНа берегу фермы; овца, корова, свинья";
-    public override string UpgradeLabel(int index) => $"Интервал → {Mathf.Max(minimumInterval, spawnInterval * intervalMultiplier):0.##} с: {upgradeCost} зол.";
+    public override string Info => $"Уровень {Level} · животное каждые {spawnInterval:0.##} с\nВес: овца {4*MassMultiplier:0.#}, корова {10*MassMultiplier:0.#}, свинья {6*MassMultiplier:0.#} кг";
+    public override string UpgradeLabel(int index) => $"Интервал → {Mathf.Max(minimumInterval, spawnInterval * intervalMultiplier):0.##} с, вес +20% базы: {upgradeCost} зол.";
     private void Awake() => remaining = spawnInterval;
     private void Update() => Advance(Time.deltaTime);
     public Animal Advance(double seconds)
@@ -39,13 +40,17 @@ public class AnimalFarm : GameBuilding
         for (int attempt = 0; attempt < spawnAttempts; attempt++)
         {
             Vector3 position = new Vector3(Random.Range(bounds.xMin, bounds.xMax), Random.Range(bounds.yMin, bounds.yMax));
-            if (WorldCollision.FreeCircle(position, prefab.Radius)) return Instantiate(prefab, position, Quaternion.identity);
+            if (WorldCollision.FreeCircle(position, prefab.Radius))
+            {
+                var animal=Instantiate(prefab, position, Quaternion.identity);
+                animal.ConfigureSpawnMass(prefab.MassKg*MassMultiplier);return animal;
+            }
         }
         return null;
     }
     public override bool TryUpgrade(int index)
     {
-        if (owner == null || index != 0 || spawnInterval <= minimumInterval || !owner.TrySpendGold(upgradeCost)) return false;
+        if (owner == null || index != 0 || !owner.TrySpendGold(upgradeCost)) return false;
         spawnInterval = Mathf.Max(minimumInterval, spawnInterval * intervalMultiplier);
         Level++;
         remaining = System.Math.Min(remaining, spawnInterval);

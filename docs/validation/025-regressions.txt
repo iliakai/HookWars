@@ -1,0 +1,277 @@
+Log: CARRYING_CHECK: Play Mode provides a positive deltaTime
+Log: CARRYING_CHECK: Repeated setup leaves scene bytes unchanged
+Log: CARRYING_CHECK: MainMenu is the enabled starting scene
+Log: CARRYING_CHECK: Carcass layer exists
+Log: CARRYING_CHECK: Carcass prefab configured
+Log: CARRYING_CHECK: Walking pickup fills 10kg with one whole carcass and one portion
+Log: CARRYING_CHECK: Two kg remainder stays on ground while carrier is full
+Log: CARRYING_CHECK: A stored carcass cannot be taken twice
+Log: CARRYING_CHECK: One level gives one point
+Log: CARRYING_CHECK: Upgrade 10 to 12 spends exactly one point
+Log: CARRYING_CHECK: No free repeated upgrade
+Log: CARRYING_CHECK: Expanded capacity takes the final two kg without losing pieces
+Log: CARRYING_CHECK: Cannot spend another hero's point
+Log: CARRYING_CHECK: Death drops all cargo
+Log: CARRYING_CHECK: Level-two death keeps 100kg because level growth is removed
+Log: CARRYING_CHECK: Dropped cargo keeps both identities and is accessible on land
+Log: CARRYING_CHECK: Repeated damage creates no duplicate death carcass
+Log: CARRYING_CHECK: Dead hero cannot collect
+Log: CARRYING_CHECK: Revival preserves carcass position and upgraded capacity
+Log: CARRYING_CHECK: Captured carcass is reserved against pickup and another hook
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Outgoing hook captures a ground carcass
+Log: CARRYING_CHECK: Pull completes and clears hook
+Log: CARRYING_CHECK: Landed carcass enters cargo
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Return cast detects a ground carcass
+Log: CARRYING_CHECK: Return hook captures a ground carcass
+Log: CARRYING_CHECK: Cancel frees carcass on land without adding it to cargo
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Lethal outgoing hit still pulls dead hero
+Log: CARRYING_CHECK: Dead hero carcass is reserved throughout pull
+Log: CARRYING_CHECK: Pull completes and clears hook
+Log: CARRYING_CHECK: Lethal hook stores the entire 100kg hero in an explicitly sufficient cargo fixture
+Log: CARRYING_CHECK: Source hero revival cannot delete stored carcass
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Return hook can deal lethal damage
+Log: CARRYING_CHECK: Lethal return hit continues pulling
+Log: CARRYING_CHECK: Pull completes and clears hook
+Log: CARRYING_CHECK: Full cargo leaves whole lethal carcass on land, mass unchanged
+Log: CARRYING_CHECK: Revival cannot teleport or unlock an independently hooked carcass
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: OnDisable cancels pull safely
+Log: CARRYING_CHECK: Second death drops both carried carcasses exactly once
+Log: CARRYING_CHECK: Drop plus own death conserves 6+100+100kg without level growth
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Living hero still gets hooked
+Log: CARRYING_CHECK: Pull completes and clears hook
+Log: CARRYING_CHECK: Living hero lands without becoming cargo
+Log: CARRYING_CHECK: WASD movement helper stays on original bank at field edge
+Log: CARRYING_CHECK: Dynamic field clamp at depth 4
+Log: CARRYING_CHECK: Dynamic field clamp at depth 16
+Log: CARRYING_CHECK: Dynamic field clamp at depth 20
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Obstacle reflects by default without buying bounces
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Obstacle with bounce budget creates a chain bend
+Log: CARRYING_CHECK: Ricochet reflects outgoing movement
+Log: CARRYING_CHECK: Full bent chain is bounded by hook range
+Log: CARRYING_CHECK: Return traverses saved bends and clears hook
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Twenty successive ricochets work without an upgrade or finite counter
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Initial hook uses volumetric .45m model without sprites
+Log: CARRYING_CHECK: Hook visual follows the original outgoing orientation
+Log: CARRYING_CHECK: Victim carries two whole carcasses: 0
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Whole death cargo is dropped and reserved with captured hero: 0
+Log: CARRYING_CHECK: No pickup while death cargo is in flight: 0
+Log: CARRYING_CHECK: Both dropped carcasses travel with dead hero across river: 0
+Log: CARRYING_CHECK: Pull completes and clears hook
+Log: CARRYING_CHECK: Lethal hook collects 100kg hero plus both 6kg carcasses when capacity is sufficient
+Log: CARRYING_CHECK: Revival preserves positions and all 112kg from loaded victim: 0
+Log: CARRYING_CHECK: Victim carries two whole carcasses: 1
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Return hook catches loaded victim
+Log: CARRYING_CHECK: Whole death cargo is dropped and reserved with captured hero: 1
+Log: CARRYING_CHECK: No pickup while death cargo is in flight: 1
+Log: CARRYING_CHECK: Both dropped carcasses travel with dead hero across river: 1
+Log: CARRYING_CHECK: Pull completes and clears hook
+Log: CARRYING_CHECK: Partial own meat fills receiver; all remainders land next to killer: 1
+Log: CARRYING_CHECK: Revival preserves positions and all 112kg from loaded victim: 1
+Log: CARRYING_CHECK: Victim carries two whole carcasses: 2
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Whole death cargo is dropped and reserved with captured hero: 2
+Log: CARRYING_CHECK: No pickup while death cargo is in flight: 2
+Log: CARRYING_CHECK: Both dropped carcasses travel with dead hero across river: 2
+Log: CARRYING_CHECK: Cancelled group stays available on land without pickup
+Log: CARRYING_CHECK: Revival preserves positions and all 112kg from loaded victim: 2
+Log: CARRYING_CHECK: Victim carries two whole carcasses: 3
+Log: CARRYING_CHECK: Hook instantiated
+Log: CARRYING_CHECK: Whole death cargo is dropped and reserved with captured hero: 3
+Log: CARRYING_CHECK: No pickup while death cargo is in flight: 3
+Log: CARRYING_CHECK: Both dropped carcasses travel with dead hero across river: 3
+Log: CARRYING_CHECK: Pull completes and clears hook
+Log: CARRYING_CHECK: Partial own meat fills receiver; all remainders land next to killer: 3
+Log: CARRYING_CHECK: Revival preserves positions and all 112kg from loaded victim: 3
+Log: ECONOMY_CHECK: Target starting income
+Log: ECONOMY_CHECK: One factory per owner
+Log: ECONOMY_CHECK: Load full 18 kg
+Log: ECONOMY_CHECK: Load full 18 kg
+Log: ECONOMY_CHECK: Load full 18 kg
+Log: ECONOMY_CHECK: Whole carcass delivery conserves mass at full capacity
+Log: ECONOMY_CHECK: Experience awarded only for accepted 12 kg
+Log: ECONOMY_CHECK: Full factory leaves cargo and grants no extra experience
+Log: ECONOMY_CHECK: Processing kg and bone coefficients
+Log: ECONOMY_CHECK: Automatic retry while near after capacity is freed
+Log: ECONOMY_CHECK: No processing XP; full mass balance
+Log: ECONOMY_CHECK: Fractional bone output retained
+Log: ECONOMY_CHECK: Owner resources isolated
+Log: ECONOMY_CHECK: Repeated factory construction does not spend money
+Log: ECONOMY_CHECK: Three independent upgrades
+Log: ECONOMY_CHECK: New experience coefficient applies only to future delivery
+Log: ECONOMY_CHECK: Speed upgrade preserves partially processed carcass
+Log: ECONOMY_CHECK: New processing time applies without resetting progress
+Log: ECONOMY_CHECK: Death preserves owner and building resources
+Log: ECONOMY_CHECK: Two shops cannot sell one stock twice
+Log: ECONOMY_CHECK: Empty stock grants no income or experience
+Log: ECONOMY_CHECK: Sales preserve fractional results across time steps
+Log: ECONOMY_CHECK: Local level upgrade doubles throughput and raises price to 25
+Log: ECONOMY_CHECK: Other shop levels and owners remain independent
+Log: ECONOMY_CHECK: Independent farm timers wait for interval
+Log: ECONOMY_CHECK: Each farm spawns independently
+Log: ECONOMY_CHECK: Animal spawn on dry dynamic banks
+Log: ECONOMY_CHECK: No numeric Health on animals
+Log: ECONOMY_CHECK: Animal death gives exactly one carcass and stops walking animation
+Log: ECONOMY_CHECK: Imported Walk timing and looping: Sheep
+Log: ECONOMY_CHECK: Imported Graze timing and looping: Sheep
+Log: ECONOMY_CHECK: Imported Walk timing and looping: Cow
+Log: ECONOMY_CHECK: Imported Graze timing and looping: Cow
+Log: ECONOMY_CHECK: Imported Walk timing and looping: Pig
+Log: ECONOMY_CHECK: Imported Graze timing and looping: Pig
+Log: ECONOMY_CHECK: Animal lethal hook continues pulling its carcass: 0
+Log: ECONOMY_CHECK: Animal carcass uses normal pickup: 0
+Log: ECONOMY_CHECK: Animal lethal hook continues pulling its carcass: 1
+Log: ECONOMY_CHECK: Animal carcass uses normal pickup: 1
+Log: ECONOMY_CHECK: Farm upgrade is local with positive minimum
+Log: ECONOMY_CHECK: Animal movement sweep cannot cross buildings or walls
+Log: ECONOMY_CHECK: Animal update rejects crossing the river and stops animation
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 12
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 12
+Log: ECONOMY_CHECK: Independent left and right farms use their own banks at depth 12
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Free dry spawn at bank depth 36
+Log: ECONOMY_CHECK: Farm bank ignores transported owner at depth 36
+Log: ECONOMY_CHECK: Independent left and right farms use their own banks at depth 36
+Log: ECONOMY_CHECK: Farm interval has positive lower bound
+Log: ECONOMY_CHECK: Full map returns after bounded spawn attempts
+Log: ECONOMY_CHECK: Blocked left farm never falls back to free right bank
+Log: ECONOMY_CHECK: Long overdue farm starts a fresh interval without burst queue
+Log: ECONOMY_CHECK: One ordinary axe hit kills cow without numeric Health
+Log: ECONOMY_CHECK: Surviving enemy wall reflects without a purchased bounce budget
+Log: ECONOMY_CHECK: Surviving enemy wall takes damage before ricochet
+Log: ECONOMY_CHECK: Numerical repeated contact does not multiply wall damage
+Log: ECONOMY_CHECK: Destroyed wall releases cell and does not reflect: 2
+Log: ECONOMY_CHECK: Destroyed wall never changes unlimited ricochet availability
+Log: ECONOMY_CHECK: Hook continues through destroyed wall
+Log: ECONOMY_CHECK: Destroyed wall releases cell and does not reflect: 3
+Log: ECONOMY_CHECK: Destroyed wall never changes unlimited ricochet availability
+Log: ECONOMY_CHECK: Hook continues through destroyed wall
+Log: ECONOMY_CHECK: Friendly wall collides and reflects without damage
+Log: ECONOMY_CHECK: Wall upgrade spends bones only and preserves previously received damage
+Log: ECONOMY_CHECK: Wall blocks hero walking
+Log: ECONOMY_CHECK: A hero can escape a preexisting overlap after hook landing
+Log: ECONOMY_CHECK: Destroyed wall releases walking path immediately
+Log: ECONOMY_CHECK: Extreme bank cell touching mountain is buildable at depth 12
+Log: ECONOMY_CHECK: Wall construction spends only bones
+Log: ECONOMY_CHECK: Occupied cell rejects overlapping build without payment
+Log: ECONOMY_CHECK: River, other bank and outside field reject construction
+Log: ECONOMY_CHECK: Destroyed wall cell becomes buildable immediately
+Log: ECONOMY_CHECK: Building API rejects positions between grid cells
+Log: ECONOMY_CHECK: Extreme bank cell touching mountain is buildable at depth 36
+Log: ECONOMY_CHECK: Wall construction spends only bones
+Log: ECONOMY_CHECK: Occupied cell rejects overlapping build without payment
+Log: ECONOMY_CHECK: River, other bank and outside field reject construction
+Log: ECONOMY_CHECK: Destroyed wall cell becomes buildable immediately
+Log: ECONOMY_CHECK: Building API rejects positions between grid cells
+Log: ECONOMY_CHECK: Logical footprint has a ready 3D visual asset: SausageFactory
+Log: ECONOMY_CHECK: Logical footprint has a ready 3D visual asset: MeatShop
+Log: ECONOMY_CHECK: Logical footprint has a ready 3D visual asset: AnimalFarm
+Log: ECONOMY_CHECK: Logical footprint has a ready 3D visual asset: BoneWall
+Log: HOOKWARS_ECONOMY_STAGE_5_PASS: 175 assertions.
+Log: CARRYING_CHECK: Both timed respawn subjects died
+Log: CARRYING_CHECK: PlayerRespawn and TrainingMatch coroutines really revived both heroes
+Log: CARRYING_CHECK: Real coroutine revival leaves both independent carcasses on the ground
+Log: CARRYING_CHECK: TrainingMatch still counts one kill and one death
+Log: HOOKWARS_CARRYING_PASS: 99 assertions in Unity Play Mode.

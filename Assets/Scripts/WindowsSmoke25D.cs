@@ -29,7 +29,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
     IEnumerator Start()
     {
         Application.runInBackground=true;savedDepth=MatchConfiguration.LastDepth;
-        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance, bridges/orders/siege024\n");
+        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance, workers/economy/camera025\n");
         foreach(int depth in new[]{12,24,36})
         {
             yield return new WaitForSecondsRealtime(.3f);
@@ -96,11 +96,11 @@ public sealed class WindowsSmoke25D : MonoBehaviour
         yield return new WaitForSeconds(12.2f);
         var units=FindObjectsByType<SausageWarrior>();Check(units.Length==2&&barracks.QueueCount==0&&!barracks.AutoProduction,"Second order completes sequentially and manual production stops");
         foreach(var unit in units){unit.enabled=false;unit.transform.position=new Vector3(-16,-6-Array.IndexOf(units,unit));}
-        Check(barracks.SetSending(true)&&units.All(w=>w.AutoRaiding),"Own restored bridge unlocks sending for existing warriors");barracks.SetSending(false);
+        Check(!barracks.SetSending(true)&&units.All(w=>!w.AutoRaiding),"Restored bridge keeps warriors under individual orders");barracks.SetSending(false);
         first.transform.position=new Vector3(-4,7);first.enabled=true;
         var commander=hero.GetComponent<UnitCommander>();var screen=Camera.main.WorldToScreenPoint(ArenaSpace25D.ToWorld(first.transform.position));
         commander.SelectUnits(new Rect(screen.x-24,screen.y-24,48,48));Check(commander.SelectionCount==1&&first.IsSelected,"Windows selection picks only the intended friendly warrior");
-        Check(commander.GiveOrder(new Vector3(4,7))&&first.HasManualOrder,"Windows group command directs the selected warrior");
+        Check(commander.GiveOrder(new Vector3(4,7))&&first.HasManualOrder&&commander.HasOrderMarker&&!commander.LastOrderIsAttack,"Windows group movement produces a green destination marker");
         Time.timeScale=3;float until=Time.time+18;bool arch=false;
         while(first.transform.position.x<3.2f&&Time.time<until)
         {
@@ -109,20 +109,41 @@ public sealed class WindowsSmoke25D : MonoBehaviour
         Check(first.transform.position.x>3.2f&&arch,"Windows warrior traverses the completed public bridge along its raised arch");Time.timeScale=1;
         var shopPrefab=builder.BuildingPrefabs.OfType<MeatShop>().Single();var enemyShop=Instantiate(shopPrefab,new Vector3(5.5f,7.5f),Quaternion.identity);enemyShop.Initialize(rival);enemyShop.SetOperating(rival,false);
         Check(enemyShop.MaximumHP==400&&!enemyShop.TakeDamage(rival,100),"Enemy shop has durability and rejects its own owner's damage");
-        float before=enemyShop.CurrentHP;Check(commander.GiveOrder(enemyShop.transform.position,enemyShop),"Right-click attack command accepts hostile buildings");
+        float before=enemyShop.CurrentHP;Check(commander.GiveOrder(enemyShop.transform.position,enemyShop)&&commander.HasOrderMarker&&commander.LastOrderIsAttack,"Windows attack command shows a red destination marker");
         until=Time.time+5;while(enemyShop.CurrentHP==before&&Time.time<until)yield return null;
         Check(enemyShop.CurrentHP<before,"Warrior animated attack damages a hostile building");first.enabled=false;
         stock.AddOutput(4,2);Check(barracks.TryQueue(),"A new paid order can be placed after upgrades");yield return new WaitForSeconds(12.2f);
         var upgraded=FindObjectsByType<SausageWarrior>().Single(w=>!units.Contains(w));upgraded.enabled=false;
         Check(upgraded.GetComponent<Health>().MaximumKg==50&&upgraded.Stats.poisonLevel==1,"New paid warrior inherits upgraded combat characteristics");
         var upgradedView=display.VisualFor(upgraded.GetComponent<Health>());
-        Check(upgradedView!=null&&Math.Abs(upgradedView.localScale.x-1.15f)<.001&&upgraded.Stats.ClubWidth>=1.24f&&upgraded.Stats.ClubLength>1.3f,"Body and club upgrades have visibly stronger model scaling");
+        Check(upgradedView!=null&&Math.Abs(upgradedView.localScale.x-1.15f/1.5f)<.001&&upgraded.Stats.ClubWidth>=1.24f&&upgraded.Stats.ClubLength>1.3f,"Body and club upgrades have visibly stronger model scaling");
         var club=upgradedView.GetComponentsInChildren<Renderer>().Single(r=>r.name.Contains("Femur_Club"));var tint=new MaterialPropertyBlock();club.GetPropertyBlock(tint,0);
         Check(tint.GetColor("_BaseColor")==upgraded.Stats.ClubColor,"Acid club tint survives the Windows player build");
         var ownShop=Instantiate(shopPrefab,new Vector3(-8.5f,1.5f),Quaternion.identity);ownShop.Initialize(owner);stock.AddOutput(10,0);
         ownShop.SetOperating(owner,false);double meat=stock.ProductKg;gold=owner.Gold;yield return new WaitForSeconds(.2f);
         Check(stock.ProductKg==meat&&owner.Gold==gold,"Stopped shop consumes no meat and grants no income");
         ownShop.SetOperating(owner,true);yield return new WaitForSeconds(1.1f);Check(stock.ProductKg<meat&&owner.Gold>gold,"Restarted shop resumes actual native-frame sales");ownShop.enabled=false;
+        Check(ownShop.TryUpgrade(0)&&ownShop.Level==2&&Math.Abs(ownShop.SaleKgPerSecond-.2f)<.001&&ownShop.GoldPerKg==25,"Windows shop upgrade improves price and throughput together");
+        gold=owner.Gold;ownShop.Advance(1);Check(Math.Abs(owner.Gold-gold-5)<.001,"Windows upgraded shop sells for five gold per second");
+        var farmPrefab=builder.BuildingPrefabs.OfType<AnimalFarm>().Single();var farm=Instantiate(farmPrefab,new Vector3(-11,2),Quaternion.identity);farm.Initialize(owner);farm.enabled=false;
+        var born=farm.TrySpawn();float birthMass=born.MassKg;
+        Check(farm.TryUpgrade(0)&&farm.Level==2&&farm.SpawnInterval==12&&Math.Abs(farm.MassMultiplier-1.2f)<.001&&born.MassKg==birthMass,"Windows farm improves interval and future weight without mutating an existing animal");
+        var heavier=farm.TrySpawn();Check(heavier!=null&&Math.Abs(heavier.MassKg-(heavier.Kind==Animal.Species.Cow?10:heavier.Kind==Animal.Species.Pig?6:4)*1.2f)<.001,"Windows farm really creates a heavier animal");
+        yield return null;
+        Check(Math.Abs(display.VisualFor(heavier).localScale.x-1/1.5f)<.001&&Math.Abs(heavier.GetComponent<CircleCollider2D>().radius-.35f/1.5f)<.001,"Windows animal model and collider shrink together");
+        Check(Math.Abs(display.VisualFor(hero.GetComponent<Health>()).localScale.x-1)<.001,"Windows main hero size remains unchanged");
+        Destroy(born.gameObject);Destroy(heavier.gameObject);
+        Check(stock.Factory.TryOrderHelper(),"Windows factory can order its faster helper");
+        var helper=FindObjectsByType<ButcherHelper>().Single();helper.enabled=false;helper.GetComponent<CarcassCarrier>().enabled=false;
+        helper.transform.position=new Vector3(-12,-7);var prey=farm.TrySpawn();prey.enabled=false;prey.ConfigureSpawnMass(50);prey.transform.position=helper.transform.position+Vector3.right*.7f;helper.enabled=true;
+        yield return new WaitForSeconds(.2f);
+        Check(helper.GetComponent<HeroActionTiming25D>().AxePending,"Windows helper starts its real delayed animal strike");prey.transform.position+=Vector3.right;
+        yield return new WaitForSeconds(.4f);
+        Check(prey==null||prey.IsDead,"Windows helper kills moving heavy animal in a single committed blow");
+        Check(helper.Returning&&helper.GetComponent<CarcassCarrier>().CurrentMassKg==10&&helper.MoveSpeed==4.5f,"Windows helper preserves cargo and uses faster movement");
+        Check(Math.Abs(display.VisualFor(helper.GetComponent<Health>()).localScale.x-.5f/1.5f)<.001&&Math.Abs(helper.GetComponent<CircleCollider2D>().radius-.25f/1.5f)<.001,"Windows helper model and collider use reduced size");
+        helper.enabled=false;helper.GetComponent<CarcassCarrier>().DropAll();Destroy(helper.gameObject);foreach(var c in FindObjectsByType<Carcass>())Destroy(c.gameObject);
+        yield return null;
         var menu=hero.GetComponent<BuildingUpgradeMenu>();screen=Camera.main.WorldToScreenPoint(ArenaSpace25D.ToWorld(ownShop.transform.position));
         Check(menu.SelectAtScreenPoint(screen)&&menu.Selected==ownShop&&menu.Contains(menu.ToolbarRect.center),"Selecting a shop uses its compact building toolbar");
         yield return null;Check(display.VisualFor(ownShop).Find("Selection")?.gameObject.activeSelf==true,"Selected building has its ground highlight");
