@@ -1,0 +1,84 @@
+PASS Base farm really spawns an animal
+PASS One farm purchase improves spawn interval and weight together
+PASS Previously born animals retain their weight
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Upgraded spawn receives species base mass times 1.2
+PASS Further farm level is purchasable
+PASS Further farm level is purchasable
+PASS Further farm level is purchasable
+PASS Further farm level is purchasable
+PASS Further farm level is purchasable
+PASS Further farm level is purchasable
+PASS Further farm level is purchasable
+PASS Further farm level is purchasable
+PASS Further farm level is purchasable
+PASS Further farm level is purchasable
+PASS Weight upgrades continue after minimum spawn interval
+PASS Farm exposes current level interval and weight
+PASS One shop purchase improves speed and price together
+PASS Level two shop really sells .2kg for five gold
+PASS Shop exposes current level price and sale speed
+PASS Helper moves fifty percent faster and has reduced collider
+PASS Animal physical radius is reduced by one and a half
+PASS Warrior physical radius is reduced by one and a half
+PASS Idle warrior stands still without random wandering
+PASS Main hero keeps its visual scale
+PASS All three nonhero model kinds shrink by one and a half
+PASS Friendly warrior accepts movement order
+PASS Accepted movement shows green destination marker
+PASS Movement marker material is visibly green
+PASS Manual movement takes priority over a nearby enemy: x=-8,639935, hp=100/100
+PASS Destination flash disappears after its short lifetime
+PASS Idle warrior pursues and strikes a nearby same-bank opponent
+PASS Accepted enemy attack shows red destination marker
+PASS Attack marker material is visibly red
+PASS Helper begins one committed swing against a heavy animal
+PASS Animal movement during windup cannot evade the guaranteed killing blow
+PASS Heavy animal is killed once and helper collects its capacity
+PASS Capture cancels helper swing without killing the animal
+PASS Helper skips inaccessible corpse and delivers reachable meat instead
+PASS Temporarily unreachable meat is retried and delivered after obstacle removal
+PASS Delivery waiting fixture retains real cargo
+PASS Full raw storage makes helper wait without losing cargo
+PASS Helper resumes delivery when raw storage has room
+PASS Selected shop includes its current statistics in the clickable interface area
+PASS Native wheel zoom quickly approaches forty percent per notch
+PASS Holding middle mouse rotates and tilts camera through real input
+PASS Mouse ground projection remains accurate after zoom tilt and rotation
+PASS Camera tilt has upper limit
+PASS Camera tilt has lower limit
+PASS Explicit attack may target the opposite bank
+PASS Even upgraded long-range warrior cannot strike across the river
+PASS An explicitly paid bridge opens the route for the cross-bank attack
+PASS Long-range attack order crosses a completed bridge before damaging the other bank
+PASS A target blocked after acquisition is released and another job is collected
+PASS Pause blocks camera zoom and rotation input
+HOOKWARS_WORKERS_PASS: 83 assertions in Unity Play Mode

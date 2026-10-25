@@ -18,7 +18,7 @@ public class CarcassCarrier : MonoBehaviour
     public void SetHelperCapacity(float capacity){if(GetComponent<ButcherHelper>()!=null)capacityKg=Mathf.Max(capacityKg,capacity);}
     public float CapacityKg => capacityKg;
     public float CapacityPerUpgrade => capacityPerUpgrade;
-    public int Count => cargo.Count;
+    public int Count {get{cargo.RemoveAll(item=>item==null||item.MassKg<=0);return cargo.Count;}}
     public IReadOnlyList<Carcass> StoredCargo=>cargo;
     public float CurrentMassKg
     {
@@ -91,8 +91,9 @@ public class CarcassCarrier : MonoBehaviour
         for (int i = 0; i < cargo.Count;)
         {
             Carcass carcass = cargo[i];
+            if(carcass==null||carcass.MassKg<=0){cargo.RemoveAt(i);continue;}
             float amount = carcass != null ? (float)System.Math.Min(carcass.MassKg, factory.FreeRawKg) : 0;
-            if (amount < .0001f || !factory.TryAcceptMass(amount)) { i++; continue; }
+            if (amount <= 0 || !factory.TryAcceptMass(amount)) { i++; continue; }
             delivered += amount;
             carcass.ConsumeMass(amount);
             if (carcass.MassKg > .0001f) { i++; continue; }

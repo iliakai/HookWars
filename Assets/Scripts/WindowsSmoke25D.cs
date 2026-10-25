@@ -29,7 +29,7 @@ public sealed class WindowsSmoke25D : MonoBehaviour
     IEnumerator Start()
     {
         Application.runInBackground=true;savedDepth=MatchConfiguration.LastDepth;
-        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance, workers/economy/camera025\n");
+        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance, helper idle recovery026\n");
         foreach(int depth in new[]{12,24,36})
         {
             yield return new WaitForSecondsRealtime(.3f);
@@ -142,7 +142,21 @@ public sealed class WindowsSmoke25D : MonoBehaviour
         Check(prey==null||prey.IsDead,"Windows helper kills moving heavy animal in a single committed blow");
         Check(helper.Returning&&helper.GetComponent<CarcassCarrier>().CurrentMassKg==10&&helper.MoveSpeed==4.5f,"Windows helper preserves cargo and uses faster movement");
         Check(Math.Abs(display.VisualFor(helper.GetComponent<Health>()).localScale.x-.5f/1.5f)<.001&&Math.Abs(helper.GetComponent<CircleCollider2D>().radius-.25f/1.5f)<.001,"Windows helper model and collider use reduced size");
-        helper.enabled=false;helper.GetComponent<CarcassCarrier>().DropAll();Destroy(helper.gameObject);foreach(var c in FindObjectsByType<Carcass>())Destroy(c.gameObject);
+        helper.enabled=false;Destroy(helper.GetComponent<CarcassCarrier>().StoredCargo[0].gameObject);yield return null;
+        Check(!helper.Returning&&helper.GetComponent<CarcassCarrier>().Count==0,"Windows destroyed cargo cannot leave the worker stuck returning");
+        helper.enabled=true;yield return new WaitForSeconds(1.5f);
+        Check(helper.Returning&&helper.GetComponent<CarcassCarrier>().CurrentMassKg==10,"Windows worker resumes meat gathering after missing cargo cleanup");
+        helper.enabled=false;
+        var tiny=Instantiate(helper.GetComponent<CarcassCarrier>().StoredCargo[0],helper.transform.position,Quaternion.identity);tiny.Initialize(.00001f);
+        helper.GetComponent<CarcassCarrier>().DropAll();foreach(var c in FindObjectsByType<Carcass>())Destroy(c.gameObject);yield return null;
+        helper.enabled=true;int resets=helper.IdleRecoveries;yield return new WaitForSeconds(3.3f);
+        Check(helper.IdleRecoveries>=resets+2,"Windows worker repeatedly reassigns its idle task every second");
+        helper.enabled=false;helper.transform.position=stock.Factory.transform.position+Vector3.right*1.5f;
+        tiny.transform.position=helper.transform.position;tiny.gameObject.SetActive(true);
+        Check(helper.GetComponent<CarcassCarrier>().TryCollect(tiny),"Windows tiny residue is actually picked up as cargo");
+        double xp=owner.Experience;helper.enabled=true;yield return new WaitForSeconds(.2f);
+        Check(!helper.Returning&&owner.Experience>xp,"Windows tiny residue is delivered through factory acceptance instead of hanging forever");
+        helper.enabled=false;Destroy(helper.gameObject);
         yield return null;
         var menu=hero.GetComponent<BuildingUpgradeMenu>();screen=Camera.main.WorldToScreenPoint(ArenaSpace25D.ToWorld(ownShop.transform.position));
         Check(menu.SelectAtScreenPoint(screen)&&menu.Selected==ownShop&&menu.Contains(menu.ToolbarRect.center),"Selecting a shop uses its compact building toolbar");

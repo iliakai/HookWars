@@ -19,6 +19,10 @@ public sealed class ButcherHelper : MonoBehaviour
     private HeroActionTiming25D action;
     private float nextAttack,nextSearch,nextPath,stalled;
     private Vector3 pathGoal,progressPoint;
+    private float nextWorkCheck;
+    private Vector3 checkedPosition,escapeGoal;
+    private bool escaping;
+    public int IdleRecoveries {get;private set;}
     public SausageFactory Factory {get;private set;}
     public Vector2 AimDirection {get;private set;}=Vector2.up;
     public float MoveSpeed=>moveSpeed;
@@ -34,12 +38,19 @@ public sealed class ButcherHelper : MonoBehaviour
     public void Bind(SausageFactory factory,float capacity)
     {
         Factory=factory;gameObject.layer=LayerMask.NameToLayer(factory.Owner.GetComponent<PlayerMovement>()!=null?"PlayerTarget":"HookTarget");
-        carrier.ConfigureHelper(capacity);GetComponent<CircleCollider2D>().radius=Radius;progressPoint=transform.position;
+        carrier.ConfigureHelper(capacity);GetComponent<CircleCollider2D>().radius=Radius;progressPoint=checkedPosition=transform.position;nextWorkCheck=Time.time+1;
     }
     private bool SameBank(Vector3 p)=>(p.x>0)==(Factory.transform.position.x>0);
     private void Update()
     {
         if(Time.deltaTime<=0||Factory==null||health.IsDead||victim.IsCaught)return;
+        CheckIdle();
+        if(escaping)
+        {
+            MoveStep(escapeGoal);
+            if(Vector2.Distance(transform.position,escapeGoal)<.04f)escaping=false;
+            return;
+        }
         if(Returning)
         {
             ReleaseWork();
@@ -68,6 +79,40 @@ public sealed class ButcherHelper : MonoBehaviour
             if(health.IsDead||victim.IsCaught||accepted==null||accepted.IsDead||accepted.GetComponent<HookVictim>().IsCaught)return;
             var corpse=accepted.Kill();if(corpse!=null)carrier.TryCollect(corpse);ReleaseWork();
         }))nextAttack=Time.time+attackCooldown;
+    }
+    private void CheckIdle()
+    {
+        if(Time.time<nextWorkCheck)return;
+        nextWorkCheck=Time.time+1;
+        bool moved=Vector2.Distance(checkedPosition,transform.position)>=.2f;checkedPosition=transform.position;
+        bool swinging=action!=null&&action.AxePending&&Time.time-action.AxeStarted<=HeroActionTiming25D.AxeImpact/action.AxeSpeed+.35f;
+        bool waitingForStorage=Returning&&Factory.InDeliveryRange(transform.position)&&Factory.FreeRawKg<.0001;
+        if(moved||swinging||waitingForStorage)return;
+        bool hadWork=Returning||target!=null||loose!=null||escaping;
+        IdleRecoveries++;Interrupted();retryAfter.Clear();
+        // Repeated idle checks cover every Update branch, including failed pickup,
+        // empty searches and a stale animation callback. Cargo is never discarded.
+        if(hadWork)TryStepAside();
+    }
+    private void TryStepAside()
+    {
+        int first=IdleRecoveries%8;
+        for(int i=0;i<8;i++)
+        {
+            float angle=(first+i)*Mathf.PI/4;
+            Vector3 candidate=transform.position+new Vector3(Mathf.Cos(angle),Mathf.Sin(angle))*.65f;
+            if(!RiverBridge.Walkable(candidate,Radius)||!WalkNavigation25D.Segment(transform.position,candidate,Radius)||
+                !WorldCollision.FreeCircle(candidate,Radius+.01f)||!WorldCollision.CanMove(transform,candidate,Radius))continue;
+            escapeGoal=candidate;escaping=true;return;
+        }
+    }
+    private void MoveStep(Vector3 goal)
+    {
+        Vector3 before=transform.position;
+        Vector3 next=WorldCollision.Slide(transform,Vector3.MoveTowards(before,goal,moveSpeed*Time.deltaTime),Radius);
+        next=RiverBridge.ClampStep(before,next,Radius);
+        Vector2 travel=next-before;if(travel.sqrMagnitude>.000001f)AimDirection=travel.normalized;
+        transform.position=next;Physics2D.SyncTransforms();
     }
     private bool CanClaim(Component item)
     {
@@ -99,16 +144,13 @@ public sealed class ButcherHelper : MonoBehaviour
     private void BeginWork(){progressPoint=transform.position;stalled=0;nextPath=0;}
     private void WalkTo(Vector3 goal,float arrival)
     {
-        if(Time.time>=nextPath||(goal-pathGoal).sqrMagnitude>.25f)
+        if((goal-pathGoal).sqrMagnitude>.25f||Time.time>=nextPath&&(path.Count==0||!WorldCollision.CanMove(transform,path[0],Radius)))
         {pathGoal=goal;nextPath=Time.time+.5f;WalkNavigation25D.Build(transform,goal,Radius,arrival,path,null,true);}
         if(path.Count>0)
         {
             while(path.Count>1&&Vector2.Distance(transform.position,path[0])<.08f)path.RemoveAt(0);
-            Vector3 before=transform.position;Vector3 next=Vector3.MoveTowards(before,path[0],moveSpeed*Time.deltaTime);
-            next=WorldCollision.Slide(transform,next,Radius);next=RiverBridge.ClampStep(before,next,Radius);
-            Vector2 travel=next-before;if(travel.sqrMagnitude>.000001f)AimDirection=travel.normalized;
-            transform.position=next;Physics2D.SyncTransforms();
-            if(Vector2.Distance(next,path[0])<.04f)path.RemoveAt(0);
+            MoveStep(path[0]);
+            if(Vector2.Distance(transform.position,path[0])<.04f)path.RemoveAt(0);
         }
         if(Vector2.Distance(progressPoint,transform.position)>.12f){progressPoint=transform.position;stalled=0;}
         else stalled+=Time.deltaTime;
@@ -126,7 +168,7 @@ public sealed class ButcherHelper : MonoBehaviour
         if(!ReferenceEquals(loose,null)&&claims.TryGetValue(loose,out worker)&&worker==this)claims.Remove(loose);
         target=null;loose=null;
     }
-    private void Interrupted(){ReleaseWork();path.Clear();action?.CancelAll();nextSearch=nextPath=0;stalled=0;}
+    private void Interrupted(){ReleaseWork();path.Clear();action?.CancelAll();nextSearch=nextPath=0;stalled=0;escaping=false;}
     private void Died(Health _){Interrupted();StartCoroutine(RemoveAfterPull());}
     private IEnumerator RemoveAfterPull(){yield return null;while(victim!=null&&victim.IsCaught)yield return null;Destroy(gameObject);}
     private void OnDisable()=>Interrupted();
