@@ -18,7 +18,7 @@ public sealed class BuildingPresentation25D : MonoBehaviour
     public void Refresh()
     {
         if (source == null || visual == null) return;
-        bool enabled = source.isActiveAndEnabled && source.Owner != null;
+        bool enabled = source.isActiveAndEnabled && source.Owner != null && source.IsOperating;
         if (source is SausageFactory factory) visual.SetWorking(enabled && factory.CanProcess);
         else if (source is MeatShop shop)
         {

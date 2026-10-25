@@ -152,32 +152,32 @@ public static class IncomeHUDChecks
             Check(EconomyChecks.Near(wallet.ProductKg, .5) && EconomyChecks.Near(wallet.BoneKg, .5) && factory.RawKg == 0,
                 "One kg raw becomes exactly .5 kg ready meat plus .5 kg bones");
             wallet.AddOutput(17.5, 0); double xp = owner.Experience;
-            Check(!(bool)EconomyChecks.Invoke(factory, "TryAcceptMass", 1d) && owner.Experience == xp,
-                "Full 18kg ready storage rejects raw meat without XP");
+            Check((bool)EconomyChecks.Invoke(factory, "TryAcceptMass", 1d) && owner.Experience == xp+2,
+                "Eighteen kg ready stock no longer blocks raw acceptance and its XP");
             factory.Advance(1000);
-            Check(wallet.ProductKg == 18 && wallet.BoneKg == .5, "Blocked workshop creates no product or bones");
+            Check(wallet.ProductKg == 18.5 && wallet.BoneKg == 1, "Unlimited ready storage continues processing with conserved output");
             var shop = Object.Instantiate(AssetDatabase.LoadAssetAtPath<MeatShop>(EconomySetup.ShopPath), root.transform);
             shop.enabled = false; shop.Initialize(owner);
             double gold = owner.Gold; shop.Advance(1);
-            Check(Math.Abs(owner.Gold - gold - 2) < 1e-6 && Math.Abs(wallet.ProductKg - 17.9) < 1e-6,
-                "Level one shop sells .1kg for 2 gold, freeing storage");
-            Check((bool)EconomyChecks.Invoke(factory, "TryAcceptMass", 2d), "A real sale unblocks raw acceptance");
+            Check(Math.Abs(owner.Gold - gold - 2) < 1e-6 && Math.Abs(wallet.ProductKg - 18.4) < 1e-6,
+                "Level one shop sells .1kg for 2 gold from unlimited ready storage");
+            Check((bool)EconomyChecks.Invoke(factory, "TryAcceptMass", 2d), "Raw acceptance depends only on raw capacity");
             factory.Advance(1000);
-            Check(Math.Abs(wallet.ProductKg - 18) < 1e-6 && Math.Abs(factory.RawKg - 1.8) < 1e-6,
-                "Partial processing fills exact capacity and preserves remaining raw queue");
-            Check(!factory.CanProcess, "Full storage closes working visual state");
+            Check(Math.Abs(wallet.ProductKg - 19.4) < 1e-6 && factory.RawKg==0,
+                "Processing can exceed the former finished storage capacity without blocking");
+            Check(!factory.CanProcess, "Empty raw queue closes working visual state");
             wallet.TakeProduct(18); factory.Advance(1000);
-            Check(factory.RawKg == 0 && Math.Abs(wallet.ProductKg - .9) < 1e-6 && Math.Abs(wallet.BoneKg - 1.5) < 1e-6,
-                "Freed storage resumes preserved queue without losing mass");
+            Check(factory.RawKg == 0 && Math.Abs(wallet.ProductKg - 1.4) < 1e-6 && Math.Abs(wallet.BoneKg - 2) < 1e-6,
+                "Taking finished stock does not create extra product or bones");
             owner.AddGold(1000);
-            Check(factory.TryUpgrade(1) && factory.ProductCapacityKg == 36 && factory.CapacityKg == 30,
-                "Storage upgrade expands both raw and finished capacity");
+            Check(factory.TryUpgrade(1) && double.IsPositiveInfinity(factory.ProductCapacityKg) && factory.CapacityKg == 30,
+                "Storage upgrade expands raw capacity while finished stock remains unlimited");
             Check(shop.TryUpgrade(0) && shop.Level == 2 && Math.Abs(shop.GoldPerSecond - 4) < 1e-6 && shop.GoldPerKg == 20,
                 "Level two shop earns four gold/s at unchanged twenty gold/kg");
-            wallet.AddOutput(1, 0); gold = owner.Gold; shop.Advance(10);
+            wallet.TakeProduct(wallet.ProductKg);wallet.AddOutput(1.9, 0); gold = owner.Gold; shop.Advance(10);
             Check(Math.Abs(owner.Gold - gold - 38) < 1e-5, "Remaining 1.9kg finished meat sells for thirty-eight gold");
-            Check(factory.TryUpgrade(1) && factory.CapacityKg == 48 && factory.ProductCapacityKg == 54,
-                "Second capacity upgrade adds another 18kg to both warehouses");
+            Check(factory.TryUpgrade(1) && factory.CapacityKg == 48 && double.IsPositiveInfinity(factory.ProductCapacityKg),
+                "Second capacity upgrade adds another eighteen raw kg without limiting finished stock");
             Check(factory.TryUpgrade(0) && EconomyChecks.Near(factory.SecondsPerKg, 1.4),
                 "First processing upgrade reduces seconds per kg by thirty percent");
             Check(factory.TryUpgrade(0) && EconomyChecks.Near(factory.SecondsPerKg, .98),

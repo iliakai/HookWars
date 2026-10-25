@@ -46,15 +46,15 @@ public class SausageFactory : GameBuilding
     public double RawKg => rawKg;
     public double CapacityKg => capacityKg;
     public double FreeRawKg => System.Math.Max(0, capacityKg - rawKg);
-    public double ProductCapacityKg => productCapacityKg;
-    public double FreeProductKg => Math.Max(0, productCapacityKg - (owner != null ? owner.GetComponent<OwnerEconomy>().ProductKg : 0));
-    public bool CanProcess => RawKg > 1e-9 && FreeProductKg > 1e-9;
+    public double ProductCapacityKg => double.PositiveInfinity;
+    public double FreeProductKg => double.PositiveInfinity;
+    public bool CanProcess => IsOperating && RawKg > 1e-9;
     public float SecondsPerKg => secondsPerKg;
     public float ExperiencePerKg => experiencePerKg;
     public override BuildingKind Kind => BuildingKind.Factory;
     public override string DisplayName => "Колбасный цех";
     public override int UpgradeCount => 5;
-    public override string Info => $"Сырьё: {rawKg:0.##} / {capacityKg:0.##} кг\nГотовое мясо: {(owner != null ? owner.GetComponent<OwnerEconomy>().ProductKg : 0):0.##} / {productCapacityKg:0.##} кг\n{secondsPerKg:0.##} с/кг; опыт: {experiencePerKg:0.##}/кг\nИз 1 кг: {productPerKg:0.##} кг продукта и {bonesPerKg:0.##} кг костей";
+    public override string Info => $"Сырьё: {rawKg:0.##} / {capacityKg:0.##} кг\nГотовое мясо: {(owner != null ? owner.GetComponent<OwnerEconomy>().ProductKg : 0):0.##} кг · без лимита\n{secondsPerKg:0.##} с/кг; опыт: {experiencePerKg:0.##}/кг\nИз 1 кг: {productPerKg:0.##} кг продукта и {bonesPerKg:0.##} кг костей";
     public override bool CanBuild(PlayerProgression candidate) => candidate != null &&
         candidate.GetComponent<OwnerEconomy>() != null && candidate.GetComponent<OwnerEconomy>().Factory == null;
     public override bool Initialize(PlayerProgression candidate)
@@ -89,7 +89,7 @@ public class SausageFactory : GameBuilding
     }
     public void Advance(double seconds)
     {
-        if (owner == null || !double.IsFinite(seconds) || seconds <= 0) return;
+        if (owner == null || !IsOperating || MatchPause.BlocksGameplay || !double.IsFinite(seconds) || seconds <= 0) return;
         double budget = seconds / Math.Max(minimumSecondsPerKg, secondsPerKg);
         // Stop before producing beyond storage; preserve the unprocessed queue.
         if (productPerKg > 0) budget = Math.Min(budget, FreeProductKg / productPerKg);
@@ -110,7 +110,7 @@ public class SausageFactory : GameBuilding
         if(index==3)return $"Заказать помощника: {helperPrice} зол. (сейчас {HelperCount})";
         if(index==4)return $"Груз помощников {helperCapacityKg:0.#} → {helperCapacityKg+helperCapacityIncrease:0.#} кг: {helperCapacityCost} зол.";
         if (index == 0) return $"Обработка {secondsPerKg:0.##} → {Mathf.Max(minimumSecondsPerKg, secondsPerKg * speedMultiplier):0.##} с/кг: {speedCost} зол.";
-        if (index == 1) return $"Склады сырья и продукта +{capacityIncrease} кг: {capacityCost} зол.";
+        if (index == 1) return $"Склад сырья +{capacityIncrease} кг: {capacityCost} зол.";
         return $"Опыт +{experienceIncrease}/кг: {experienceCost} зол.";
     }
     public override bool TryUpgrade(int index)

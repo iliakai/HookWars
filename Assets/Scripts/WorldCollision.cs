@@ -3,10 +3,10 @@ using UnityEngine;
 public static class WorldCollision
 {
     public static int WalkingLayers=>WalkingMask;
-    public static bool ClearAttackLine(Vector2 start,Vector2 end)
+    public static bool ClearAttackLine(Vector2 start,Vector2 end,Collider2D target=null)
     {
         foreach(var hit in Physics2D.LinecastAll(start,end,LayerMask.GetMask("Buildings","Mountains")))
-            if(!hit.collider.isTrigger)return false;
+            if(!hit.collider.isTrigger&&hit.collider!=target)return false;
         return true;
     }
     private static int WalkingMask => LayerMask.GetMask("Buildings", "Mountains", "HookTarget", "PlayerTarget", "Animals");

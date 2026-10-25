@@ -29,7 +29,7 @@ public sealed class FogOfWar25D : MonoBehaviour
         var renderer=gameObject.AddComponent<MeshRenderer>();renderer.sharedMaterial=material;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
         BuildMesh();RefreshObservers();
     }
-    private bool Friendly(Health h)=>h.GetComponent<PlayerProgression>()==owner||h.GetComponent<ButcherHelper>()?.Factory?.Owner==owner;
+    private bool Friendly(Health h)=>CombatOwnership.OwnerOf(h)==owner;
     public void RefreshObservers()
     {
         eyes.Clear();routeStart.Clear();routeEnd.Clear();

@@ -5,260 +5,139 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Explicit opt-in development-player acceptance run. No effect in ordinary games.
+// Opt-in checks in the actual development player. Ordinary games never install this.
 public sealed class WindowsSmoke25D : MonoBehaviour
 {
 #if !UNITY_EDITOR
     static string output;
-    int assertions;
-    int previousDepth;
+    int assertions,savedDepth;
     bool failed;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Install()
     {
         if(!Debug.isDebugBuild)return;
         var args=Environment.GetCommandLineArgs();int index=Array.IndexOf(args,"-hookwars-smoke");
-        if(index<0)return;
-        if(index+1>=args.Length)throw new ArgumentException("-hookwars-smoke needs an output directory");
+        if(index<0)return;if(index+1>=args.Length)throw new ArgumentException("Smoke output directory required");
         output=Path.GetFullPath(args[index+1]);Directory.CreateDirectory(output);
         var go=new GameObject("Explicit Windows acceptance runner");DontDestroyOnLoad(go);go.AddComponent<WindowsSmoke25D>();
     }
-    void Check(bool value,string text)
+    void Check(bool value,string message)
     {
-        if(!value){failed=true;File.AppendAllText(Path.Combine(output,"result.txt"),"FAIL: "+text+"\n");Application.Quit(1);throw new InvalidOperationException(text);}
-        assertions++;File.AppendAllText(Path.Combine(output,"result.txt"),"PASS: "+text+"\n");
+        if(!value){failed=true;File.AppendAllText(Path.Combine(output,"result.txt"),"FAIL: "+message+"\n");Application.Quit(1);throw new InvalidOperationException(message);}
+        assertions++;File.AppendAllText(Path.Combine(output,"result.txt"),"PASS: "+message+"\n");
     }
-    static Color AuraTint(Renderer renderer)
-    {var properties=new MaterialPropertyBlock();renderer.GetPropertyBlock(properties);return properties.GetColor("_BaseColor");}
     IEnumerator Start()
     {
-        Application.runInBackground=true;previousDepth=MatchConfiguration.LastDepth;
-        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance\nPersistent data directory: "+Application.persistentDataPath+"\n");
-        foreach(int depth in new[]{4,16,20})
+        Application.runInBackground=true;savedDepth=MatchConfiguration.LastDepth;
+        File.WriteAllText(Path.Combine(output,"result.txt"),"Development Windows player acceptance, bridges/orders/siege024\n");
+        foreach(int depth in new[]{12,24,36})
         {
-            yield return new WaitForSecondsRealtime(.6f);
-            var menu=FindAnyObjectByType<MainMenuController>();Check(menu!=null&&SceneManager.GetActiveScene().name=="MainMenu","First/return scene MainMenu");
-            Check(FindAnyObjectByType<PlayerProgression>()==null&&FindObjectsByType<Rigidbody>(FindObjectsInactive.Include).Length==0,"Menu has no match logic/chain bodies");
-            menu.SetDepthText("invalid");Check(!menu.StartBattle(),"Invalid input rejected");menu.SetDepthText(depth.ToString());
-            ScreenCapture.CaptureScreenshot(Path.Combine(output,"menu_"+depth+".png"));yield return new WaitForEndOfFrame();
-            Check(menu.StartBattle()&&!menu.StartBattle(),"Single accepted match load");
-            yield return new WaitUntil(()=>SceneManager.GetActiveScene().name=="Arena25D");
-            var hero=FindAnyObjectByType<PlayerMovement>();var progress=hero.GetComponent<PlayerProgression>();
-            var clock=MatchHud25D.Instance;var coinStream=FindAnyObjectByType<RiverCoinStream>();
-            Check(clock!=null&&clock.ElapsedSeconds<1&&clock.PopupCount==0&&coinStream!=null&&coinStream.SecondsUntilSpawn>=24&&coinStream.SecondsUntilSpawn<=35&&progress.GoldPerSecond==.5f,
-                "Windows fresh match starts HH:MM:SS clock, random coin delay and half-gold passive income");
-            coinStream.enabled=false; // Explicit fixtures below control rewards; ordinary games keep autonomous spawning.
-            Check(ArenaLayout.Depth==depth,"Configured depth "+depth);
-            Check(progress.Gold<2&&progress.Experience==0&&progress.Level==1&&hero.GetComponent<OwnerEconomy>().Bones==0&&hero.GetComponent<OwnerEconomy>().ProductKg==0,"Fresh resources and level");
-            Check(FindObjectsByType<Barracks>().Length==0&&FindObjectsByType<SausageWarrior>().Length==0,"Windows fresh match contains no previous barracks or warriors");
-            Check(hero.GetComponent<Health>().MaximumKg==100&&hero.GetComponent<Health>().RegenerationPercentPerSecond==0,"Fresh session resets kill growth and percent regeneration");
-            var anchors=FindObjectsByType<HookAnchor>();
-            Check(anchors.Length==10&&anchors.Count(a=>a.transform.position.x<0)==5&&anchors.Count(a=>a.transform.position.x>0)==5,"Five hook eyes generated on each bank");
-            int rocksPerBank=Mathf.Max(0,Mathf.Clamp(Mathf.FloorToInt(ArenaLayout.Depth/3),1,6)-1);
-            var rocks=FindObjectsByType<PermanentRock>();
-            Check(rocks.Count(r=>r.transform.position.x<0)==rocksPerBank&&rocks.Count(r=>r.transform.position.x>0)==rocksPerBank,"One fewer rock per bank at selected depth");
-            var visibility=FindAnyObjectByType<FogOfWar25D>();
-            visibility.RefreshObservers();
-            Check(!visibility.IsRevealed(FindAnyObjectByType<EnemyChase>().transform.position)&&visibility.GetComponent<Renderer>().sharedMaterial.shader.isSupported,"Enemy bank is hidden and fog shader works in Windows player");
+            yield return new WaitForSecondsRealtime(.3f);
+            var menu=FindAnyObjectByType<MainMenuController>();Check(menu!=null,"Main menu starts without a match");
+            menu.SetDepthText("8");Check(!menu.StartBattle(),"Removed eight metre depth is rejected");menu.SetDepthText(depth.ToString());Check(menu.StartBattle(),"New depth starts: "+depth);
+            yield return new WaitUntil(()=>SceneManager.GetActiveScene().name=="Arena25D");yield return null;yield return null;
+            var hero=FindAnyObjectByType<PlayerMovement>();var owner=hero.GetComponent<PlayerProgression>();var stock=hero.GetComponent<OwnerEconomy>();
+            Check(ArenaLayout.Depth==depth&&owner.GoldPerSecond==.5f&&owner.Experience==0&&owner.Level==1,"Fresh map preserves normal hero progression and half-gold income");
+            Check(RiverBridge.All.Count==2&&RiverBridge.All.All(b=>b.Stage==0),"New match creates two unfinished bridges");
+            var anchors=FindObjectsByType<HookAnchor>();Check(anchors.Length==8&&anchors.All(a=>ArenaLayout.OuterEdge-Mathf.Abs(a.transform.position.x)>=8),"Four hook eyes on each bank keep eight metres clear of mountains");
+            Check(FindObjectsByType<Barracks>().Length==0&&FindObjectsByType<SausageWarrior>().Length==0&&!MatchPause.Instance.MatchEnded,"Fresh match has no old troops orders or match result");
+            Check(stock.Factory.MaximumHP==3000&&double.IsPositiveInfinity(stock.Factory.ProductCapacityKg),"Factory is strongest and finished storage is unlimited");
+            Check(!stock.Factory.TakeDamage(owner,100)&&stock.Factory.CurrentHP==3000,"Friendly damage cannot hurt its own factory");
+            var bridge=RiverBridge.All.Single(b=>b.Owner==owner);Check(!bridge.TryBuildNext(owner)&&bridge.Stage==0,"Unpaid bridge stage cannot complete");
+            Check(!RiverBridge.Walkable(new Vector2(0,7),.5f),"Unfinished bridge does not open a walking route");
+            var display=FindAnyObjectByType<ArenaPresentation25D>();var visual=display.VisualFor(bridge);
+            Check(visual!=null&&visual.GetComponentsInChildren<Collider>().Length==0,"Bridge model loads without duplicate three dimensional physics");
+            Check(visual.GetComponentsInChildren<Renderer>().All(r=>r.sharedMaterials.All(m=>m!=null&&m.shader.isSupported)),"Bridge materials survive player shader stripping");
+            var camera=Camera.main.GetComponent<ArenaCamera25D>();float size=Camera.main.orthographicSize;camera.SetZoom(2);
+            Check(camera.Zoom==2&&Camera.main.orthographicSize<size,"Windows map can zoom in");camera.SetZoom(1);
             foreach(var ai in FindObjectsByType<EnemyHookAI>())ai.enabled=false;
-            foreach(var ai in FindObjectsByType<EnemyMelee>())ai.enabled=false;
             foreach(var ai in FindObjectsByType<EnemyChase>())ai.enabled=false;
-            if(depth==16)
+            foreach(var ai in FindObjectsByType<EnemyMelee>())ai.enabled=false;
+            foreach(var carrier in FindObjectsByType<CarcassCarrier>())carrier.enabled=false;
+            hero.enabled=false;owner.enabled=false;
+            var rival=FindAnyObjectByType<EnemyChase>().GetComponent<PlayerProgression>();rival.enabled=false;
+            if(depth==24)yield return ExerciseSiege(hero,owner,rival,bridge,display);
+            else
             {
-                var stock = progress.GetComponent<OwnerEconomy>();
-                var factory = stock.Factory; factory.enabled = false;
-                Check(factory.CapacityKg==12 && factory.ProductCapacityKg==18 && factory.SecondsPerKg==2,
-                    "Windows factory starts with 12kg raw, 18kg product and 2 seconds per kg");
-                Check(factory.TryAcceptMass(1), "Windows factory accepts one kg raw meat");
-                factory.Advance(2);
-                Check(Math.Abs(stock.ProductKg-.5)<1e-6 && Math.Abs(stock.BoneKg-.5)<1e-6,
-                    "Windows one kg raw yields half product and half bones");
-                stock.AddOutput(17.5, 0);
-                Check(!factory.TryAcceptMass(1), "Windows full finished storage blocks raw delivery");
-                var saleObject = new GameObject("Explicit economy smoke shop");
-                var shop = saleObject.AddComponent<MeatShop>(); shop.Initialize(progress);
-                yield return new WaitForSeconds(2.2f);
-                Check(Math.Abs(progress.CurrentGoldIncomePerSecond-2.5)<.03,
-                    "Updated Windows player displays total income 2.5 with level one shop");
-                progress.AddGold(100); Check(shop.TryUpgrade(0), "Windows shop level upgrade accepted");
-                yield return new WaitForSeconds(2.2f);
-                Check(Math.Abs(progress.CurrentGoldIncomePerSecond-4.5)<.03 && shop.GoldPerKg==20 && shop.Level==2,
-                    "Updated Windows player displays total income 4.5 with level two shop");
-                progress.AddGold(1000);
-                Check(factory.TryUpgrade(0) && Math.Abs(factory.SecondsPerKg-1.4)<1e-6,
-                    "Windows first processing upgrade reduces time to 1.4 seconds per kg");
-                Check(factory.TryUpgrade(0) && Math.Abs(factory.SecondsPerKg-.98)<1e-6,
-                    "Windows second processing upgrade reduces time to .98 seconds per kg");
-                Check(factory.TryUpgrade(1) && factory.CapacityKg==30 && factory.ProductCapacityKg==36,
-                    "Windows first capacity upgrade adds 18kg to both warehouses");
-                Check(factory.TryUpgrade(1) && factory.CapacityKg==48 && factory.ProductCapacityKg==54,
-                    "Windows second capacity upgrade adds another 18kg to both warehouses");
-                Destroy(saleObject); factory.enabled = true;
+                stock.AddOutput(1000000,1000000);
+                Check(stock.Factory.TryAcceptMass(1),"Large ready inventory permits raw acceptance");
+                stock.Factory.Advance(2);Check(stock.ProductKg>1000000&&stock.BoneKg>1000000,"Both ready meat and bones can exceed old capacity");
+                MatchPause.Instance.SetPaused(true);Check(Time.timeScale==0,"Pause freezes the ordinary match");
             }
-            yield return new WaitForSecondsRealtime(.7f);
-            Check(FindObjectsByType<ButcherVisual25D>().Length==2&&FindObjectsByType<SpriteRenderer>().Length==0,"Both 3D heroes and zero world sprites");
-            var heroView=FindAnyObjectByType<ArenaPresentation25D>().VisualFor(hero.GetComponent<Health>());
-            var aura=heroView.Find("Hook mode aura")?.GetComponent<Renderer>();
-            Check(aura!=null&&aura.sharedMaterial.shader.isSupported&&AuraTint(aura).r>.9f&&AuraTint(aura).b<.2f&&
-                !heroView.Find("Team").gameObject.activeSelf,"Windows player shows red aura without the conflicting solid blue disk");
-            ScreenCapture.CaptureScreenshot(Path.Combine(output,"battle_"+depth+".png"));yield return new WaitForEndOfFrame();
-            var hook=hero.GetComponent<HookAbility>();
-            Vector2 direction=Vector2.zero;
-            for(int i=0;i<16;i++)
-            {
-                float angle=i*Mathf.PI/8;var candidate=new Vector2(Mathf.Sin(angle),Mathf.Cos(angle));
-                Vector3 end=hero.transform.position+(Vector3)(candidate*4);
-                if(Mathf.Abs(end.y)<ArenaLayout.FieldHeight*.5f-.5f&&Mathf.Abs(end.x)<ArenaLayout.OuterEdge-.5f&&WorldCollision.CanMove(hero.transform,end,hook.Width*.5f))
-                {direction=candidate;break;}
-            }
-            Check(direction!=Vector2.zero,"Generated map contains a clear four-meter hook test lane");
-            hook.TryThrow(direction);Check(hero.GetComponent<HeroActionTiming25D>().HookPending,"Accepted animated hook cast");
-            bool issued=false;float until=Time.time+1.2f;
-            while(Time.time<until&&!issued)
-            {
-                yield return new WaitForEndOfFrame();
-                issued=FindObjectsByType<HookChain25D>().Any(c=>c.ActiveLinks>0);
-            }
-            Check(hero.GetComponent<HookFlightAudio>()?.PlaybackCount==1,"Flight audio triggered once on actual hook release");
-            Check(issued,"Native PhysX chain issued in Windows player");
-            if(depth==16)
-            {
-                var victim=FindAnyObjectByType<EnemyChase>().GetComponent<Health>();var eater=hero.GetComponent<Health>();
-                victim.TakeDamage(100000,eater);
-                var meat=victim.GetComponent<HeroCarcassSpawner>().CurrentCarcass;
-                Check(eater.MaximumKg==120&&meat.MassKg==80,"Native hero kill divides weight 20/80");
-                var carrier=hero.GetComponent<CarcassCarrier>();
-                Check(carrier.TryCollect(meat)&&carrier.CurrentMassKg==10&&meat.MassKg==70,"Native partial pickup takes ten kg and leaves seventy");
-                victim.TakeDamage(100000,eater);Check(eater.MaximumKg==120,"Repeated dead-target damage cannot award weight twice");
-                var smallObject = new GameObject("Explicit small lifetime fixture"); smallObject.AddComponent<BoxCollider2D>();
-                var smallMeat = smallObject.AddComponent<Carcass>(); smallMeat.Initialize(6);
-                var largeObject = new GameObject("Explicit large lifetime fixture"); largeObject.AddComponent<BoxCollider2D>();
-                var largeMeat = largeObject.AddComponent<Carcass>(); largeMeat.Initialize(80, eater.GetComponent<HookVictim>());
-                Check(smallMeat.GroundLifetimeSeconds==60 && largeMeat.GroundLifetimeSeconds==300,
-                    "Windows small and large meat use sixty and three hundred game seconds");
-                smallMeat.AdvanceGroundLifetime(59); largeMeat.AdvanceGroundLifetime(299);
-                Check(smallMeat.IsAvailable && largeMeat.IsAvailable, "Windows meat survives before each expiry deadline");
-                smallMeat.AdvanceGroundLifetime(1); largeMeat.AdvanceGroundLifetime(1);
-                Check(!smallMeat.IsAvailable && !largeMeat.IsAvailable, "Windows expiry immediately prevents pickup");
-                yield return null;
-                Check(smallMeat==null && largeMeat==null, "Windows player destroys both expired meat objects");
-                hook.CancelHook();
-                Check(hook.SelectedPullMode==HookAbility.PullMode.TargetToOwner&&hook.TryTogglePullMode()&&hook.SelectedPullMode==HookAbility.PullMode.OwnerToTarget,
-                    "Windows hook switches from default pull to owner-flight mode");
-                Vector3 ownerStart=hero.transform.position,flightTarget=ownerStart;Vector2 flightDirection=Vector2.zero;
-                for(int i=0;i<16;i++)
-                {
-                    float angle=i*Mathf.PI/8;var candidate=new Vector2(Mathf.Sin(angle),Mathf.Cos(angle));
-                    var end=ownerStart+(Vector3)(candidate*3);
-                    if(ArenaLayout.IsInsideBank(end,end.x>0)&&WorldCollision.CanMove(hero.transform,end,ArenaLayout.HeroRadius))
-                    {flightDirection=candidate;flightTarget=end;break;}
-                }
-                Check(flightDirection!=Vector2.zero,"Windows map has a safe owner-flight lane");
-                var flightObject=new GameObject("Explicit owner-flight target fixture");flightObject.transform.position=flightTarget;
-                flightObject.layer=LayerMask.NameToLayer("HookTarget");flightObject.AddComponent<BoxCollider2D>().size=Vector2.one*.3f;
-                flightObject.AddComponent<HookVictim>();var flightHealth=flightObject.AddComponent<Health>();
-                yield return new WaitForSeconds(hook.Cooldown+.1f);
-                Check(AuraTint(aura).b>.9f&&AuraTint(aura).r<.2f,"Windows owner-flight mode shows light blue aura");
-                hook.TryThrow(flightDirection);Check(hook.IsPreparingThrow,"Windows owner-flight uses normal animated windup");
-                float flightDeadline=Time.time+4;
-                while((hook.IsPreparingThrow||hook.ActiveHook!=null)&&Time.time<flightDeadline)yield return null;
-                Check(hook.ActiveHook==null&&!hero.GetComponent<HookVictim>().IsCaught&&Vector2.Distance(ownerStart,hero.transform.position)>1.5f&&
-                    Vector2.Distance(flightTarget,hero.transform.position)<1.2f&&flightObject.transform.position==flightTarget&&flightHealth.CurrentKg==60,
-                    "Windows animated hook flies owner to stationary target, deals damage and releases movement lock");
-                Check(hook.TryTogglePullMode()&&hook.SelectedPullMode==HookAbility.PullMode.TargetToOwner,"Windows E-mode action returns to target pull");
-                yield return null;
-                Check(AuraTint(aura).r>.9f&&AuraTint(aura).b<.2f,"Windows switching back restores red aura");
-                Destroy(flightObject);
-                yield return new WaitForSeconds(hook.Cooldown+.1f);
-                Vector3 coinOrigin=Vector3.zero;bool coinLane=false;
-                for(float y=-7;y<=7&&!coinLane;y++)
-                {
-                    var candidate=new Vector3(hero.transform.position.x>0?4:-4,y);
-                    if(!WorldCollision.FreeCircle(candidate,ArenaLayout.HeroRadius))continue;
-                    Vector2 intoRiver=new Vector2(-Mathf.Sign(candidate.x),0);
-                    bool blocked=Physics2D.CircleCastAll(candidate,hook.Width*.5f,intoRiver,Mathf.Abs(candidate.x),LayerMask.GetMask("Buildings","Mountains","HookTarget"))
-                        .Any(hit=>hit.transform!=hero.transform&&(!hit.collider.isTrigger||hit.collider.GetComponent<HookAnchor>()!=null));
-                    if(!blocked){coinOrigin=candidate;coinLane=true;}
-                }
-                Check(coinLane,"Windows generated map contains a clear bank-to-river coin lane");hero.transform.position=coinOrigin;Physics2D.SyncTransforms();
-                var coin=coinStream.SpawnOne();coin.transform.position=new Vector3(0,coinOrigin.y);
-                int reward=coin.Value;Check(reward>=25&&reward<=75,"Windows coin reward is an integer in inclusive range twenty-five to seventy-five");
-                Check(hook.TryTogglePullMode()&&hook.SelectedPullMode==HookAbility.PullMode.OwnerToTarget,"Select blue mode to verify coin-only pull override");
-                yield return null;
-                var coinView=FindAnyObjectByType<ArenaPresentation25D>().VisualFor(coin);
-                Check(coinView!=null&&coinView.GetComponentsInChildren<MeshRenderer>().All(r=>r.sharedMaterials.All(m=>m.shader.isSupported&&m.GetFloat("_Cull")==0&&m.IsKeywordEnabled("_EMISSION"))),"Windows imported gold coin has supported shaders, both-face rendering and readable gold fill");
-                float distance=Vector2.Distance(coinOrigin,coin.transform.position);
-                Vector2 predicted=(Vector2)coin.transform.position+Vector2.down*coin.FlowSpeed*(HeroActionTiming25D.HookRelease+distance/hook.Speed);
-                double goldBefore=progress.Gold,xpBefore=progress.Experience;float coinStarted=Time.time;
-                hook.TryThrow(predicted-(Vector2)coinOrigin);Check(hook.IsPreparingThrow,"Windows coin catch starts an actual animated throw");
-                float coinDeadline=Time.time+4;while(coin!=null&&Time.time<coinDeadline)yield return null;
-                Check(coin==null&&Vector2.Distance(hero.transform.position,coinOrigin)<.001f&&
-                    Math.Abs(progress.Gold-goldBefore-.5*(Time.time-coinStarted)-reward)<.1&&progress.Experience==xpBefore,
-                    "Windows blue hook pulls coin to stationary hero and awards its value once without XP");
-                Check(clock.PopupCount==1,"Windows delivered coin shows one rising gold reward label");
-                yield return new WaitForSeconds(1.1f);Check(clock.PopupCount==0,"Windows reward label disappears after one game second");
-                var missed=coinStream.SpawnOne();missed.transform.position=new Vector3(0,-10.55f);missed.Advance(1);yield return null;
-                Check(missed==null,"Windows missed coin washes out and is destroyed");
-            }
-            if(depth==16)yield return CheckBarracks(hero,progress);
-            ScreenCapture.CaptureScreenshot(Path.Combine(output,"chain_"+depth+".png"));yield return new WaitForEndOfFrame();
-            var pause=MatchPause.Instance;pause.HandleEscape();Check(pause.IsPaused&&Time.timeScale==0,"Pause freezes game");
-            double pausedClock=clock.ElapsedSeconds;yield return new WaitForSecondsRealtime(.15f);
-            Check(clock.ElapsedSeconds==pausedClock,"Windows match clock freezes during pause");
-            ScreenCapture.CaptureScreenshot(Path.Combine(output,"pause_"+depth+".png"));yield return new WaitForEndOfFrame();
-            Check(pause.ReturnToMenu()&&!pause.ReturnToMenu(),"Return is accepted only once");
-            yield return new WaitUntil(()=>SceneManager.GetActiveScene().name=="MainMenu");
-            yield return new WaitForSecondsRealtime(.4f);
-            Check(Time.timeScale==1&&SceneManager.sceneCount==1&&MatchHud25D.Instance==null&&FindObjectsByType<RiverCoin>().Length==0,"No residual physics scene, clock, coins or time scale");
-            Check(FindObjectsByType<Barracks>().Length==0&&FindObjectsByType<SausageWarrior>().Length==0&&FindObjectsByType<WarriorPoison>().Length==0,"Windows menu cleans all barracks warriors and poison");
+            ScreenCapture.CaptureScreenshot(Path.Combine(output,"siege_"+depth+".png"));yield return new WaitForEndOfFrame();
+            Check(MatchPause.Instance.ReturnToMenu(),"Return to menu is accepted");
+            yield return new WaitUntil(()=>SceneManager.GetActiveScene().name=="MainMenu");yield return null;
+            Check(Time.timeScale==1&&RiverBridge.All.Count==0&&FindObjectsByType<SausageWarrior>().Length==0&&FindObjectsByType<Barracks>().Length==0,"Menu clears bridges troops queues and pause/result state");
         }
-        MatchConfiguration.RememberDepth(previousDepth);
+        MatchConfiguration.RememberDepth(savedDepth);
         File.AppendAllText(Path.Combine(output,"result.txt"),"HOOKWARS_WINDOWS_SMOKE_PASS: "+assertions+" assertions\n");Application.Quit(0);
     }
-    IEnumerator CheckBarracks(PlayerMovement hero,PlayerProgression progress)
+    IEnumerator ExerciseSiege(PlayerMovement hero,PlayerProgression owner,PlayerProgression rival,RiverBridge bridge,ArenaPresentation25D display)
     {
-        var builder=hero.GetComponent<PlayerBuilding>();var prefab=builder.BuildingPrefabs.OfType<Barracks>().Single();
-        Check(prefab.BuildCost==250&&prefab.Footprint==new Vector2Int(2,2),"Windows construction palette contains the two by two barracks for 250 gold");
-        // Controlled fixture area; normal matches retain all generated collisions.
         foreach(var item in FindObjectsByType<GameBuilding>())foreach(var c in item.GetComponents<Collider2D>())c.enabled=false;
         foreach(var item in FindObjectsByType<PermanentRock>())foreach(var c in item.GetComponents<Collider2D>())c.enabled=false;
         foreach(var item in FindObjectsByType<HookAnchor>())foreach(var c in item.GetComponents<Collider2D>())c.enabled=false;
-        hero.transform.position=new Vector3(-12.5f,-6);progress.AddGold(10000);
-        var stock=hero.GetComponent<OwnerEconomy>();stock.TakeProduct(stock.ProductKg);stock.TrySpendBones((int)stock.Bones);
-        builder.SelectBuilding(prefab);var building=(Barracks)builder.TryBuildAt(new Vector3(-10,-6));builder.CloseInterface();
-        Check(building!=null&&!building.AutoProduction,"Windows constructs a barracks with production initially off");
-        double gold=progress.Gold;building.SetProduction(true);building.Advance(.01f);
-        Check(!building.HasOrder&&progress.Gold==gold,"Windows missing stock cannot partially spend production gold");
-        stock.AddOutput(4,2);double beforeMeat=stock.ProductKg,beforeBones=stock.BoneKg;building.Advance(.01f);
-        Check(building.HasOrder&&Math.Abs(gold-progress.Gold-50)<.0001&&Math.Abs(beforeMeat-stock.ProductKg-4)<.0001&&Math.Abs(beforeBones-stock.BoneKg-2)<.0001,"Windows order atomically pays four meat two bones and fifty gold");
-        for(int i=0;i<6;i++){gold=progress.Gold;Check(building.TryUpgrade(i)&&Math.Abs(gold-progress.Gold-1000)<.0001,"Windows upgrade branch "+i+" costs one thousand gold");}
-        Check(building.OrderStats.healthLevel==0&&building.Upgrades.healthLevel==1,"Windows upgrade preserves the started order snapshot");
-        yield return new WaitForSeconds(12.15f);building.SetProduction(false);
-        var soldier=FindObjectsByType<SausageWarrior>().Single();
-        Check(soldier.GetComponent<Health>().MaximumKg==40&&soldier.Owner==progress,"Windows automatic twelve second order releases its original forty kilogram warrior");
-        var display=FindAnyObjectByType<ArenaPresentation25D>();var view=display.VisualFor(soldier.GetComponent<Health>());
-        Check(view!=null&&view.GetComponentsInChildren<SkinnedMeshRenderer>().Length==4&&view.GetComponentInChildren<Animator>().runtimeAnimatorController!=null,"Windows renders the authored warrior rig and animator");
-        Check(display.VisualFor(building)!=null&&view.GetComponentsInChildren<Renderer>().All(r=>r.sharedMaterials.All(m=>m.shader.isSupported)),"Windows barracks and soldier materials survive build shader stripping");
-        Vector3 start=soldier.transform.position;yield return new WaitForSeconds(1.5f);
-        Check(Vector2.Distance(start,soldier.transform.position)>.05f&&ArenaLayout.IsInsideBank(soldier.transform.position,false,SausageWarrior.BodyRadius),"Windows warrior wanders on its home bank");
-        stock.AddOutput(4,2);building.SetProduction(true);building.Advance(.1f);float frozen=building.Progress;
-        MatchPause.Instance.SetPaused(true);building.Advance(12);yield return new WaitForSecondsRealtime(.15f);
-        Check(building.Progress==frozen,"Windows pause freezes the paid barracks order");MatchPause.Instance.SetPaused(false);
-        soldier.transform.position=new Vector3(-15,-7);soldier.enabled=false;building.Advance(12);building.SetProduction(false);
-        var upgraded=FindObjectsByType<SausageWarrior>().Single(w=>w!=soldier);upgraded.enabled=false;upgraded.transform.position=new Vector3(-7,-3.7f);
-        Check(upgraded.GetComponent<Health>().MaximumKg==50&&upgraded.Stats.poisonLevel==1,"Windows next warrior inherits improved health and poison");
-        var rival=FindAnyObjectByType<EnemyChase>().GetComponent<PlayerProgression>();
-        var target=Instantiate(soldier,new Vector3(-7,-3),Quaternion.identity);target.Bind(rival,new WarriorStats{healthLevel=20},false);target.enabled=false;
-        upgraded.enabled=true;float deadline=Time.time+3;
-        while(target.GetComponent<Health>().CurrentKg==240&&Time.time<deadline)yield return null;
-        upgraded.enabled=false;float after=target.GetComponent<Health>().CurrentKg;
-        Check(after==233||after==226,"Windows animated warrior strike deals approved ordinary or double critical damage");
-        yield return new WaitForSeconds(1.1f);
-        Check(target.GetComponent<Health>().CurrentKg==after-1,"Windows poison ticks once per game second after a successful strike");
-        ScreenCapture.CaptureScreenshot(Path.Combine(output,"barracks_16.png"));yield return new WaitForEndOfFrame();
-        gold=progress.Gold;int alive=FindObjectsByType<SausageWarrior>().Length;
-        Check(building.Demolish(progress)&&progress.Gold==gold&&FindObjectsByType<SausageWarrior>().Length==alive,"Windows demolition preserves soldiers and refunds no gold");
+        var stock=owner.GetComponent<OwnerEconomy>();owner.AddGold(30000);stock.AddOutput(500,500);
+        Check(bridge.TryBuildNext(owner)&&bridge.Stage==1&&stock.BoneKg==0,"Bridge supports consume five hundred bones");
+        double gold=owner.Gold;Check(bridge.TryBuildNext(owner)&&bridge.Stage==2&&gold-owner.Gold==10000,"Bridge bun consumes ten thousand gold");
+        Check(bridge.TryBuildNext(owner)&&bridge.Complete&&stock.ProductKg==0,"Bridge sausage consumes five hundred ready meat");
+        Check(!bridge.TryBuildNext(owner)&&RiverBridge.Walkable(new Vector2(0,7),.5f)&&!RiverBridge.Walkable(Vector2.zero,.2f),"Finished bridge opens only its own crossing and cannot charge a fourth stage");
+        var builder=hero.GetComponent<PlayerBuilding>();var barracksPrefab=builder.BuildingPrefabs.OfType<Barracks>().Single();
+        hero.transform.position=new Vector3(-12.5f,-3);rival.transform.position=new Vector3(12,0);
+        builder.SelectBuilding(barracksPrefab);var barracks=(Barracks)builder.TryBuildAt(new Vector3(-10,-3));builder.CloseInterface();
+        Check(barracks!=null&&barracks.MaximumHP==800&&!barracks.AutoProduction,"Windows constructs a durable barracks with conveyor off");
+        stock.AddOutput(8,4);gold=owner.Gold;
+        Check(barracks.TryQueue()&&barracks.TryQueue()&&barracks.QueueCount==2&&gold-owner.Gold==100&&stock.ProductKg==0&&stock.BoneKg==0,"Two left-click orders immediately reserve and spend their complete cost");
+        for(int i=0;i<6;i++){gold=owner.Gold;Check(barracks.TryUpgrade(i)&&gold-owner.Gold==1000,"Upgrade branch "+i+" costs one thousand");}
+        yield return new WaitForSeconds(12.2f);
+        Check(FindObjectsByType<SausageWarrior>().Length==1&&barracks.QueueCount==1,"First paid warrior is produced after twelve native game seconds");
+        var first=FindAnyObjectByType<SausageWarrior>();Check(first.Stats.healthLevel==0&&first.GetComponent<Health>().MaximumKg==40,"Paid queue snapshot precedes later upgrades");
+        first.enabled=false;first.transform.position=new Vector3(-16,-6);
+        yield return new WaitForSeconds(12.2f);
+        var units=FindObjectsByType<SausageWarrior>();Check(units.Length==2&&barracks.QueueCount==0&&!barracks.AutoProduction,"Second order completes sequentially and manual production stops");
+        foreach(var unit in units){unit.enabled=false;unit.transform.position=new Vector3(-16,-6-Array.IndexOf(units,unit));}
+        Check(barracks.SetSending(true)&&units.All(w=>w.AutoRaiding),"Own restored bridge unlocks sending for existing warriors");barracks.SetSending(false);
+        first.transform.position=new Vector3(-4,7);first.enabled=true;
+        var commander=hero.GetComponent<UnitCommander>();var screen=Camera.main.WorldToScreenPoint(ArenaSpace25D.ToWorld(first.transform.position));
+        commander.SelectUnits(new Rect(screen.x-24,screen.y-24,48,48));Check(commander.SelectionCount==1&&first.IsSelected,"Windows selection picks only the intended friendly warrior");
+        Check(commander.GiveOrder(new Vector3(4,7))&&first.HasManualOrder,"Windows group command directs the selected warrior");
+        Time.timeScale=3;float until=Time.time+18;bool arch=false;
+        while(first.transform.position.x<3.2f&&Time.time<until)
+        {
+            var view=display.VisualFor(first.GetComponent<Health>());if(Mathf.Abs(first.transform.position.x)<1)arch|=view!=null&&view.position.y>.6f;yield return null;
+        }
+        Check(first.transform.position.x>3.2f&&arch,"Windows warrior traverses the completed public bridge along its raised arch");Time.timeScale=1;
+        var shopPrefab=builder.BuildingPrefabs.OfType<MeatShop>().Single();var enemyShop=Instantiate(shopPrefab,new Vector3(5.5f,7.5f),Quaternion.identity);enemyShop.Initialize(rival);enemyShop.SetOperating(rival,false);
+        Check(enemyShop.MaximumHP==400&&!enemyShop.TakeDamage(rival,100),"Enemy shop has durability and rejects its own owner's damage");
+        float before=enemyShop.CurrentHP;Check(commander.GiveOrder(enemyShop.transform.position,enemyShop),"Right-click attack command accepts hostile buildings");
+        until=Time.time+5;while(enemyShop.CurrentHP==before&&Time.time<until)yield return null;
+        Check(enemyShop.CurrentHP<before,"Warrior animated attack damages a hostile building");first.enabled=false;
+        stock.AddOutput(4,2);Check(barracks.TryQueue(),"A new paid order can be placed after upgrades");yield return new WaitForSeconds(12.2f);
+        var upgraded=FindObjectsByType<SausageWarrior>().Single(w=>!units.Contains(w));upgraded.enabled=false;
+        Check(upgraded.GetComponent<Health>().MaximumKg==50&&upgraded.Stats.poisonLevel==1,"New paid warrior inherits upgraded combat characteristics");
+        var upgradedView=display.VisualFor(upgraded.GetComponent<Health>());
+        Check(upgradedView!=null&&Math.Abs(upgradedView.localScale.x-1.15f)<.001&&upgraded.Stats.ClubWidth>=1.24f&&upgraded.Stats.ClubLength>1.3f,"Body and club upgrades have visibly stronger model scaling");
+        var club=upgradedView.GetComponentsInChildren<Renderer>().Single(r=>r.name.Contains("Femur_Club"));var tint=new MaterialPropertyBlock();club.GetPropertyBlock(tint,0);
+        Check(tint.GetColor("_BaseColor")==upgraded.Stats.ClubColor,"Acid club tint survives the Windows player build");
+        var ownShop=Instantiate(shopPrefab,new Vector3(-8.5f,1.5f),Quaternion.identity);ownShop.Initialize(owner);stock.AddOutput(10,0);
+        ownShop.SetOperating(owner,false);double meat=stock.ProductKg;gold=owner.Gold;yield return new WaitForSeconds(.2f);
+        Check(stock.ProductKg==meat&&owner.Gold==gold,"Stopped shop consumes no meat and grants no income");
+        ownShop.SetOperating(owner,true);yield return new WaitForSeconds(1.1f);Check(stock.ProductKg<meat&&owner.Gold>gold,"Restarted shop resumes actual native-frame sales");ownShop.enabled=false;
+        var menu=hero.GetComponent<BuildingUpgradeMenu>();screen=Camera.main.WorldToScreenPoint(ArenaSpace25D.ToWorld(ownShop.transform.position));
+        Check(menu.SelectAtScreenPoint(screen)&&menu.Selected==ownShop&&menu.Contains(menu.ToolbarRect.center),"Selecting a shop uses its compact building toolbar");
+        yield return null;Check(display.VisualFor(ownShop).Find("Selection")?.gameObject.activeSelf==true,"Selected building has its ground highlight");
+        var enemyHealth=rival.GetComponent<Health>();enemyHealth.TakeDamage(10000,hero.GetComponent<Health>());
+        var carcass=rival.GetComponent<HeroCarcassSpawner>().CurrentCarcass;
+        Check(hero.GetComponent<CarcassCarrier>().TryCollect(carcass),"Actual enemy kill supports partial hero meat pickup");yield return null;yield return null;
+        var cargo=display.VisualFor(hero.GetComponent<Health>()).Find("Cargo");
+        Check(cargo.GetComponentsInChildren<Renderer>().Length>0&&cargo.GetComponentsInChildren<Renderer>().All(r=>r.shadowCastingMode==UnityEngine.Rendering.ShadowCastingMode.Off),"Carried meat casts no stretched screen-wide shadow");
+        Check(stock.Factory.CurrentHP==3000,"Own factory still retains its strongest full durability");
+        Check(rival.GetComponent<OwnerEconomy>().Factory.TakeDamage(owner,3000)&&MatchPause.Instance.MatchEnded&&Time.timeScale==0,"Enemy factory destruction ends and freezes the Windows match");
+        Check(!barracks.TryQueue(),"Finished match rejects further paid production");
     }
-    void Update(){if(Time.realtimeSinceStartup>115&&!failed){failed=true;File.AppendAllText(Path.Combine(output,"result.txt"),"FAIL: timeout\n");Application.Quit(1);}}
+    void Update()
+    {
+        if(Time.realtimeSinceStartup>112&&!failed){failed=true;File.AppendAllText(Path.Combine(output,"result.txt"),"FAIL: timeout\n");Application.Quit(1);}
+    }
 #endif
 }

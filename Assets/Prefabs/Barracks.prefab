@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 421615012745710540}
   - component: {fileID: 5911859632275128142}
   - component: {fileID: 1525938760077254709}
+  - component: {fileID: 1147529917083614702}
   m_Layer: 10
   m_Name: Barracks
   m_TagString: Untagged
@@ -99,3 +100,15 @@ MonoBehaviour:
   warriorBones: 2
   warriorMeat: 4
   productionSeconds: 12
+--- !u!114 &1147529917083614702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8137171167021333744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07dfe187d91bc3a42a5f135139691f83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuildingDurability

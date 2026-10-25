@@ -12,11 +12,11 @@ public struct WarriorStats
     public float Poison => poisonLevel;
     public float AttackPeriod => 1.2f / (1f + .1f * speedLevel);
     public double CriticalChance => 1d - .9d * Math.Pow(.98d, criticalLevel);
-    public float BodyScale => 1f + .05f * healthLevel;
-    public float ClubWidth => 1f + .08f * damageLevel;
-    public float ClubLength => Range / .9f;
-    public Color BodyColor => Color.Lerp(new Color(1f,.72f,.73f),new Color(.20f,.065f,.025f),criticalLevel/(criticalLevel+5f));
-    public Color ClubColor => Color.Lerp(new Color(1f,.96f,.83f),new Color(.48f,1f,.015f),poisonLevel/(poisonLevel+5f));
+    public float BodyScale => 1f + .15f * healthLevel;
+    public float ClubWidth => 1f + .24f * damageLevel;
+    public float ClubLength => 1f + .3f * areaLevel / .9f;
+    public Color BodyColor => Color.Lerp(new Color(1f,.72f,.73f),new Color(.20f,.065f,.025f),3f*criticalLevel/(3f*criticalLevel+5f));
+    public Color ClubColor => Color.Lerp(new Color(1f,.96f,.83f),new Color(.48f,1f,.015f),3f*poisonLevel/(3f*poisonLevel+5f));
     public int Level(int index) => index switch {0=>healthLevel,1=>damageLevel,2=>areaLevel,3=>poisonLevel,4=>speedLevel,5=>criticalLevel,_=>-1};
     public bool Upgrade(int index)
     {

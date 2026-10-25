@@ -328,6 +328,7 @@ public class HookAbility: MonoBehaviour
         bool found = false;
         foreach (RaycastHit2D candidate in hits)
         {
+            if(candidate.collider.GetComponent<RiverBridge>()!=null)continue;
             if (candidate.collider.transform == transform ||
                 candidate.collider.transform.IsChildOf(transform)) continue;
             // Ignore only numerical re-contact with the surface just left.
@@ -358,8 +359,8 @@ public class HookAbility: MonoBehaviour
         if(anchor!=null){BeginAnchorPull(anchor);return;}
         if (IsObstacle(best.collider))
         {
-            BoneWall wall = best.collider.GetComponent<BoneWall>();
-            if (wall != null && wallContacts.Add(best.collider) && wall.TakeHookDamage(GetComponent<PlayerProgression>(), damage))
+            GameBuilding wall = best.collider.GetComponent<GameBuilding>();
+            if (wall != null && wallContacts.Add(best.collider) && wall.TakeDamage(GetComponent<PlayerProgression>(), damage))
             {
                 // The wall is gone. Keep flying without spending a bounce or adding a bend.
                 activeHook.position += throwDirection * Skin;

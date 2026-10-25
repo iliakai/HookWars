@@ -11,6 +11,9 @@ public class AnimalFarm : GameBuilding
     [SerializeField, Min(0.1f)] private float retryDelay = 1;
     private double remaining;
     public float SpawnInterval => spawnInterval;
+    public int Level {get;private set;}=1;
+    public int UpgradeCost=>upgradeCost;
+    public bool CanUpgrade=>owner!=null&&owner.Gold>=upgradeCost&&spawnInterval>minimumInterval;
     public override BuildingKind Kind => BuildingKind.Farm;
     public override string DisplayName => "Ферма";
     public override string Info => $"Случайное животное каждые {spawnInterval:0.##} с\nНа берегу фермы; овца, корова, свинья";
@@ -19,7 +22,7 @@ public class AnimalFarm : GameBuilding
     private void Update() => Advance(Time.deltaTime);
     public Animal Advance(double seconds)
     {
-        if (owner == null || !double.IsFinite(seconds) || seconds <= 0) return null;
+        if (owner == null || !IsOperating || MatchPause.BlocksGameplay || !double.IsFinite(seconds) || seconds <= 0) return null;
         remaining -= seconds;
         if (remaining > 0) return null;
         Animal result = TrySpawn();
@@ -28,7 +31,7 @@ public class AnimalFarm : GameBuilding
     }
     public Animal TrySpawn()
     {
-        if (owner == null || animalPrefabs == null || animalPrefabs.Length == 0) return null;
+        if (owner == null || !IsOperating || MatchPause.BlocksGameplay || animalPrefabs == null || animalPrefabs.Length == 0) return null;
         Animal prefab = animalPrefabs[Random.Range(0, animalPrefabs.Length)];
         bool right = transform.position.x > 0;
         Rect bounds = ArenaLayout.BankBounds(right, prefab.Radius);
@@ -44,6 +47,7 @@ public class AnimalFarm : GameBuilding
     {
         if (owner == null || index != 0 || spawnInterval <= minimumInterval || !owner.TrySpendGold(upgradeCost)) return false;
         spawnInterval = Mathf.Max(minimumInterval, spawnInterval * intervalMultiplier);
+        Level++;
         remaining = System.Math.Min(remaining, spawnInterval);
         upgradeCost = NextCost(upgradeCost);
         return true;

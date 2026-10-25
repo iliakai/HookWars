@@ -21,6 +21,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if(MatchPause.BlocksGameplay)return;
         if (victim != null && victim.IsCaught)
         {
             return;
@@ -58,7 +59,7 @@ public class PlayerMovement : MonoBehaviour
         position.x += direction.x * moveSpeed * Time.deltaTime;
         position.y += direction.y * moveSpeed * Time.deltaTime;
 
-        position = ArenaLayout.ClampToBank(position, rightBank);
+        position = RiverBridge.ClampStep(transform.position,position,ArenaLayout.HeroRadius);
         position = WorldCollision.Slide(transform, position, ArenaLayout.HeroRadius);
 
         transform.position = position;

@@ -73,6 +73,7 @@ public class PlayerBuilding : MonoBehaviour
     private bool CanPlaceInternal(Vector3 cell, bool syncPhysics)
     {
         Vector2Int size=PlacementSize;
+        if(RiverBridge.Reserved(cell,Mathf.Max(size.x,size.y)*.5f))return false;
         if((cell-Snap(cell,size)).sqrMagnitude>.00000001f)return false;
         if (!CanAct || selectedPrefab == null || Vector2.Distance(transform.position,cell)>BuildRadius || !selectedPrefab.CanBuild(progression) ||
             !ArenaLayout.IsInsideBank(cell-new Vector3(size.x*.5f,size.y*.5f),homeRightBank,0)||

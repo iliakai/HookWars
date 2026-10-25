@@ -19,6 +19,10 @@ public sealed class CargoPresentation25D : MonoBehaviour
             {
                 var prefab=presentation.ModelFor(carcass);if(prefab==null)continue;
                 view=Instantiate(prefab,transform,false);views.Add(carcass,view);
+                // A rotating, attached meat mesh can otherwise project an unstable
+                // long cascade shadow. Carried meat keeps lighting, but casts none.
+                foreach(var renderer in view.GetComponentsInChildren<Renderer>())
+                    renderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
             }
             view.transform.localScale=Vector3.one*.5f*Mathf.Pow(carcass.VisualMassFraction,1f/3f);
             view.transform.localPosition=new Vector3((i%2-.5f)*.32f,(i/2)*.16f,0);i++;

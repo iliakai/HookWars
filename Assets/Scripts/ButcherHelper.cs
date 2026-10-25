@@ -87,13 +87,14 @@ public sealed class ButcherHelper : MonoBehaviour
         if(path.Count==0)return;
         while(path.Count>1&&Vector2.Distance(transform.position,path[0])<.08f)path.RemoveAt(0);
         Vector3 before=transform.position;Vector3 next=Vector3.MoveTowards(before,path[0],moveSpeed*Time.deltaTime);
-        next=WorldCollision.Slide(transform,next,Radius);next=ArenaLayout.ClampToBank(next,Factory.transform.position.x>0,Radius);
+        next=WorldCollision.Slide(transform,next,Radius);next=RiverBridge.ClampStep(before,next,Radius);
         Vector2 travel=next-before;if(travel.sqrMagnitude>.000001f)AimDirection=travel.normalized;
         transform.position=next;Physics2D.SyncTransforms();
         if(Vector2.Distance(next,path[0])<.04f)path.RemoveAt(0);
     }
     private void BuildPath(Vector3 goal,float arrival)
     {
+        if(RiverBridge.AnyComplete){WalkNavigation25D.Build(transform,goal,Radius,arrival,path);return;}
         path.Clear();Rect bank=ArenaLayout.BankBounds(Factory.transform.position.x>0,Radius+.02f);
         const float step=.5f;int width=Mathf.FloorToInt(bank.width/step)+1,height=Mathf.FloorToInt(bank.height/step)+1;
         int sx=Mathf.Clamp(Mathf.RoundToInt((transform.position.x-bank.xMin)/step),0,width-1),sy=Mathf.Clamp(Mathf.RoundToInt((transform.position.y-bank.yMin)/step),0,height-1);

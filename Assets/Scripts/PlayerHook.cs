@@ -20,7 +20,7 @@ public class PlayerHook : HookAbility
             return;
         }
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        if (GetComponent<UnitCommander>()==null&&Mouse.current.leftButton.wasPressedThisFrame)
         {
             TryThrowAtScreenPoint(Mouse.current.position.ReadValue());
         }
@@ -30,6 +30,6 @@ public class PlayerHook : HookAbility
         if (GamePointer.OverInterface(screen) || playerAim == null) return;
         PlayerBuilding builder = GetComponent<PlayerBuilding>();
         if (builder != null && builder.BlocksMouseInput) return;
-        TryThrow(playerAim.AimDirection);
+        if(GamePointer.TryLogicalPoint(Camera.main,screen,out var point))TryThrow((Vector2)(point-transform.position));
     }
 }

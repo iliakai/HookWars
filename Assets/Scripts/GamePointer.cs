@@ -31,6 +31,7 @@ public static class GamePointer
         if(HookUpgradeMenu.BlocksWorldInput)return true;
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return true;
         Vector2 gui = new Vector2(screen.x, Screen.height - screen.y);
+        if(Object.FindAnyObjectByType<BuildingUpgradeMenu>()?.Contains(gui)==true)return true;
         return (MatchHud25D.Instance!=null&&MatchHud25D.ScreenRect.Contains(gui)) || TrainingMatch.ScreenRect.Contains(gui) || ProgressionHUD.ScreenRect.Contains(gui) ||
             CarryingHUD.ScreenRect.Contains(gui) || PlayerBuilding.ScreenRect.Contains(gui) || HookUpgradeMenu.ScreenRect.Contains(gui);
     }

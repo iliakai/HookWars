@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8478074508387339781}
   - component: {fileID: 8880500085725491096}
   - component: {fileID: 6430136431561755328}
+  - component: {fileID: 8874693975658280896}
   m_Layer: 10
   m_Name: SausageFactory
   m_TagString: Untagged
@@ -90,7 +91,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9af857b60b398114c80b03fcb36b4611, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SausageFactory
   owner: {fileID: 0}
   buildCost: 75
@@ -114,6 +115,18 @@ MonoBehaviour:
   helperCapacityCost: 50
   helperCapacityKg: 10
   helperCapacityIncrease: 2
+--- !u!114 &8874693975658280896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700948850401342035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07dfe187d91bc3a42a5f135139691f83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuildingDurability
 --- !u!1 &3593699298149390708
 GameObject:
   m_ObjectHideFlags: 0

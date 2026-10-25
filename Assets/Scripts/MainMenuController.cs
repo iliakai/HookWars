@@ -38,13 +38,13 @@ public sealed class MainMenuController : MonoBehaviour
         GUI.Label(new Rect(180,132,600,36),"Бой на двух берегах",small);
         GUI.Box(new Rect(180,188,600,256),GUIContent.none);
         GUI.Label(new Rect(210,208,500,34),"Глубина каждого берега, м",label);
-        float value=GUI.HorizontalSlider(new Rect(214,268,410,24),sliderValue,4,20);
+        float value=GUI.HorizontalSlider(new Rect(214,268,410,24),sliderValue,MatchConfiguration.MinimumDepth,MatchConfiguration.MaximumDepth);
         int integer=Mathf.RoundToInt(value);
         if(integer!=sliderValue)SetDepthText(integer.ToString());
         string edited=GUI.TextField(new Rect(654,255,90,38),number,8,numberStyle);
         if(edited!=number)SetDepthText(edited);
         GUI.Label(new Rect(210,310,540,36),$"Ширина реки {ArenaLayout.RiverWidth:0} м · длина вдоль реки {ArenaLayout.FieldHeight:0} м",small);
-        GUI.Label(new Rect(210,350,540,36),IsValid?$"Общая ширина поля: 2 × {sliderValue} + {ArenaLayout.RiverWidth:0} = {2*sliderValue+ArenaLayout.RiverWidth:0} м":"Введите целое число от 4 до 20",small);
+        GUI.Label(new Rect(210,350,540,36),IsValid?$"Общая ширина поля: 2 × {sliderValue} + {ArenaLayout.RiverWidth:0} = {2*sliderValue+ArenaLayout.RiverWidth:0} м":"Введите целое число от 12 до 36",small);
         GUI.enabled=IsValid&&!loading;
         if(GUI.Button(new Rect(270,466,420,54),loading?"Загрузка…":"Начать бой",button))StartBattle();
         GUI.enabled=!Application.isEditor&&!loading;

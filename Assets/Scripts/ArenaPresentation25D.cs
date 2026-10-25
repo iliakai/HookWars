@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 [DefaultExecutionOrder(1000)]
 public class ArenaPresentation25D : MonoBehaviour
 {
-    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass, Rock, Anchor, Coin, Barracks, Warrior }
+    public enum VisualKind { Player, Enemy, Sheep, Cow, Pig, Carcass, Factory, Shop, Farm, Wall, Hook, SheepCarcass, CowCarcass, PigCarcass, Rock, Anchor, Coin, Barracks, Warrior, Bridge }
     [System.Serializable]
     public struct ModelOverride
     {
@@ -24,6 +24,8 @@ public class ArenaPresentation25D : MonoBehaviour
     [SerializeField] private Color hookFlightAuraColor = new Color(.12f,.65f,1f,.85f);
     private Mesh hookAuraMesh;
     private Material hookAuraMaterial;
+    private Mesh selectionMesh;
+    private Material selectionMaterial;
     private MaterialPropertyBlock hookAuraProperties;
     [SerializeField, Min(.1f)] private float grassTileMeters = 4;
     [SerializeField] private Material riverMaterial;
@@ -164,7 +166,7 @@ public class ArenaPresentation25D : MonoBehaviour
                 throw new System.InvalidOperationException("3D model must contain no gameplay physics or sprites: "+prefab.name);
             foreach(var script in prefab.GetComponentsInChildren<MonoBehaviour>(true))
                 if(script==null||!(script is ButcherVisual25D||script is BuildingPresentation25D||script is AnimalPresentation25D||
-                    script is HookWars.Animals.AnimalMotion||script is HookWars.Buildings.BuildingVisualController||script is WarriorVisual25D||script is BarracksVisual25D))
+                    script is HookWars.Animals.AnimalMotion||script is HookWars.Buildings.BuildingVisualController||script is WarriorVisual25D||script is BarracksVisual25D||script is BridgeVisual25D))
                     throw new System.InvalidOperationException("Unexpected script in visual prefab: "+prefab.name);
             view = new GameObject(source.name + " 25D"); view.transform.SetParent(generated.transform, false);
             GameObject model=Instantiate(prefab, view.transform, false);model.name="Model";
@@ -179,11 +181,29 @@ public class ArenaPresentation25D : MonoBehaviour
             }
             if (source is GameBuilding building) model.GetComponent<BuildingPresentation25D>()?.Bind(building);
             if (source is Barracks barracks) model.GetComponent<BarracksVisual25D>()?.Bind(barracks);
+            if (source is RiverBridge bridge) model.GetComponent<BridgeVisual25D>()?.Bind(bridge);
             if (source is Animal animal) model.GetComponent<AnimalPresentation25D>()?.Bind(animal);
         }
         view.SetActive(source.gameObject.activeInHierarchy);
-        view.transform.position = ArenaSpace25D.ToWorld(source.transform.position);
+        view.transform.position = ArenaSpace25D.ToWorld(source.transform.position,source is Health?RiverBridge.Height(source.transform.position):0);
         return view;
+    }
+    private void Selection(GameObject view,bool selected)
+    {
+        var marker=view.transform.Find("Selection");
+        if(marker==null&&selected&&overlayMaterial!=null)
+        {
+            if(selectionMesh==null)
+            {
+                selectionMesh=new Mesh{name="Selection footprint"};
+                selectionMesh.vertices=new[]{new Vector3(-.54f,.025f,-.54f),new Vector3(-.54f,.025f,.54f),new Vector3(.54f,.025f,.54f),new Vector3(.54f,.025f,-.54f),new Vector3(-.48f,.025f,-.48f),new Vector3(-.48f,.025f,.48f),new Vector3(.48f,.025f,.48f),new Vector3(.48f,.025f,-.48f)};
+                selectionMesh.triangles=new[]{0,1,4,1,5,4,1,2,5,2,6,5,2,3,6,3,7,6,3,0,7,0,4,7};selectionMesh.RecalculateBounds();
+                selectionMaterial=new Material(overlayMaterial);selectionMaterial.SetColor("_BaseColor",new Color(.2f,1,.3f,.75f));materials.Add(selectionMaterial);
+            }
+            var go=new GameObject("Selection");go.transform.SetParent(view.transform,false);go.AddComponent<MeshFilter>().sharedMesh=selectionMesh;
+            var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=selectionMaterial;renderer.shadowCastingMode=ShadowCastingMode.Off;marker=go.transform;
+        }
+        if(marker!=null)marker.gameObject.SetActive(selected);
     }
     private void CreateHookAura(Transform view)
     {
@@ -228,6 +248,7 @@ public class ArenaPresentation25D : MonoBehaviour
         else if (source is PermanentRock) kind=VisualKind.Rock;
         else if (source is HookAnchor) kind=VisualKind.Anchor;
         else if (source is RiverCoin) kind=VisualKind.Coin;
+        else if (source is RiverBridge) kind=VisualKind.Bridge;
         else if (source is BoneWall) kind = VisualKind.Wall;
         else if (source is AnimalFarm) kind = VisualKind.Farm;
         else if (source is MeatShop) kind = VisualKind.Shop;
@@ -261,6 +282,7 @@ public class ArenaPresentation25D : MonoBehaviour
             Color color = friendly ? new Color(0.2f, 0.65f, 1) : new Color(0.95f, 0.24f, 0.18f);
             GameObject view = View(hero);
             view.transform.localScale=Vector3.one*(warrior!=null?warrior.Stats.BodyScale:helper!=null?.5f:1f);
+            Selection(view,warrior!=null&&warrior.IsSelected);
             view.SetActive(hero.gameObject.activeInHierarchy && !hero.IsDead);
             var aura=view.transform.Find("Hook mode aura");
             if(aura!=null)
@@ -323,7 +345,9 @@ public class ArenaPresentation25D : MonoBehaviour
             var buildingView=View(building);
             buildingView.transform.rotation=Quaternion.Euler(0,-building.transform.eulerAngles.z,0);
             buildingView.transform.localScale=new Vector3(building.Footprint.x,Mathf.Max(building.Footprint.x,building.Footprint.y),building.Footprint.y);
+            Selection(buildingView,FindAnyObjectByType<BuildingUpgradeMenu>()?.Selected==building);
         }
+        foreach(var bridge in FindObjectsByType<RiverBridge>())if(bridge.gameObject.scene==gameObject.scene)View(bridge);
         foreach(var rock in FindObjectsByType<PermanentRock>())
         {
             if(rock.gameObject.scene!=gameObject.scene)continue;
@@ -434,6 +458,7 @@ public class ArenaPresentation25D : MonoBehaviour
     {
         DestroyGenerated();
         if(hookAuraMesh!=null)Destroy(hookAuraMesh);
+        if(selectionMesh!=null)Destroy(selectionMesh);
         foreach(var mesh in mountainMeshes)if(mesh!=null)Destroy(mesh);
         if (materials != null) foreach (Material material in materials) if (material != null) Destroy(material);
     }

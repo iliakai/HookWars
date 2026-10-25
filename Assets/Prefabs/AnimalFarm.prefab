@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 2405059680150656302}
   - component: {fileID: 2571535559978914661}
   - component: {fileID: 4178985464801724631}
+  - component: {fileID: 6780971493635893874}
   m_Layer: 10
   m_Name: AnimalFarm
   m_TagString: Untagged
@@ -136,3 +137,15 @@ MonoBehaviour:
   upgradeCost: 75
   spawnAttempts: 24
   retryDelay: 1
+--- !u!114 &6780971493635893874
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5527803358012623326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07dfe187d91bc3a42a5f135139691f83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuildingDurability

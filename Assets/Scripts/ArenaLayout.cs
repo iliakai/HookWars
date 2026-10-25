@@ -4,7 +4,7 @@
 [DefaultExecutionOrder(-1000)]
 public class ArenaLayout : MonoBehaviour
 {
-    [SerializeField, Range(4,20)] private int bankDepth=MatchConfiguration.DefaultDepth;
+    [SerializeField, Range(12,36)] private int bankDepth=MatchConfiguration.DefaultDepth;
     [SerializeField, Min(.1f)] private float mountainWidth=1;
     [SerializeField] private Transform player,enemy;
     [SerializeField] private BoxCollider2D leftBoundary,rightBoundary;

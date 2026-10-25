@@ -53,6 +53,7 @@ public class PlayerMelee : MonoBehaviour
     private void TryAttack()
     {
         if(MatchPause.BlocksGameplay)return;
+        if(GetComponent<UnitCommander>()?.HasSelection==true||GetComponent<UnitCommander>()?.ConsumedRightClick==true)return;
         PlayerBuilding builder = GetComponent<PlayerBuilding>();
         if (builder != null && builder.BlocksMouseInput) return;
         HookVictim victim = GetComponent<HookVictim>();
@@ -93,27 +94,29 @@ public class PlayerMelee : MonoBehaviour
         Collider2D[] targets = Physics2D.OverlapCircleAll(
             transform.position,
             attackRange,
-            targetLayers
+            targetLayers.value | LayerMask.GetMask("Buildings")
         );
 
         // Одна цель получает урон только один раз за взмах.
         HashSet<Health> damagedTargets = new HashSet<Health>();
         HashSet<Animal> killedAnimals = new HashSet<Animal>();
+        HashSet<GameBuilding> damagedBuildings=new HashSet<GameBuilding>();
         int hitCount = 0;
 
         foreach (Collider2D target in targets)
         {
             Health health = target.GetComponent<Health>();
             Animal animal = target.GetComponent<Animal>();
+            GameBuilding building=target.GetComponent<GameBuilding>();
 
-            if ((health == null && animal == null) || (health != null && health.IsDead) ||
+            if ((health == null && animal == null && building==null) || (health != null && health.IsDead) ||
                 (animal != null && animal.IsDead) || target.gameObject == gameObject)
             {
                 continue;
             }
 
             Vector2 toTarget =
-                (Vector2)target.bounds.center -
+                (building!=null?building.ClosestPoint(transform.position):(Vector2)target.bounds.center) -
                 (Vector2)transform.position;
 
             // Проверяем расстояние именно между центрами.
@@ -131,6 +134,10 @@ public class PlayerMelee : MonoBehaviour
             {
                 continue;
             }
+            Vector2 point=(Vector2)transform.position+toTarget;
+            if(!WorldCollision.ClearAttackLine(transform.position,point,building!=null?target:null))continue;
+            if(building!=null&&building.Owner!=GetComponent<PlayerProgression>()&&damagedBuildings.Add(building))
+            {building.TakeDamage(GetComponent<PlayerProgression>(),damage);hitCount++;continue;}
 
             if (animal != null && killedAnimals.Add(animal))
             {

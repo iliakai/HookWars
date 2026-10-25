@@ -24,6 +24,8 @@ public class EnemyChase : MonoBehaviour
     private bool hasPatrolPoint;
     private bool patrolRightBank;
     private float nextPatrolTime;
+    private readonly System.Collections.Generic.List<Vector3> bridgePath=new System.Collections.Generic.List<Vector3>();
+    private float nextPath;
 
     private void Awake()
     {
@@ -33,6 +35,7 @@ public class EnemyChase : MonoBehaviour
 
     private void LateUpdate()
     {
+        if(MatchPause.BlocksGameplay)return;
         if (playerHealth == null)
         {
             return;
@@ -47,7 +50,7 @@ public class EnemyChase : MonoBehaviour
         Vector3 enemyPosition = transform.position;
 
         // Дополнительная защита: пешком по реке не ходим.
-        if (Mathf.Abs(enemyPosition.x) < ArenaLayout.RiverHalfWidth + ArenaLayout.HeroRadius)
+        if (!RiverBridge.Walkable(enemyPosition,ArenaLayout.HeroRadius))
         {
             ResetPatrol();
             return;
@@ -64,7 +67,7 @@ public class EnemyChase : MonoBehaviour
 
         bool sameBank = ArenaLayout.IsInsideBank(playerPosition, rightBank);
 
-        if (!playerHealth.IsDead && sameBank)
+        if (!playerHealth.IsDead && (sameBank||RiverBridge.AnyComplete))
         {
             ResetPatrol();
             ChasePlayer(playerPosition, rightBank);
@@ -77,6 +80,13 @@ public class EnemyChase : MonoBehaviour
 
     private void ChasePlayer(Vector3 playerPosition, bool rightBank)
     {
+        if(RiverBridge.AnyComplete)
+        {
+            if(Time.time>=nextPath){nextPath=Time.time+.8f;WalkNavigation25D.Build(transform,playerPosition,ArenaLayout.HeroRadius,stopDistance,bridgePath);}
+            if(bridgePath.Count==0)return;
+            while(bridgePath.Count>1&&Vector2.Distance(transform.position,bridgePath[0])<.08f)bridgePath.RemoveAt(0);
+            ApplyPosition(Vector3.MoveTowards(transform.position,bridgePath[0],moveSpeed*Time.deltaTime),rightBank);return;
+        }
         Vector2 toPlayer =
             (Vector2)playerPosition - (Vector2)transform.position;
 
@@ -143,7 +153,7 @@ public class EnemyChase : MonoBehaviour
 
     private void ApplyPosition(Vector3 position, bool rightBank)
     {
-        position = ArenaLayout.ClampToBank(position, rightBank);
+        position = RiverBridge.ClampStep(transform.position,position,ArenaLayout.HeroRadius);
         Vector3 requested = position;
         position = WorldCollision.Slide(transform, position, ArenaLayout.HeroRadius);
         if (hasPatrolPoint && (requested - transform.position).sqrMagnitude > 0.00000001f &&

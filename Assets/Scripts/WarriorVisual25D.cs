@@ -11,10 +11,11 @@ public sealed class WarriorVisual25D : MonoBehaviour
     private int serial=-1;
     private bool attacking;
     private Vector3 weaponScale;
+    private Quaternion weaponRotation;
     private MaterialPropertyBlock properties;
     public void Bind(SausageWarrior warrior)
     {
-        source=warrior;properties=new MaterialPropertyBlock();weaponScale=weapon.localScale;
+        source=warrior;properties=new MaterialPropertyBlock();weaponScale=weapon.localScale;weaponRotation=weapon.localRotation;
         foreach(var skin in GetComponentsInChildren<SkinnedMeshRenderer>())
             skin.localBounds=new Bounds(skin.localBounds.center,Vector3.one*8*Mathf.Max(1,source.Stats.ClubLength,source.Stats.ClubWidth));
         foreach(var renderer in GetComponentsInChildren<Renderer>())
@@ -46,5 +47,17 @@ public sealed class WarriorVisual25D : MonoBehaviour
         }
         // Bone scale runs after Animator, so animation curves cannot undo upgrades.
         weapon.localScale=Vector3.Scale(weaponScale,new Vector3(source.Stats.ClubWidth,source.Stats.ClubLength,source.Stats.ClubWidth));
+        weapon.localRotation=weaponRotation;
+        // Extend the club outward instead of burying its enlarged tip in the
+        // ground. The grip stays in the hand and the authored vertical reach
+        // remains unchanged; raised attack poses keep their original direction.
+        if(source.Stats.ClubLength>1&&weapon.up.y<0)
+        {
+            Vector3 original=weapon.up;Vector3 horizontal=Vector3.ProjectOnPlane(original,Vector3.up).normalized;
+            if(horizontal.sqrMagnitude<.001f)horizontal=transform.forward;
+            float vertical=original.y/source.Stats.ClubLength;
+            Vector3 direction=horizontal*Mathf.Sqrt(1-vertical*vertical)+Vector3.up*vertical;
+            weapon.rotation=Quaternion.FromToRotation(original,direction)*weapon.rotation;
+        }
     }
 }

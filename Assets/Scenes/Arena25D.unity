@@ -392,8 +392,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
@@ -550,11 +550,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 27418daf081c41046999127958300d76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MatchMap25D
   factoryPrefab: {fileID: 6430136431561755328, guid: 3e2d9cd8c6dcf9048bd8cce8e7a08044, type: 3}
   rockPrefab: {fileID: 4540405582322878325, guid: 421dd4570e9ac2c49a678d1cceb2e9d5, type: 3}
   anchorPrefab: {fileID: 4548318267114708101, guid: 5cfb4be1e1036a14d9d55cdc009042b1, type: 3}
+  bridgePrefab: {fileID: 8623098193051416458, guid: ed2b0a3e0e71c2a4dba692446079c2e2, type: 3}
 --- !u!4 &595882810
 Transform:
   m_ObjectHideFlags: 0
@@ -596,6 +597,7 @@ GameObject:
   - component: {fileID: 641424510}
   - component: {fileID: 641424512}
   - component: {fileID: 641424511}
+  - component: {fileID: 641424513}
   m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
@@ -633,7 +635,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0846f6588f25ced41a8b03f59837c22d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 5
   speedPerUpgrade: 0.25
@@ -647,7 +649,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e914148bd3b42dd4abdcc0ee85be072d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHook
   hookPrefab: {fileID: 4949370477256255621, guid: a48f41b36fc6e834581fb6868943873e, type: 3}
   targetLayers:
@@ -678,7 +680,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f113a0dd71c0cc745af40d47562d967f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMelee
   playerAim: {fileID: 1372860863}
   targetLayers:
@@ -700,7 +702,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ed508df04bbd67e40a0efb15b3130f1c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 100
   currentHealth: 0
@@ -715,7 +717,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5557b7514ed9bb84ab88ae8ef1726e6f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRespawn
   respawnDelay: 3
 --- !u!58 &641424501
@@ -764,7 +766,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7146064ab4b88ea47a606185617a6155, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HookVictim
 --- !u!114 &641424503
 MonoBehaviour:
@@ -776,7 +778,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4fea5545d54f19449b8507f6e7da5612, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProgression
   goldPerSecond: 0.5
   experiencePerSecond: 0
@@ -797,7 +799,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 212776cbebb32b947a5d6de0324f1d54, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBuilding
   worldCamera: {fileID: 519420031}
   buildingPrefabs:
@@ -815,7 +817,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 30c328ccab604c94fa6847bd9ae03b3a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuildingUpgradeMenu
   worldCamera: {fileID: 519420031}
 --- !u!114 &641424506
@@ -828,7 +830,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b1d0bf4989a44a29b817ff9ac005baf6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CarryingHUD
 --- !u!114 &641424507
 MonoBehaviour:
@@ -840,7 +842,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b032d1cccb14235b807dbeda6c7169a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeroCarcassSpawner
   carcassPrefab: {fileID: 535136966263187727, guid: e6579373cd4466745a77a33273954b02, type: 3}
 --- !u!114 &641424508
@@ -853,7 +855,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b739655a2d3844b28aa5cd4453f53e30, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CarcassCarrier
   capacityKg: 10
   capacityPerUpgrade: 2
@@ -871,7 +873,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6123bff6a88d09a44a66b8f9ca30837d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OwnerEconomy
 --- !u!114 &641424510
 MonoBehaviour:
@@ -883,7 +885,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c01924579c0c20f449b91fa1e33ced59, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeroActionTiming25D
 --- !u!114 &641424511
 MonoBehaviour:
@@ -895,7 +897,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 75b3d2a9cdc649a429bdce757ad98c4d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HookFlightAudio
   flightClip: {fileID: 8300000, guid: 4f643d25faee3d044b91a7f1326e0fa6, type: 3}
   pitchRange: {x: 0.93, y: 1.07}
@@ -997,6 +999,18 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &641424513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 641424493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27893ba3c97e64f4191ee0a5e1050bf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitCommander
 --- !u!1 &735907297
 GameObject:
   m_ObjectHideFlags: 0
@@ -1024,7 +1038,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ab152190969ec95419fd3c7ee36d7e90, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MatchPause
 --- !u!4 &735907299
 Transform:
@@ -1169,7 +1183,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ed508df04bbd67e40a0efb15b3130f1c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 100
   currentHealth: 0
@@ -1184,7 +1198,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 040f8ae2f051e094e9d1e180ee7124e8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMelee
   playerHealth: {fileID: 641424499}
   playerHook: {fileID: 641424497}
@@ -1202,7 +1216,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 843e03f0d463a5b45b24f4eab136098d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChase
   playerHealth: {fileID: 641424499}
   playerHook: {fileID: 641424497}
@@ -1220,7 +1234,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f633fbdc790594043b8e9f29ad16f18e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHookAI
   playerHealth: {fileID: 641424499}
   decisionInterval: 0.8
@@ -1236,7 +1250,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7146064ab4b88ea47a606185617a6155, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HookVictim
 --- !u!114 &923269599
 MonoBehaviour:
@@ -1248,7 +1262,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a81c17cf1853e14094dc315650bd8fe, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HookAbility
   hookPrefab: {fileID: 4949370477256255621, guid: a48f41b36fc6e834581fb6868943873e, type: 3}
   targetLayers:
@@ -1278,7 +1292,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b032d1cccb14235b807dbeda6c7169a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeroCarcassSpawner
   carcassPrefab: {fileID: 535136966263187727, guid: e6579373cd4466745a77a33273954b02, type: 3}
 --- !u!114 &923269601
@@ -1291,7 +1305,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b739655a2d3844b28aa5cd4453f53e30, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CarcassCarrier
   capacityKg: 10
   capacityPerUpgrade: 2
@@ -1309,7 +1323,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6123bff6a88d09a44a66b8f9ca30837d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OwnerEconomy
 --- !u!114 &923269603
 MonoBehaviour:
@@ -1321,7 +1335,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4fea5545d54f19449b8507f6e7da5612, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProgression
   goldPerSecond: 0.5
   experiencePerSecond: 0
@@ -1342,7 +1356,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c01924579c0c20f449b91fa1e33ced59, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeroActionTiming25D
 --- !u!114 &923269605
 MonoBehaviour:
@@ -1354,7 +1368,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 75b3d2a9cdc649a429bdce757ad98c4d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HookFlightAudio
   flightClip: {fileID: 8300000, guid: 4f643d25faee3d044b91a7f1326e0fa6, type: 3}
   pitchRange: {x: 0.93, y: 1.07}
@@ -1702,7 +1716,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c82e2a7ea90a50e44b0c1180bf613869, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAim
   worldCamera: {fileID: 519420031}
 --- !u!1 &1408655253
@@ -1763,7 +1777,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9e1b0a69696eee34486cdac001ded892, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArenaLayout
   bankDepth: 16
   mountainWidth: 1
@@ -1847,7 +1861,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d6e7c13772acee4d9654f5069467db0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainingMatch
   enemyHealth: {fileID: 923269594}
   playerHealth: {fileID: 641424499}
@@ -1878,7 +1892,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0688448bb48d80542b562a9bccd1668c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProgressionHUD
   progression: {fileID: 641424503}
 --- !u!114 &1838938795
@@ -1891,7 +1905,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cb89d0d2110345e42961a3b5a990b544, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HookUpgradeMenu
   progression: {fileID: 641424503}
   hook: {fileID: 641424497}
@@ -1967,8 +1981,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1aca1f47f99d4fd78df18337dbb4b5db, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   tilt: 55
   margin: 1.5
 --- !u!1 &2100000010
@@ -1984,6 +1998,7 @@ GameObject:
   - component: {fileID: 2100000013}
   - component: {fileID: 2100000015}
   - component: {fileID: 2100000014}
+  - component: {fileID: 2100000016}
   m_Layer: 0
   m_Name: Arena25D Presentation
   m_TagString: Untagged
@@ -2016,8 +2031,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9157752418324945b707e98a1b9eb796, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   pipeline: {fileID: 11400000, guid: 683606ffeb604d3c82427dab1b7f8b70, type: 2}
   litMaterial: {fileID: 2100000, guid: c8ccbc87102546de80166e7bb48bc895, type: 2}
   bankMaterial: {fileID: 2100000, guid: f16d2ae063a836746be07a369a90071f, type: 2}
@@ -2074,6 +2089,8 @@ MonoBehaviour:
     prefab: {fileID: 5216302162424092391, guid: 1fab51d5a940ef945bf133b4964ab983, type: 3}
   - kind: 18
     prefab: {fileID: 6733993739570117667, guid: e4293c329bd116a46aa18065097e039c, type: 3}
+  - kind: 19
+    prefab: {fileID: 2595380269780542177, guid: b9b4defc0c6415f42b0a5a8c9570dfa7, type: 3}
 --- !u!114 &2100000013
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2084,7 +2101,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c090ee25b91f5474089a56423cc95fff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChainEnvironment25D
 --- !u!114 &2100000014
 MonoBehaviour:
@@ -2096,7 +2113,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0bbf80ada4e3a914ca91d1b9c890449e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MatchHud25D
 --- !u!114 &2100000015
 MonoBehaviour:
@@ -2108,10 +2125,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0427eae7f40a90142a095bac08937be6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RiverCoinStream
   coinPrefab: {fileID: 7058809716990667895, guid: 938180fd1668da844b2def1bbd085c69, type: 3}
   presentation: {fileID: 2100000012}
+--- !u!114 &2100000016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee988122afb00514982693fbd62184e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldBuildingHUD
 --- !u!1 &2100000020
 GameObject:
   m_ObjectHideFlags: 0

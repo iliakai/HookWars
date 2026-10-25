@@ -8,6 +8,7 @@ public sealed class MatchMap25D : MonoBehaviour
     [SerializeField] private SausageFactory factoryPrefab;
     [SerializeField] private PermanentRock rockPrefab;
     [SerializeField] private HookAnchor anchorPrefab;
+    [SerializeField] private RiverBridge bridgePrefab;
     private GameObject mapRoot;
     private readonly List<SausageFactory> factories=new List<SausageFactory>();
     public IReadOnlyList<SausageFactory> Factories=>factories;
@@ -18,6 +19,10 @@ public sealed class MatchMap25D : MonoBehaviour
         if(mapRoot!=null)return;
         if(factoryPrefab==null||rockPrefab==null)throw new System.InvalidOperationException("Assign factory and permanent rock prefabs");
         mapRoot=new GameObject("Match map");mapRoot.transform.SetParent(transform,false);
+        if(bridgePrefab!=null)foreach(var player in FindObjectsByType<PlayerProgression>())
+        {
+            var bridge=Instantiate(bridgePrefab,new Vector3(0,player.transform.position.x>0?-7:7),Quaternion.identity,mapRoot.transform);bridge.Initialize(player);
+        }
         foreach(var owner in FindObjectsByType<PlayerProgression>())
         {
             bool right=owner.transform.position.x>0;
@@ -29,7 +34,7 @@ public sealed class MatchMap25D : MonoBehaviour
             {
                 position=new Vector3(Random.Range(min,max+1)*(right?1:-1),Random.Range(-8,9),0);
                 Physics2D.SyncTransforms();
-                if(WorldCollision.FreeBox(position,Vector2.one*2)){found=true;break;}
+                if(!RiverBridge.Reserved(position,1)&&WorldCollision.FreeBox(position,Vector2.one*2)){found=true;break;}
             }
             if(!found)throw new System.InvalidOperationException("Cannot place starting factory on its bank");
             var factory=Instantiate(factoryPrefab,position,Quaternion.identity,mapRoot.transform);
@@ -54,7 +59,7 @@ public sealed class MatchMap25D : MonoBehaviour
                         if((f.transform.position.x>0)==right&&Mathf.Abs(p.y-f.transform.position.y)<2&&Mathf.Abs(p.x)<Mathf.Abs(f.transform.position.x)+2)reserved=true;
                     }
                     foreach(var hero in FindObjectsByType<PlayerProgression>())if(Vector2.Distance(hero.transform.position,p)<2)reserved=true;
-                    if(reserved)continue;
+                    if(reserved||RiverBridge.Reserved(p,.6f))continue;
                     if(!WorldCollision.FreeBox(p,Vector2.one))continue;
                     Instantiate(rockPrefab,p,Quaternion.Euler(0,0,90*Random.Range(0,4)),mapRoot.transform);Physics2D.SyncTransforms();placed=true;break;
                 }
@@ -64,16 +69,17 @@ public sealed class MatchMap25D : MonoBehaviour
         if(anchorPrefab!=null)
         {
             foreach(bool right in new[]{false,true})
-            for(int i=0;i<5;i++)
+            for(int i=0;i<4;i++)
             {
                 Rect bank=ArenaLayout.BankBounds(right,.6f);bool found=false;
                 for(int attempt=0;attempt<200;attempt++)
                 {
                     Vector3 p=new Vector3(Random.Range(bank.xMin,bank.xMax),Random.Range(bank.yMin,bank.yMax));
+                    if(ArenaLayout.OuterEdge-Mathf.Abs(p.x)<8||RiverBridge.Reserved(p,.5f))continue;
                     if(!WorldCollision.FreeCircle(p,.45f))continue;
                     Instantiate(anchorPrefab,p,Quaternion.Euler(0,0,Random.Range(0,360)),mapRoot.transform);Physics2D.SyncTransforms();found=true;break;
                 }
-                if(!found)throw new System.InvalidOperationException("Cannot place five hook anchors on "+(right?"right":"left")+" bank");
+                if(!found)throw new System.InvalidOperationException("Cannot place four hook anchors at least eight metres from mountains on "+(right?"right":"left")+" bank");
             }
         }
     }

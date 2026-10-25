@@ -11,6 +11,8 @@ public class MeatShop : GameBuilding
     public float SaleKgPerSecond => saleKgPerSecond;
     public float GoldPerKg => goldPerKg;
     public int Level => level;
+    public int UpgradeCost=>upgradeCost;
+    public bool CanUpgrade=>owner!=null&&owner.Gold>=upgradeCost;
     public double GoldPerSecond => (double)saleKgPerSecond * goldPerKg;
     public float LastSaleTime { get; private set; } = float.NegativeInfinity;
     public override BuildingKind Kind => BuildingKind.Shop;
@@ -20,7 +22,7 @@ public class MeatShop : GameBuilding
     private void Update() => Advance(Time.deltaTime);
     public double Advance(double seconds)
     {
-        if (owner == null || !double.IsFinite(seconds) || seconds <= 0) return 0;
+        if (owner == null || !IsOperating || MatchPause.BlocksGameplay || !double.IsFinite(seconds) || seconds <= 0) return 0;
         double sold = owner.GetComponent<OwnerEconomy>().TakeProduct(saleKgPerSecond * seconds);
         owner.AddGold(sold * goldPerKg);
         if (sold > 0) LastSaleTime = Time.time;

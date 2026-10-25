@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class MatchConfiguration
 {
-    public const int DefaultDepth=16,MinimumDepth=4,MaximumDepth=20;
+    public const int DefaultDepth=16,MinimumDepth=12,MaximumDepth=36;
     public const string SavedDepth="HookWars.BankDepth";
     private static int? nextDepth;
     private static int? rememberedDepth;
@@ -41,7 +41,7 @@ public static class MatchConfiguration
             {
                 if(File.Exists(PreferenceFile))return int.TryParse(File.ReadAllText(PreferenceFile),out int stored)&&Valid(stored)?stored:DefaultDepth;
                 // Read-only migration of an earlier editor/player preference.
-                return Mathf.Clamp(PlayerPrefs.GetInt(SavedDepth,DefaultDepth),MinimumDepth,MaximumDepth);
+                int legacy=PlayerPrefs.GetInt(SavedDepth,DefaultDepth);return Valid(legacy)?legacy:DefaultDepth;
             }
             catch(Exception error) when(error is IOException||error is UnauthorizedAccessException||error is PlayerPrefsException)
             {return DefaultDepth;}

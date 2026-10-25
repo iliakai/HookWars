@@ -15,7 +15,7 @@ public class ProgressionHUD : MonoBehaviour
         GUI.Label(new Rect(24, 234, 290, 26), $"Очки улучшений: {progression.UpgradePoints}");
         if (economy != null)
         {
-            GUI.Label(new Rect(24, 264, 290, 26), $"Готовое мясо: {economy.ProductKg:0.#} / {(economy.Factory != null ? economy.Factory.ProductCapacityKg : 12):0} кг");
+            GUI.Label(new Rect(24, 264, 290, 26), $"Готовое мясо: {economy.ProductKg:0.#} кг · ∞");
             GUI.Label(new Rect(24, 294, 290, 26), $"Кости: {economy.BoneKg:0.#} кг");
         }
         GUI.Label(new Rect(24, 326, 290, 26), "Клик по своему зданию — меню / снос");

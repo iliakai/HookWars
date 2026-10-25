@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 7315139727977306943}
   - component: {fileID: 7762778462167823157}
   - component: {fileID: 2455497073292196938}
+  - component: {fileID: 3885867584527515238}
   m_Layer: 10
   m_Name: MeatShop
   m_TagString: Untagged
@@ -131,3 +132,15 @@ MonoBehaviour:
   saleSpeedIncrease: 0.1
   level: 1
   upgradeCost: 50
+--- !u!114 &3885867584527515238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6034288152224346498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07dfe187d91bc3a42a5f135139691f83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuildingDurability

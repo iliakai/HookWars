@@ -7,6 +7,7 @@ public sealed class Barracks : GameBuilding
     [SerializeField,Min(0)] private float warriorMeat=4;
     [SerializeField,Min(.1f)] private float productionSeconds=12;
     private WarriorStats upgrades,order;
+    private readonly System.Collections.Generic.Queue<WarriorStats> pending=new System.Collections.Generic.Queue<WarriorStats>();
     private bool hasOrder;
     private float progress;
     private float nextExitCheck;
@@ -16,13 +17,32 @@ public sealed class Barracks : GameBuilding
     public override Vector2Int Footprint=>new Vector2Int(2,2);
     public override int UpgradeCount=>6;
     public bool AutoProduction {get;private set;}
+    public bool SendToEnemy {get;private set;}
+    public int QueueCount=>pending.Count+(hasOrder?1:0);
+    public bool CanQueue=>owner!=null&&warriorPrefab!=null&&owner.Gold>=warriorGold&&owner.GetComponent<OwnerEconomy>().ProductKg>=warriorMeat&&owner.GetComponent<OwnerEconomy>().BoneKg>=warriorBones;
     public bool HasOrder=>hasOrder;
     public float Progress=>hasOrder?Mathf.Clamp01(progress/productionSeconds):0;
     public WarriorStats Upgrades=>upgrades;
     public WarriorStats OrderStats=>order;
-    public float DoorOpening=>hasOrder&&AutoProduction?Mathf.InverseLerp(.85f,1,Progress):0;
+    public float DoorOpening=>hasOrder?Mathf.InverseLerp(.85f,1,Progress):0;
     public string UnitCost=>$"{warriorMeat:0.#} кг мяса + {warriorBones} кг костей + {warriorGold} золота";
-    public override string Info=>$"Воин: {UnitCost}\n"+(hasOrder?$"{(AutoProduction?(Progress>=1?"Ожидает свободный выход":"Производство"):"Приостановлено")}: {Progress*100:0}%":AutoProduction?MissingResources():"Производство выключено");
+    public override string Info=>$"Воин: {UnitCost}\nОчередь: {QueueCount} · {(hasOrder?$"{Progress*100:0}%":MissingResources())}";
+    public bool TryQueue()
+    {
+        return CanManage()&&PayOrder();
+    }
+    private bool PayOrder()
+    {
+        if(owner==null||warriorPrefab==null||!owner.GetComponent<OwnerEconomy>().TrySpendResources(warriorGold,warriorMeat,warriorBones))return false;
+        pending.Enqueue(upgrades);return true;
+    }
+    public bool SetSending(bool active)
+    {
+        if(!CanManage()||active&&!RiverBridge.OwnComplete(owner))return false;
+        SendToEnemy=active;
+        foreach(var warrior in FindObjectsByType<SausageWarrior>())if(warrior.SourceBarracks==this)warrior.SetAutoRaid(active);
+        return true;
+    }
     public bool SetProduction(bool enabled)
     {
         if(!CanManage())return false;
@@ -44,11 +64,12 @@ public sealed class Barracks : GameBuilding
     private void Update()=>Advance(Time.deltaTime);
     public void Advance(float seconds)
     {
-        if(!isActiveAndEnabled||MatchPause.BlocksGameplay||!AutoProduction||owner==null||seconds<=0||!float.IsFinite(seconds))return;
+        if(!isActiveAndEnabled||MatchPause.BlocksGameplay||!IsOperating||owner==null||seconds<=0||!float.IsFinite(seconds))return;
+        if(AutoProduction&&pending.Count==0&&!hasOrder&&CanQueue)PayOrder();
         if(!hasOrder)
         {
-            if(warriorPrefab==null||!owner.GetComponent<OwnerEconomy>().TrySpendResources(warriorGold,warriorMeat,warriorBones))return;
-            order=upgrades;progress=0;hasOrder=true;
+            if(pending.Count==0)return;
+            order=pending.Dequeue();progress=0;hasOrder=true;
         }
         progress=Mathf.Min(productionSeconds,progress+seconds);
         if(progress<productionSeconds||Time.time<nextExitCheck)return;
@@ -56,6 +77,7 @@ public sealed class Barracks : GameBuilding
         if(!TryFindExit(out var position))return;
         var warrior=Instantiate(warriorPrefab,position,Quaternion.identity);
         warrior.Bind(owner,order,transform.position.x>0);
+        warrior.AssignBarracks(this);warrior.SetAutoRaid(SendToEnemy);
         hasOrder=false;progress=0;
     }
     public bool TryFindExit(out Vector3 position)

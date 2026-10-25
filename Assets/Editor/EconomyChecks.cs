@@ -99,7 +99,7 @@ public static class EconomyChecks
             Check(builder.TryBuildAt(new Vector3(-12.5f, 8.5f)) == null && owner.Gold == beforeGold,
                 "Repeated factory construction does not spend money");
             Check(factory.TryUpgrade(0) && factory.TryUpgrade(1) && factory.TryUpgrade(2) &&
-                Near(factory.CapacityKg, 30) && Near(factory.ProductCapacityKg, 36) && Near(factory.SecondsPerKg, 1.4) && factory.ExperiencePerKg == 3,
+                Near(factory.CapacityKg, 30) && double.IsPositiveInfinity(factory.ProductCapacityKg) && Near(factory.SecondsPerKg, 1.4) && factory.ExperiencePerKg == 3,
                 "Three independent upgrades");
             Carcass future = Object.Instantiate(AssetDatabase.LoadAssetAtPath<Carcass>(CarryingSetup.PrefabPath));
             Check(carrier.TryCollect(future) && carrier.DeliverTo(factory) == 6 && owner.Level == 3 && Near(owner.Experience, 9),
@@ -187,7 +187,7 @@ public static class EconomyChecks
         OwnerEconomy wallet = hero.AddComponent<OwnerEconomy>(); wallet.AddOutput(0, 100);
         PlayerProgression owner = hero.GetComponent<PlayerProgression>(); owner.AddGold(1000);
         PlayerBuilding builder = hero.AddComponent<PlayerBuilding>();
-        foreach (int depth in new[] { 4, 20 })
+        foreach (int depth in new[] { 12, 36 })
         {
             Set(ArenaLayout.Instance, "appliedDepth", depth);
             float edge = ArenaLayout.OuterEdge;
@@ -290,7 +290,7 @@ public static class EconomyChecks
             "Animal update rejects crossing the river and stops animation");
         UnityEngine.Random.State randomBefore = UnityEngine.Random.state;
         UnityEngine.Random.InitState(1021);
-        foreach (int depth in new[] { 4, 20 })
+        foreach (int depth in new[] { 12, 36 })
         {
             Set(ArenaLayout.Instance, "appliedDepth", depth);
             a.transform.position=new Vector3(-(2+depth*.5f),-8);b.transform.position=new Vector3(2+depth*.5f,-8);

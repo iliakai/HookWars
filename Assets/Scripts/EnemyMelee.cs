@@ -18,6 +18,7 @@ public class EnemyMelee : MonoBehaviour
     private float readyAt;
     private float nextAttackTime;
     private Health attackTarget;
+    private GameBuilding attackBuilding;
     public Vector2 AimDirection {get;private set;}=Vector2.up;
 
     private void Awake()
@@ -64,8 +65,15 @@ public class EnemyMelee : MonoBehaviour
             float distance=(candidate.transform.position-transform.position).sqrMagnitude;
             if(distance<nearest&&WorldCollision.ClearAttackLine(transform.position,candidate.transform.position)){nearest=distance;desiredTarget=candidate;}
         }
-        if(desiredTarget==null){readyAt=Time.time+reactionDelay;return;}
-        toPlayer=desiredTarget.transform.position-transform.position;
+        GameBuilding desiredBuilding=null;var ownOwner=GetComponent<PlayerProgression>();
+        foreach(var building in FindObjectsByType<GameBuilding>())
+        {
+            if(building.Owner==null||building.Owner==ownOwner||building.CurrentHP<=0)continue;
+            Vector2 point=building.ClosestPoint(transform.position);float distance=(point-(Vector2)transform.position).sqrMagnitude;
+            if(distance<nearest&&WorldCollision.ClearAttackLine(transform.position,point,building.GetComponent<Collider2D>())){nearest=distance;desiredBuilding=building;desiredTarget=null;}
+        }
+        if(desiredTarget==null&&desiredBuilding==null){readyAt=Time.time+reactionDelay;return;}
+        toPlayer=desiredBuilding!=null?desiredBuilding.ClosestPoint(transform.position)-(Vector2)transform.position:(Vector2)(desiredTarget.transform.position-transform.position);
         if(toPlayer.sqrMagnitude>.00001f)AimDirection=toPlayer.normalized;
 
         if (toPlayer.sqrMagnitude > attackRange * attackRange)
@@ -82,15 +90,23 @@ public class EnemyMelee : MonoBehaviour
         HeroActionTiming25D timing = GetComponent<HeroActionTiming25D>();
         if (timing != null && timing.enabled)
         {
-            if (timing.BeginAxe(attackCooldown, ApplyAttack)){attackTarget=desiredTarget;nextAttackTime = Time.time + attackCooldown;}
+            if (timing.BeginAxe(attackCooldown, ApplyAttack)){attackTarget=desiredTarget;attackBuilding=desiredBuilding;nextAttackTime = Time.time + attackCooldown;}
             return;
         }
         nextAttackTime = Time.time + attackCooldown;
         attackTarget=desiredTarget;
+        attackBuilding=desiredBuilding;
         ApplyAttack();
     }
     private void ApplyAttack()
     {
+        if(attackBuilding!=null)
+        {
+            Vector2 point=attackBuilding.ClosestPoint(transform.position);
+            if(isActiveAndEnabled&&!ownHealth.IsDead&&GetComponent<HookVictim>()?.IsCaught!=true&&Vector2.Distance(transform.position,point)<=attackRange&&WorldCollision.ClearAttackLine(transform.position,point,attackBuilding.GetComponent<Collider2D>()))
+                attackBuilding.TakeDamage(GetComponent<PlayerProgression>(),damage);
+            return;
+        }
         if (!isActiveAndEnabled || ownHealth.IsDead || attackTarget == null || attackTarget.IsDead ||
             GetComponent<HookVictim>()?.IsCaught == true || !attackTarget.gameObject.activeInHierarchy) return;
         Vector2 toPlayer = (Vector2)(attackTarget.transform.position - transform.position);
