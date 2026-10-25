@@ -11,6 +11,7 @@ public class PlayerHook : HookAbility
     {
         // Общая механика: полёт, возврат и подтягивание.
         base.LateUpdate();
+        if (Keyboard.current?.eKey.wasPressedThisFrame == true) TryTogglePullMode();
         PlayerBuilding builder = GetComponent<PlayerBuilding>();
         if (builder != null && builder.BlocksMouseInput) return;
 

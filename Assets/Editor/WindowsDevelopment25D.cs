@@ -9,10 +9,10 @@ using UnityEngine;
 public static class WindowsDevelopment25D
 {
     [MenuItem("HookWars/25D/Launch/Build Windows development")]
-    public static void Build()=>Build("019");
+    public static void Build()=>Build("020");
     public static void Build(string revision)
     {
-        if(revision!="009"&&revision!="010"&&revision!="012"&&revision!="013"&&revision!="014"&&revision!="015"&&revision!="016"&&revision!="017"&&revision!="019")throw new ArgumentException("Unknown build report revision");
+        if(revision!="009"&&revision!="010"&&revision!="012"&&revision!="013"&&revision!="014"&&revision!="015"&&revision!="016"&&revision!="017"&&revision!="019"&&revision!="020")throw new ArgumentException("Unknown build report revision");
         if(EditorApplication.isPlayingOrWillChangePlaymode)throw new InvalidOperationException("Stop Play Mode before building");
         if(!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone,BuildTarget.StandaloneWindows64))throw new InvalidOperationException("Windows module is unavailable");
         if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.StandaloneWindows64)throw new InvalidOperationException("Active profile is not Windows x64");

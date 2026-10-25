@@ -39,7 +39,7 @@ public sealed class MatchMap25D : MonoBehaviour
         foreach(bool right in new[]{false,true})
         {
             Rect bank=ArenaLayout.BankBounds(right,.5f);
-            int desired=Mathf.Clamp(Mathf.FloorToInt(ArenaLayout.Depth/3),1,6);
+            int desired=Mathf.Max(0,Mathf.Clamp(Mathf.FloorToInt(ArenaLayout.Depth/3),1,6)-1);
             for(int n=0;n<desired;n++)
             {
                 bool placed=false;
@@ -63,17 +63,17 @@ public sealed class MatchMap25D : MonoBehaviour
         }
         if(anchorPrefab!=null)
         {
-            bool firstRight=Random.value>.5f;
+            foreach(bool right in new[]{false,true})
             for(int i=0;i<5;i++)
             {
-                bool right=(i%2==0)==firstRight;Rect bank=ArenaLayout.BankBounds(right,.6f);bool found=false;
+                Rect bank=ArenaLayout.BankBounds(right,.6f);bool found=false;
                 for(int attempt=0;attempt<200;attempt++)
                 {
                     Vector3 p=new Vector3(Random.Range(bank.xMin,bank.xMax),Random.Range(bank.yMin,bank.yMax));
                     if(!WorldCollision.FreeCircle(p,.45f))continue;
                     Instantiate(anchorPrefab,p,Quaternion.Euler(0,0,Random.Range(0,360)),mapRoot.transform);Physics2D.SyncTransforms();found=true;break;
                 }
-                if(!found)throw new System.InvalidOperationException("Cannot place five hook anchors on fresh map");
+                if(!found)throw new System.InvalidOperationException("Cannot place five hook anchors on "+(right?"right":"left")+" bank");
             }
         }
     }

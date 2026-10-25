@@ -128,7 +128,8 @@ public static class GameplayRevisionChecks
                     Check(Mathf.Abs(f.transform.position.x)>=2+ArenaLayout.Depth*.6f&&ArenaLayout.IsInsideBank(f.transform.position,f.transform.position.x>0,1),"Factory fits the rear of the selected bank");
                     var view=Object.FindAnyObjectByType<ArenaPresentation25D>().VisualFor(f);Check(view!=null&&view.transform.localScale==Vector3.one*2,"Factory model scale matches its new footprint");
                 }
-                var rocks=Object.FindObjectsByType<PermanentRock>();Check(rocks.Any(r=>r.transform.position.x<0)&&rocks.Any(r=>r.transform.position.x>0),"Permanent rocks generated on both banks");
+                var rocks=Object.FindObjectsByType<PermanentRock>();int expectedRocks=Mathf.Max(0,Mathf.Clamp(Mathf.FloorToInt(ArenaLayout.Depth/3),1,6)-1);
+                Check(rocks.Count(r=>r.transform.position.x<0)==expectedRocks&&rocks.Count(r=>r.transform.position.x>0)==expectedRocks,"Reduced permanent rock count on both banks");
                 foreach(var r in rocks)
                 {
                     Check(r.GetComponent<Health>()==null&&r.GetComponent<GameBuilding>()==null&&!WorldCollision.FreeCircle(r.transform.position,.1f),"Rock is indestructible terrain and blocks occupancy");
@@ -137,7 +138,7 @@ public static class GameplayRevisionChecks
                 builder=Object.FindAnyObjectByType<PlayerBuilding>();builder.GetComponent<PlayerProgression>().AddGold(1000);
                 builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.FactoryPath));Check(!builder.IsBuilding,"Starting factory cannot be selected for manual construction");
                 builder.SelectBuilding(AssetDatabase.LoadAssetAtPath<GameBuilding>(EconomySetup.ShopPath));
-                var ownRock=rocks.First(r=>(r.transform.position.x>0)==(builder.transform.position.x>0));Check(!builder.CanPlace(ownRock.transform.position),"Rock's cell cannot be built over");builder.CloseInterface();
+                var ownRock=rocks.FirstOrDefault(r=>(r.transform.position.x>0)==(builder.transform.position.x>0));if(ownRock!=null)Check(!builder.CanPlace(ownRock.transform.position),"Rock's cell cannot be built over");builder.CloseInterface();
                 Directory.CreateDirectory("Temp/RevisionPreview");ScreenCapture.CaptureScreenshot("Temp/RevisionPreview/map_"+depth+".png");
                 if(mapCycle++==0){phase=21;due=Time.time+.2f;return;}
                 Directory.CreateDirectory("docs/validation");File.WriteAllText("docs/validation/009-map.txt",$"PASS: {count} real Play Mode assertions at 4m and 20m\nByte-stable setup, two rear 2x2 factories, both-bank permanent imported rocks, visual scale, occupancy and no manual factory.\n");

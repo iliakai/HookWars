@@ -22,6 +22,9 @@ public static class GameplayExpansionChecks
     static Carcass lifetimeSmall, lifetimeLarge, lifetimePortion;
     static GameObject lifetimeRoot;
     static Transform lifetimeSmallView, lifetimeLargeView;
+    static PlayerHook modesHook;
+    static UnityEngine.InputSystem.Keyboard modesKeyboard;
+    static GameObject modesRoot;
     static Quaternion meatRotation;
     static int worldDepthIndex;
     static bool worldRotationCaptured;
@@ -101,6 +104,7 @@ public static class GameplayExpansionChecks
             if(stage=="world"){WorldTick();return;}
             if(stage=="fog"){FogTick();return;}
             if(stage=="lifetime"){LifetimeTick();return;}
+            if(stage=="modes"){ModesTick();return;}
             if(phase==1)
             {
                 foreach(var a in Object.FindObjectsByType<EnemyHookAI>())a.enabled=false;
@@ -132,6 +136,135 @@ public static class GameplayExpansionChecks
                 SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_"+stage.ToUpperInvariant()+"_PASS: "+count);Stop();
     }
     static void Age(Carcass meat, double seconds) => EconomyChecks.Invoke(meat, "AdvanceGroundLifetime", seconds);
+    static object HookCall(string method, params object[] args) => typeof(HookAbility).GetMethod(method,
+        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(modesHook,args);
+    static Transform ModeTarget(Vector3 position)
+    {
+        var target=new GameObject("Mode test victim");target.transform.SetParent(modesRoot.transform);
+        target.transform.position=position;target.layer=LayerMask.NameToLayer("HookTarget");
+        target.AddComponent<CircleCollider2D>().radius=.5f;target.AddComponent<Health>();target.AddComponent<HookVictim>();
+        return target.transform;
+    }
+    static void ModeHit(Transform target, Vector3 origin, bool returning=false)
+    {
+        modesHook.CancelHook();modesHook.transform.position=origin;
+        HookCall("ReleaseThrow",(Vector2)(target.position-origin).normalized);
+        if(returning)
+        {
+            modesHook.ActiveHook.position=target.position+Vector3.right*2;
+            Check((bool)HookCall("TryCatchOnReturn",origin,20f),"Returning hook finds a real target collider");
+        }
+        else { EconomyChecks.Set(modesHook,"speed",20f/Time.deltaTime);HookCall("FlyHook"); }
+    }
+    static void OwnerTravel(float distance)
+    {EconomyChecks.Set(modesHook,"pullSpeed",distance/Time.deltaTime);HookCall("PullOwner");}
+    static void ModesTick()
+    {
+        if(phase==1)
+        {
+            DisableAI();modesHook=Object.FindAnyObjectByType<PlayerHook>();modesHook.GetComponent<PlayerMovement>().enabled=false;
+            foreach(var b in Object.FindObjectsByType<GameBuilding>())Object.DestroyImmediate(b.gameObject);
+            foreach(var r in Object.FindObjectsByType<PermanentRock>())Object.DestroyImmediate(r.gameObject);
+            foreach(var a in Object.FindObjectsByType<HookAnchor>())Object.DestroyImmediate(a.gameObject);
+            modesRoot=new GameObject("Hook mode fixtures");
+            Check(modesHook.SelectedPullMode==HookAbility.PullMode.TargetToOwner,"Fresh match defaults to pulling the target");
+            modesKeyboard=UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
+            UnityEngine.InputSystem.InputSystem.QueueStateEvent(modesKeyboard,new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.E));
+            due=Time.time+.1f;phase=2;return;
+        }
+        if(phase==2)
+        {
+            Check(modesHook.SelectedPullMode==HookAbility.PullMode.OwnerToTarget,"Actual E key event switches player hook to owner flight");
+            UnityEngine.InputSystem.InputSystem.RemoveDevice(modesKeyboard);modesKeyboard=null;
+            MatchPause.Instance.SetPaused(true);Check(!modesHook.TryTogglePullMode(),"Pause blocks mode changes");MatchPause.Instance.SetPaused(false);
+            var target=ModeTarget(new Vector3(-4,-5));var targetStart=target.position;
+            ModeHit(target,new Vector3(-10,-5));
+            Check(modesHook.IsSelfPulling&&target.GetComponent<HookVictim>().IsCaught&&modesHook.GetComponent<HookVictim>().IsCaught,
+                "Outbound hit locks both target and flying owner");
+            Check(target.GetComponent<Health>().CurrentKg==60,"Owner-flight hit deals normal forty kg damage once");
+            Check(!modesHook.TryTogglePullMode(),"Active hook cannot switch modes midway");
+            OwnerTravel(2);
+            Check(modesHook.transform.position.x>-9&&target.position==targetStart,"Owner moves while the captured target stays fixed");
+            OwnerTravel(100);
+            Check(modesHook.ActiveHook==null&&!target.GetComponent<HookVictim>().IsCaught&&!modesHook.GetComponent<HookVictim>().IsCaught,
+                "Owner arrival clears hook and both capture locks");
+            Check(Near(Vector2.Distance(modesHook.transform.position,target.position),1.1),"Owner stops at the normal safe separation");
+            Object.DestroyImmediate(target.gameObject);
+
+            target=ModeTarget(new Vector3(-4,-5));ModeHit(target,new Vector3(-10,-5));
+            var bends=(System.Collections.Generic.List<Vector3>)typeof(HookAbility).GetField("bends",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(modesHook);
+            bends.Add(new Vector3(-10,-7));bends.Add(new Vector3(-4,-7));
+            EconomyChecks.Set(modesHook,"ownerLandingPosition",HookCall("GetOwnerLandingPosition",target.position));OwnerTravel(1);
+            Check(Near(modesHook.transform.position.x,-10)&&modesHook.transform.position.y<-5.5f,"Owner follows the first saved bend instead of cutting across the route");
+            OwnerTravel(100);Check(modesHook.ActiveHook==null&&Near(Vector2.Distance(modesHook.transform.position,target.position),1.1),"Owner completes the saved bent route");
+            Object.DestroyImmediate(target.gameObject);
+
+            target=ModeTarget(new Vector3(4,-6));targetStart=target.position;
+            ModeHit(target,new Vector3(-4,-6),true);OwnerTravel(4);
+            Check(!ArenaLayout.IsInsideBank(modesHook.transform.position,modesHook.transform.position.x>0),"Owner travel can cross the river");
+            modesHook.CancelHook();
+            Check(modesHook.transform.position==new Vector3(-4,-6)&&target.position==targetStart&&!target.GetComponent<HookVictim>().IsCaught,
+                "Cancellation in river restores last dry position and releases stationary target");
+            Object.DestroyImmediate(target.gameObject);
+
+            target=ModeTarget(new Vector3(2.6f,-6));ModeHit(target,new Vector3(-4,-6));OwnerTravel(100);
+            Check(ArenaLayout.IsInsideBank(modesHook.transform.position,true)&&modesHook.ActiveHook==null,
+                "Near-shore target lands the flying owner on the destination bank");Object.DestroyImmediate(target.gameObject);
+
+            target=ModeTarget(new Vector3(4,-6));ModeHit(target,new Vector3(-4,-6));
+            var wall=new GameObject("Blocking flight wall");wall.transform.SetParent(modesRoot.transform);wall.layer=LayerMask.NameToLayer("Buildings");
+            wall.transform.position=new Vector3(0,-6);wall.AddComponent<BoxCollider2D>().size=new Vector2(1,4);OwnerTravel(100);
+            Check(modesHook.ActiveHook==null&&modesHook.transform.position.x<0&&!target.GetComponent<HookVictim>().IsCaught,
+                "Impassable terrain cancels owner flight without passing through it");
+            Object.DestroyImmediate(wall);Object.DestroyImmediate(target.gameObject);
+
+            target=ModeTarget(new Vector3(4,-6));ModeHit(target,new Vector3(-4,-6));OwnerTravel(4);Object.DestroyImmediate(target.gameObject);OwnerTravel(1);
+            Check(modesHook.ActiveHook==null&&ArenaLayout.IsInsideBank(modesHook.transform.position,false)&&!modesHook.GetComponent<HookVictim>().IsCaught,
+                "Disappearing target safely cancels river flight");
+
+            Check(modesHook.TryTogglePullMode(),"Ready hook switches back to target pull");
+            target=ModeTarget(new Vector3(-4,-5));ModeHit(target,new Vector3(-10,-5));
+            Check(modesHook.IsPullingTarget(target)&&!modesHook.IsSelfPulling&&modesHook.transform.position==new Vector3(-10,-5),
+                "Default mode still pulls the target without moving owner");modesHook.CancelHook();Object.DestroyImmediate(target.gameObject);
+            for(int mode=0;mode<2;mode++)
+            {
+                var anchor=Object.Instantiate(AssetDatabase.LoadAssetAtPath<HookAnchor>("Assets/Prefabs/HookAnchor.prefab"),new Vector3(-4,6),Quaternion.identity);
+                var anchorStart=anchor.transform.position;modesHook.transform.position=new Vector3(-8,6);
+                HookCall("ReleaseThrow",Vector2.right);modesHook.ActiveHook.position=anchorStart;HookCall("BeginAnchorPull",anchor);
+                Check(modesHook.IsSelfPulling,"Anchor always pulls owner in selected mode "+mode);OwnerTravel(100);
+                Check(anchor.transform.position==anchorStart&&modesHook.ActiveHook==null,"Anchor remains stationary and releases owner in mode "+mode);
+                Object.DestroyImmediate(anchor.gameObject);if(mode==0)Check(modesHook.TryTogglePullMode(),"Select owner mode for second anchor test");
+            }
+
+            var meat=Meat(6);meat.transform.position=new Vector3(-4,-5);ModeHit(meat.transform,new Vector3(-10,-5));OwnerTravel(100);
+            var carrier=modesHook.GetComponent<CarcassCarrier>();
+            Check(meat.IsStored&&carrier.CurrentMassKg==6,"Flying to meat collects it after releasing owner capture");
+            carrier.DropAll();Object.DestroyImmediate(meat.gameObject);
+
+            var cow=Object.Instantiate(AssetDatabase.LoadAssetAtPath<Animal>("Assets/Prefabs/cow.prefab"),new Vector3(-4,-5),Quaternion.identity);cow.enabled=false;
+            ModeHit(cow.transform,new Vector3(-10,-5));OwnerTravel(100);
+            Check(cow.IsDead&&carrier.CurrentMassKg==10,"Animal hit replaces its body with meat and owner flight collects the ten kg");
+            carrier.DropAll();foreach(var item in Object.FindObjectsByType<Carcass>())Object.DestroyImmediate(item.gameObject);
+
+            var enemy=Object.FindAnyObjectByType<EnemyChase>();enemy.transform.position=new Vector3(4,5);
+            var cargo=Meat(4);Check(enemy.GetComponent<CarcassCarrier>().TryCollect(cargo),"Prepare enemy cargo before lethal owner-flight hook");
+            EconomyChecks.Set(modesHook,"damage",200f);ModeHit(enemy.transform,new Vector3(-4,5));
+            var corpse=enemy.GetComponent<HeroCarcassSpawner>().CurrentCarcass;
+            Check(enemy.GetComponent<Health>().IsDead&&corpse.IsReserved&&cargo.IsReserved,"Lethal owner-flight hit reserves corpse and dropped cargo");
+            OwnerTravel(100);
+            Check(carrier.CurrentMassKg==10&&corpse.MassKg==70&&cargo.IsAvailable&&cargo.MassKg==4,
+                "Lethal owner flight preserves partial pickup and the full dropped cargo at target bank");
+            Check(ArenaLayout.IsInsideBank(modesHook.transform.position,true)&&!corpse.IsReserved,"Lethal arrival releases corpse on dry destination bank");
+            carrier.DropAll();
+            target=ModeTarget(new Vector3(-4,-6));ModeHit(target,new Vector3(4,-6));OwnerTravel(4);
+            modesHook.GetComponent<Health>().TakeDamage(100000);HookCall("LateUpdate");
+            Check(modesHook.ActiveHook==null&&ArenaLayout.IsInsideBank(modesHook.transform.position,true)&&!target.GetComponent<HookVictim>().IsCaught,
+                "Owner death during river flight automatically clears both captures and returns to dry ground");
+            Check(!modesHook.TryTogglePullMode(),"Dead owner cannot change hook mode");Object.Destroy(modesRoot);
+            File.WriteAllText("docs/validation/020-hook-modes.txt",$"PASS: {count} actual Unity Play Mode assertions\nActual E input; normal/owner modes; outbound/return hits; damage; pause/action guards; cross-river arrival/cancel; blocked/destroyed targets; both modes on anchors; meat pickup; lethal hero plus dropped cargo. Random terrain removed only in these isolated interaction fixtures.\n");
+            SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_HOOK_MODES_PASS: "+count);Stop();
+        }
+    }
     static void LifetimeTick()
     {
         if (phase == 1)
@@ -197,7 +330,7 @@ public static class GameplayExpansionChecks
             SessionState.SetBool(Key + ".Passed", true); Debug.Log("HOOKWARS_MEAT_LIFETIME_PASS: " + count); Stop();
         }
     }
-    static void Stop(){if(stage=="world")MatchConfiguration.RememberDepth(SessionState.GetInt(Key+".SavedDepth",16));phase=99;EditorApplication.isPlaying=false;}
+    static void Stop(){if(modesKeyboard!=null){UnityEngine.InputSystem.InputSystem.RemoveDevice(modesKeyboard);modesKeyboard=null;}if(stage=="world")MatchConfiguration.RememberDepth(SessionState.GetInt(Key+".SavedDepth",16));phase=99;EditorApplication.isPlaying=false;}
     static void Building()
     {
         var builder=Object.FindAnyObjectByType<PlayerBuilding>();var owner=builder.GetComponent<PlayerProgression>();owner.AddGold(1000);
@@ -237,7 +370,10 @@ public static class GameplayExpansionChecks
     static void AnchorCount()
     {
         var anchors=Object.FindObjectsByType<HookAnchor>();
-        Check(anchors.Length==5,"Exactly five ground anchors at depth "+ArenaLayout.Depth);
+        Check(anchors.Length==10,"Exactly ten ground anchors at depth "+ArenaLayout.Depth);
+        Check(anchors.Count(a=>a.transform.position.x<0)==5&&anchors.Count(a=>a.transform.position.x>0)==5,"Exactly five anchors on each bank");
+        var rocks=Object.FindObjectsByType<PermanentRock>();int expected=Mathf.Max(0,Mathf.Clamp(Mathf.FloorToInt(ArenaLayout.Depth/3),1,6)-1);
+        Check(rocks.Count(r=>r.transform.position.x<0)==expected&&rocks.Count(r=>r.transform.position.x>0)==expected,"One fewer rock per bank at depth "+ArenaLayout.Depth);
         Check(anchors.All(a=>ArenaLayout.IsInsideBank(a.transform.position,a.transform.position.x>0,.28f)&&a.GetComponent<Health>()==null&&a.GetComponent<GameBuilding>()==null),"Anchors fit banks and cannot be damaged or demolished");
         var display=Object.FindAnyObjectByType<ArenaPresentation25D>();
         foreach(var a in anchors)
@@ -312,7 +448,7 @@ public static class GameplayExpansionChecks
             if(display==null||Object.FindObjectsByType<HookAnchor>().Any(a=>display.VisualFor(a)==null))return;
             AnchorCount();
             if(worldDepthIndex++==0){MatchConfiguration.Prepare(20);UnityEngine.SceneManagement.SceneManager.LoadScene("Arena25D");due=0;return;}
-            File.WriteAllText("docs/validation/016-world.txt",$"PASS: {count} actual Unity Play Mode assertions\nFive upright immutable anchors at 16/4/20m, actual hit and owner pull, safe ending, stationary fixture, cow pushing, river exclusion, new rib steak meshes and actual spin.\n");
+            File.WriteAllText("docs/validation/020-world.txt",$"PASS: {count} actual Unity Play Mode assertions\nFive upright immutable anchors per bank at 16/4/20m, one fewer rock per bank, actual hit and owner pull, safe ending, stationary fixture, cow pushing, river exclusion, new rib steak meshes and actual spin.\n");
             SessionState.SetBool(Key+".Passed",true);Debug.Log("HOOKWARS_EXPANSION_WORLD_PASS: "+count);Stop();
         }
     }

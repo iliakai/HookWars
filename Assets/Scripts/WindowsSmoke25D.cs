@@ -45,7 +45,11 @@ public sealed class WindowsSmoke25D : MonoBehaviour
             Check(ArenaLayout.Depth==depth,"Configured depth "+depth);
             Check(progress.Gold<2&&progress.Experience==0&&progress.Level==1&&hero.GetComponent<OwnerEconomy>().Bones==0&&hero.GetComponent<OwnerEconomy>().ProductKg==0,"Fresh resources and level");
             Check(hero.GetComponent<Health>().MaximumKg==100&&hero.GetComponent<Health>().RegenerationPercentPerSecond==0,"Fresh session resets kill growth and percent regeneration");
-            Check(FindObjectsByType<HookAnchor>().Length==5,"Five hook eyes generated at selected bank depth");
+            var anchors=FindObjectsByType<HookAnchor>();
+            Check(anchors.Length==10&&anchors.Count(a=>a.transform.position.x<0)==5&&anchors.Count(a=>a.transform.position.x>0)==5,"Five hook eyes generated on each bank");
+            int rocksPerBank=Mathf.Max(0,Mathf.Clamp(Mathf.FloorToInt(ArenaLayout.Depth/3),1,6)-1);
+            var rocks=FindObjectsByType<PermanentRock>();
+            Check(rocks.Count(r=>r.transform.position.x<0)==rocksPerBank&&rocks.Count(r=>r.transform.position.x>0)==rocksPerBank,"One fewer rock per bank at selected depth");
             var visibility=FindAnyObjectByType<FogOfWar25D>();
             visibility.RefreshObservers();
             Check(!visibility.IsRevealed(FindAnyObjectByType<EnemyChase>().transform.position)&&visibility.GetComponent<Renderer>().sharedMaterial.shader.isSupported,"Enemy bank is hidden and fog shader works in Windows player");
@@ -127,6 +131,30 @@ public sealed class WindowsSmoke25D : MonoBehaviour
                 Check(!smallMeat.IsAvailable && !largeMeat.IsAvailable, "Windows expiry immediately prevents pickup");
                 yield return null;
                 Check(smallMeat==null && largeMeat==null, "Windows player destroys both expired meat objects");
+                hook.CancelHook();
+                Check(hook.SelectedPullMode==HookAbility.PullMode.TargetToOwner&&hook.TryTogglePullMode()&&hook.SelectedPullMode==HookAbility.PullMode.OwnerToTarget,
+                    "Windows hook switches from default pull to owner-flight mode");
+                Vector3 ownerStart=hero.transform.position,flightTarget=ownerStart;Vector2 flightDirection=Vector2.zero;
+                for(int i=0;i<16;i++)
+                {
+                    float angle=i*Mathf.PI/8;var candidate=new Vector2(Mathf.Sin(angle),Mathf.Cos(angle));
+                    var end=ownerStart+(Vector3)(candidate*3);
+                    if(ArenaLayout.IsInsideBank(end,end.x>0)&&WorldCollision.CanMove(hero.transform,end,ArenaLayout.HeroRadius))
+                    {flightDirection=candidate;flightTarget=end;break;}
+                }
+                Check(flightDirection!=Vector2.zero,"Windows map has a safe owner-flight lane");
+                var flightObject=new GameObject("Explicit owner-flight target fixture");flightObject.transform.position=flightTarget;
+                flightObject.layer=LayerMask.NameToLayer("HookTarget");flightObject.AddComponent<BoxCollider2D>().size=Vector2.one*.3f;
+                flightObject.AddComponent<HookVictim>();var flightHealth=flightObject.AddComponent<Health>();
+                yield return new WaitForSeconds(hook.Cooldown+.1f);
+                hook.TryThrow(flightDirection);Check(hook.IsPreparingThrow,"Windows owner-flight uses normal animated windup");
+                float flightDeadline=Time.time+4;
+                while((hook.IsPreparingThrow||hook.ActiveHook!=null)&&Time.time<flightDeadline)yield return null;
+                Check(hook.ActiveHook==null&&!hero.GetComponent<HookVictim>().IsCaught&&Vector2.Distance(ownerStart,hero.transform.position)>1.5f&&
+                    Vector2.Distance(flightTarget,hero.transform.position)<1.2f&&flightObject.transform.position==flightTarget&&flightHealth.CurrentKg==60,
+                    "Windows animated hook flies owner to stationary target, deals damage and releases movement lock");
+                Check(hook.TryTogglePullMode()&&hook.SelectedPullMode==HookAbility.PullMode.TargetToOwner,"Windows E-mode action returns to target pull");
+                Destroy(flightObject);
             }
             ScreenCapture.CaptureScreenshot(Path.Combine(output,"chain_"+depth+".png"));yield return new WaitForEndOfFrame();
             var pause=MatchPause.Instance;pause.HandleEscape();Check(pause.IsPaused&&Time.timeScale==0,"Pause freezes game");

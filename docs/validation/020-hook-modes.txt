@@ -1,0 +1,2 @@
+PASS: 32 actual Unity Play Mode assertions
+Actual E input; normal/owner modes; outbound/return hits; damage; pause/action guards; cross-river arrival/cancel; blocked/destroyed targets; both modes on anchors; meat pickup; lethal hero plus dropped cargo. Random terrain removed only in these isolated interaction fixtures.

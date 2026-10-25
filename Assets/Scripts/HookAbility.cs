@@ -61,6 +61,17 @@ public class HookAbility: MonoBehaviour
     public bool IsFlyingOut => state == HookState.Flying;
     public bool IsSelfPulling => state == HookState.PullingOwner;
     private HookAnchor caughtAnchor;
+    private Vector3 ownerLastSafePosition;
+    private Vector3 ownerLandingPosition;
+    public enum PullMode { TargetToOwner, OwnerToTarget }
+    public PullMode SelectedPullMode { get; private set; } = PullMode.TargetToOwner;
+    public bool TryTogglePullMode()
+    {
+        if (!isActiveAndEnabled || MatchPause.BlocksGameplay || state != HookState.Ready || IsPreparingThrow ||
+            GetComponent<Health>()?.IsDead == true || GetComponent<HookVictim>()?.IsCaught == true) return false;
+        SelectedPullMode = SelectedPullMode == PullMode.TargetToOwner ? PullMode.OwnerToTarget : PullMode.TargetToOwner;
+        return true;
+    }
 
     public float Range => range;
     public float Damage => damage;
@@ -573,6 +584,12 @@ public class HookAbility: MonoBehaviour
 
         landingDirection.Normalize();
         state = HookState.Pulling;
+        if (SelectedPullMode == PullMode.OwnerToTarget && !BeginOwnerPull())
+        {
+            caughtVictim.Release(this); caughtVictim = null; caughtTarget = null;
+            state = HookState.Returning;
+        }
+        else if (IsSelfPulling) ownerLandingPosition = GetOwnerLandingPosition(target.position);
 
         Debug.Log("Притягиваем: " + target.name, target);
     }
@@ -678,6 +695,8 @@ public class HookAbility: MonoBehaviour
     public void CancelHook()
     {
         GetComponent<HeroActionTiming25D>()?.CancelHook();
+        if (IsSelfPulling && !ArenaLayout.IsInsideBank(transform.position, transform.position.x > 0))
+            transform.position = ownerLastSafePosition;
         Carcass carcass = GetPulledCarcass();
         CarcassCarrier droppedCargo = GetPulledDeathCargo();
         // При прерывании захвата возвращаем цель в исходную
@@ -698,28 +717,59 @@ public class HookAbility: MonoBehaviour
     }
     private void BeginAnchorPull(HookAnchor anchor)
     {
+        if (!BeginOwnerPull()) { state=HookState.Returning;return; }
+        caughtAnchor=anchor;
+        ownerLandingPosition=GetOwnerLandingPosition(anchor.transform.position);
+    }
+    private Vector3 GetOwnerLandingPosition(Vector3 target)
+    {
+        Vector3 approach=bends.Count>0?bends[bends.Count-1]:transform.position;
+        Vector3 direction=approach-target;direction.z=0;
+        if(direction.sqrMagnitude<.0001f)direction=Vector3.up;
+        Vector3 landing=ArenaLayout.ClampToBank(target+direction.normalized*stopDistance,target.x>0);
+        if(Vector2.Distance(landing,target)<stopDistance*.99f)
+        {
+            float vertical=target.y>0?-1:1;
+            landing=ArenaLayout.ClampToBank(target+Vector3.up*vertical*stopDistance,target.x>0);
+        }
+        return landing;
+    }
+    private bool BeginOwnerPull()
+    {
         var self=GetComponent<HookVictim>();
-        if(self==null||!self.TryCapture(this)){state=HookState.Returning;return;}
-        caughtAnchor=anchor;state=HookState.PullingOwner;
+        if(self==null||!self.TryCapture(this))return false;
+        ownerLastSafePosition=ArenaLayout.ClampToBank(transform.position,transform.position.x>0);
+        state=HookState.PullingOwner;return true;
+    }
+    private void CompleteOwnerPull()
+    {
+        var carcass=GetPulledCarcass();var cargo=GetPulledDeathCargo();
+        Vector3 landing=caughtTarget!=null?caughtTarget.position:transform.position;
+        ClearHook();
+        var carrier=GetComponent<CarcassCarrier>();
+        if(carcass!=null){carcass.ReleaseFromHero(landing);if(carrier!=null)carrier.TryCollect(carcass);}
+        if(cargo!=null)cargo.ReleaseDeathCargo(landing,carrier);
     }
     private void PullOwner()
     {
-        if(caughtAnchor==null){ClearHook();return;}
+        if(caughtAnchor==null&&caughtTarget==null){CancelHook();return;}
+        if(caughtTarget!=null)activeHook.position=caughtTarget.position+hookOffset;
         float budget=pullSpeed*Time.deltaTime;
         while(budget>.00001f)
         {
-            Vector3 goal=bends.Count>0?bends[0]:caughtAnchor.transform.position;
+            Vector3 goal=bends.Count>0?bends[0]:ownerLandingPosition;
             float remaining=Vector2.Distance(transform.position,goal);
-            if(bends.Count==0&&remaining<=stopDistance){ClearHook();return;}
-            float travel=Mathf.Min(budget,Mathf.Max(0,remaining-(bends.Count==0?stopDistance:0)));
+            if(bends.Count==0&&remaining<=.01f){CompleteOwnerPull();return;}
+            float travel=Mathf.Min(budget,remaining);
             Vector3 before=transform.position;
             Vector3 desired=Vector3.MoveTowards(before,goal,travel);
             transform.position=WorldCollision.Slide(transform,desired,ArenaLayout.HeroRadius);
             Physics2D.SyncTransforms();
+            if(ArenaLayout.IsInsideBank(transform.position,transform.position.x>0))ownerLastSafePosition=transform.position;
             float moved=Vector2.Distance(before,transform.position);budget-=travel;
-            if(moved<travel*.5f){CancelHook();transform.position=ArenaLayout.ClampToBank(transform.position,transform.position.x>0);return;}
+            if(moved<travel*.5f){CancelHook();return;}
             if(bends.Count>0&&Vector2.Distance(transform.position,goal)<.01f)bends.RemoveAt(0);
-            else if(bends.Count==0&&Vector2.Distance(transform.position,goal)<=stopDistance+.01f){ClearHook();return;}
+            else if(bends.Count==0&&Vector2.Distance(transform.position,goal)<=.01f){CompleteOwnerPull();return;}
             if(travel<.00001f)break;
         }
     }

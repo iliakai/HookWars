@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class ProgressionHUD : MonoBehaviour
 {
-    public static Rect ScreenRect => new Rect(12, 164, 310, 200);
+    public static Rect ScreenRect => new Rect(12, 164, 310, 210);
     [SerializeField] private PlayerProgression progression;
     private void OnGUI()
     {
@@ -19,5 +19,8 @@ public class ProgressionHUD : MonoBehaviour
             GUI.Label(new Rect(24, 294, 290, 26), $"Кости: {economy.BoneKg:0.#} кг");
         }
         GUI.Label(new Rect(24, 326, 290, 26), "Клик по своему зданию — меню / снос");
+        var hook = progression.GetComponent<HookAbility>();
+        if(hook!=null)GUI.Label(new Rect(24,348,290,26),hook.SelectedPullMode==HookAbility.PullMode.TargetToOwner
+            ? "E: крюк — притянуть цель" : "E: крюк — лететь к цели");
     }
 }
